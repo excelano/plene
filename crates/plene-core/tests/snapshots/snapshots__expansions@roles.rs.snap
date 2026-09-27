@@ -24,6 +24,7 @@ input_file: crates/plene-core/tests/fixtures/roles.rs
  12 |     'outer: for item in items {
     |     label outer: for item in items {
  13 |         if *item == 0 {
+    |         if dereference item == 0 {
  14 |             continue 'outer;
     |             continue label outer;
  15 |         }
@@ -33,12 +34,10 @@ input_file: crates/plene-core/tests/fixtures/roles.rs
  18 |     total
  19 | }
  20 | 
- 21 | // Tokens that take no milestone 1 role.
- 22 | fn unroled<T: ?Sized>(a: u8, b: u8) -> u8 {
-    | function unroled<T: ?Sized>(a: u8, b: u8) returns u8 {
- 23 |     let masked = a & b;
- 24 |     println!("{}", &a);
- 25 |     #[route(&mut state, fn() -> u8)]
- 26 |     let attributed = masked;
- 27 |     a | b
- 28 | }
+ 21 | // Tokens in macro and attribute arguments take no role.
+ 22 | fn unroled(a: u8) {
+    | function unroled(a: u8) {
+ 23 |     println!("{}", &a);
+ 24 |     #[route(&mut state, fn() -> u8)]
+ 25 |     let attributed = a;
+ 26 | }

@@ -9,7 +9,7 @@ input_file: crates/plene-core/tests/fixtures/basic.rs
   4 | pub:Keyword/keyword fn:Keyword/keyword count:Function <:Punctuation 'a:Lifetime/lifetime >:Punctuation (:Punctuation words:Identifier ::Punctuation &:Operator/ref_type [:Punctuation &:Operator/ref_type 'a:Lifetime/lifetime str:Type ]:Punctuation ):Punctuation ->:Operator/ret_type HashMap:Type <:Punctuation &:Operator/ref_type 'a:Lifetime/lifetime str:Type ,:Punctuation usize:Type >:Punctuation {:Punctuation
   5 | let:Keyword mut:Keyword/keyword counts:Identifier =:Operator HashMap:Identifier :::Punctuation new:Function (:Punctuation ):Punctuation ;:Punctuation
   6 | for:Keyword word:Identifier in:Keyword words:Identifier {:Punctuation
-  7 | *:Operator counts:Identifier .:Punctuation entry:Function (:Punctuation *:Operator word:Identifier ):Punctuation .:Punctuation or_insert:Function (:Punctuation 0:Number ):Punctuation +=:Operator 1:Number ;:Punctuation
+  7 | *:Operator/deref counts:Identifier .:Punctuation entry:Function (:Punctuation *:Operator/deref word:Identifier ):Punctuation .:Punctuation or_insert:Function (:Punctuation 0:Number ):Punctuation +=:Operator 1:Number ;:Punctuation
   8 | }:Punctuation
   9 | counts:Identifier
  10 | }:Punctuation

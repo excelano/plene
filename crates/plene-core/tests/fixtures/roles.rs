@@ -18,11 +18,9 @@ pub fn roles<'a>(&mut self, text: &'a str, items: &[u8]) -> Result<&'static str,
     total
 }
 
-// Tokens that take no milestone 1 role.
-fn unroled<T: ?Sized>(a: u8, b: u8) -> u8 {
-    let masked = a & b;
+// Tokens in macro and attribute arguments take no role.
+fn unroled(a: u8) {
     println!("{}", &a);
     #[route(&mut state, fn() -> u8)]
-    let attributed = masked;
-    a | b
+    let attributed = a;
 }

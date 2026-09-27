@@ -1,0 +1,46 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/operators.rs
+---
+  1 | fn bits(a: u32, b: u32, flags: &mut u32) -> u32 {
+    | function bits(a: u32, b: u32, flags: borrowed mutable u32) returns u32 {
+  2 |     let masked = a & b;
+    |     let masked = a bitwise and b;
+  3 |     let merged = a | b;
+    |     let merged = a bitwise or b;
+  4 |     let toggled = a ^ b;
+    |     let toggled = a bitwise xor b;
+  5 |     let shifted = (a << 2) >> 1;
+    |     let shifted = (a shift left 2) shift right 1;
+  6 |     *flags &= !a;
+    |     dereference flags bitwise and= not a;
+  7 |     *flags |= b;
+    |     dereference flags bitwise or= b;
+  8 |     *flags ^= 0xff;
+    |     dereference flags bitwise xor= 0xff;
+  9 |     *flags <<= 1;
+    |     dereference flags shift left= 1;
+ 10 |     *flags >>= 2;
+    |     dereference flags shift right= 2;
+ 11 |     let product = a * b;
+ 12 |     let negated = -(a as i32);
+ 13 |     let unequal = a != b && !(a > b) || b == 0;
+    |     let unequal = a != b && not(a > b) || b == 0;
+ 14 |     masked + merged + toggled + shifted + product
+ 15 | }
+ 16 | 
+ 17 | fn pointers(p: *const u8, q: *mut u8, r: &&u8) -> u8 {
+    | function pointers(p: raw pointer const u8, q: raw pointer mutable u8, r: borrowed borrowed u8) returns u8 {
+ 18 |     unsafe { *p + *q + **r }
+    |     unsafe { dereference p + dereference q + dereference dereference r }
+ 19 | }
+ 20 | 
+ 21 | struct Handle;
+ 22 | impl !Send for Handle {}
+    | implement not Send for Handle {}
+ 23 | 
+ 24 | fn nested() -> Vec<Vec<u8>> {
+    | function nested() returns Vec<Vec<u8>> {
+ 25 |     Vec::<Vec<u8>>::new()
+ 26 | }

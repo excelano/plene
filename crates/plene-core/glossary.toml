@@ -81,6 +81,90 @@ text = "borrowed"
 note = "The method borrows the value it is called on instead of taking ownership of it."
 
 [[expand]]
+token = "&"
+role = "binary"
+text = "bitwise and"
+note = "Bitwise AND of two integers. On bool it is a logical AND that evaluates both sides."
+
+[[expand]]
+token = "|"
+role = "binary"
+text = "bitwise or"
+note = "Bitwise OR of two integers. On bool it is a logical OR that evaluates both sides."
+
+[[expand]]
+token = "^"
+role = "binary"
+text = "bitwise xor"
+note = "Bitwise exclusive OR of two integers, or of two bools."
+
+[[expand]]
+token = "<<"
+role = "binary"
+text = "shift left"
+note = "Shifts the bits of an integer left by the given number of places."
+
+[[expand]]
+token = ">>"
+role = "binary"
+text = "shift right"
+note = "Shifts the bits of an integer right by the given number of places."
+
+[[expand]]
+token = "&="
+role = "compound_assign"
+text = "bitwise and="
+note = "Bitwise AND with the right-hand side, assigned back to the left."
+
+[[expand]]
+token = "|="
+role = "compound_assign"
+text = "bitwise or="
+note = "Bitwise OR with the right-hand side, assigned back to the left."
+
+[[expand]]
+token = "^="
+role = "compound_assign"
+text = "bitwise xor="
+note = "Bitwise exclusive OR with the right-hand side, assigned back to the left."
+
+[[expand]]
+token = "<<="
+role = "compound_assign"
+text = "shift left="
+note = "Shifts left by the right-hand side, assigned back to the left."
+
+[[expand]]
+token = ">>="
+role = "compound_assign"
+text = "shift right="
+note = "Shifts right by the right-hand side, assigned back to the left."
+
+[[expand]]
+token = "*"
+role = "deref"
+text = "dereference"
+note = "Reaches through a reference, raw pointer or smart pointer to the value it points to."
+
+[[expand]]
+token = "*"
+role = "ptr_type"
+text = "raw pointer"
+note = "A raw pointer: no borrow checking, and reading through it requires unsafe. *mut T allows changes through it."
+
+[[expand]]
+token = "!"
+role = "not"
+text = "not"
+note = "Logical NOT of a bool, or bitwise NOT of an integer."
+
+[[expand]]
+token = "!"
+role = "negative_impl"
+text = "not"
+note = "Declares that a type does not implement an auto trait such as Send or Sync."
+
+[[expand]]
 token = "->"
 role = "ret_type"
 text = "returns"

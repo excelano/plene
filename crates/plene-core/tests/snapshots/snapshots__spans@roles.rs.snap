@@ -15,7 +15,7 @@ input_file: crates/plene-core/tests/fixtures/roles.rs
  10 | let:Keyword noop:Identifier =:Operator |:Operator/closure_open |:Operator/closure_close {:Punctuation }:Punctuation ;:Punctuation
  11 | let:Keyword any:Identifier ::Punctuation &:Operator/ref_type '_:Lifetime/lifetime_anonymous str:Type =:Operator text:Identifier ;:Punctuation
  12 | 'outer:Lifetime/label ::Punctuation for:Keyword item:Identifier in:Keyword items:Identifier {:Punctuation
- 13 | if:Keyword *:Operator item:Identifier ==:Operator 0:Number {:Punctuation
+ 13 | if:Keyword *:Operator/deref item:Identifier ==:Operator 0:Number {:Punctuation
  14 | continue:Keyword 'outer:Lifetime/label ;:Punctuation
  15 | }:Punctuation
  16 | break:Keyword 'outer:Lifetime/label ;:Punctuation
@@ -23,11 +23,9 @@ input_file: crates/plene-core/tests/fixtures/roles.rs
  18 | total:Identifier
  19 | }:Punctuation
  20 |
- 21 | // Tokens that take no milestone 1 role.:Comment
- 22 | fn:Keyword/keyword unroled:Function <:Punctuation T:Type ::Punctuation ?:Operator Sized:Type >:Punctuation (:Punctuation a:Identifier ::Punctuation u8:Type ,:Punctuation b:Identifier ::Punctuation u8:Type ):Punctuation ->:Operator/ret_type u8:Type {:Punctuation
- 23 | let:Keyword masked:Identifier =:Operator a:Identifier &:Operator b:Identifier ;:Punctuation
- 24 | println:Macro !:Macro (:Punctuation "{}":String ,:Punctuation &:Operator a:Identifier ):Punctuation ;:Punctuation
- 25 | #:Attribute [:Attribute route:Attribute (:Attribute &:Attribute mut:Attribute state:Attribute ,:Attribute fn:Attribute (:Attribute ):Attribute -:Attribute >:Attribute u8:Attribute ):Attribute ]:Attribute
- 26 | let:Keyword attributed:Identifier =:Operator masked:Identifier ;:Punctuation
- 27 | a:Identifier |:Operator b:Identifier
- 28 | }:Punctuation
+ 21 | // Tokens in macro and attribute arguments take no role.:Comment
+ 22 | fn:Keyword/keyword unroled:Function (:Punctuation a:Identifier ::Punctuation u8:Type ):Punctuation {:Punctuation
+ 23 | println:Macro !:Macro (:Punctuation "{}":String ,:Punctuation &:Operator a:Identifier ):Punctuation ;:Punctuation
+ 24 | #:Attribute [:Attribute route:Attribute (:Attribute &:Attribute mut:Attribute state:Attribute ,:Attribute fn:Attribute (:Attribute ):Attribute -:Attribute >:Attribute u8:Attribute ):Attribute ]:Attribute
+ 25 | let:Keyword attributed:Identifier =:Operator a:Identifier ;:Punctuation
+ 26 | }:Punctuation

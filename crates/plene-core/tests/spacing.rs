@@ -31,7 +31,8 @@ fn spaces_separate_words() {
         ("&&x;", "borrow borrow x;"),
         ("&mut x;", "borrow mutable x;"),
         ("&[1];", "borrow [1];"),
-        ("&*x;", "borrow *x;"),
+        ("&*x;", "borrow dereference x;"),
+        ("&-x;", "borrow -x;"),
         ("x=&y;", "x= borrow y;"),
         ("let c = &|x| x;", "let c = borrow closure(x) x;"),
     ] {

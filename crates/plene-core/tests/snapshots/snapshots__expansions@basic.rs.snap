@@ -12,6 +12,7 @@ input_file: crates/plene-core/tests/fixtures/basic.rs
     |     let mutable counts = HashMap::new();
   6 |     for word in words {
   7 |         *counts.entry(*word).or_insert(0) += 1;
+    |         dereference counts.entry(dereference word).or_insert(0) += 1;
   8 |     }
   9 |     counts
  10 | }

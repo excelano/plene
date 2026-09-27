@@ -124,3 +124,32 @@ fn dyn_is_a_keyword_role_in_2015_type_position() {
         .role;
     assert_eq!(role, Some(Role::Keyword));
 }
+
+#[test]
+fn star_and_bang_read_by_where_they_stand() {
+    let roles =
+        roles_in("fn f(p: *const u8) -> bool { let n = *p * 2; !(n > 1) }\nimpl !Send for S {}");
+    let stars: Vec<_> = roles
+        .iter()
+        .filter(|(text, _)| text == "*")
+        .map(|(_, role)| *role)
+        .collect();
+    assert_eq!(
+        stars,
+        [Role::PtrType, Role::Deref],
+        "multiplication takes no role"
+    );
+    let bangs: Vec<_> = roles
+        .iter()
+        .filter(|(text, _)| text == "!")
+        .map(|(_, role)| *role)
+        .collect();
+    assert_eq!(bangs, [Role::Not, Role::NegativeImpl]);
+}
+
+#[test]
+fn shifts_are_operators_but_nested_generics_are_not() {
+    let roles = roles_in("fn f() -> Vec<Vec<u8>> { x >> 1; Vec::<Vec<u8>>::new() }");
+    let texts: Vec<_> = roles.iter().map(|(text, _)| text.as_str()).collect();
+    assert_eq!(texts, ["fn", "->", ">>"]);
+}

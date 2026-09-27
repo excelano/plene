@@ -1,0 +1,31 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_spans(&source)
+input_file: crates/plene-core/tests/fixtures/operators.rs
+---
+  1 | fn:Keyword/keyword bits:Function (:Punctuation a:Identifier ::Punctuation u32:Type ,:Punctuation b:Identifier ::Punctuation u32:Type ,:Punctuation flags:Identifier ::Punctuation &:Operator/ref_type mut:Keyword/keyword u32:Type ):Punctuation ->:Operator/ret_type u32:Type {:Punctuation
+  2 | let:Keyword masked:Identifier =:Operator a:Identifier &:Operator/binary b:Identifier ;:Punctuation
+  3 | let:Keyword merged:Identifier =:Operator a:Identifier |:Operator/binary b:Identifier ;:Punctuation
+  4 | let:Keyword toggled:Identifier =:Operator a:Identifier ^:Operator/binary b:Identifier ;:Punctuation
+  5 | let:Keyword shifted:Identifier =:Operator (:Punctuation a:Identifier <<:Operator/binary 2:Number ):Punctuation >>:Operator/binary 1:Number ;:Punctuation
+  6 | *:Operator/deref flags:Identifier &=:Operator/compound_assign !:Operator/not a:Identifier ;:Punctuation
+  7 | *:Operator/deref flags:Identifier |=:Operator/compound_assign b:Identifier ;:Punctuation
+  8 | *:Operator/deref flags:Identifier ^=:Operator/compound_assign 0xff:Number ;:Punctuation
+  9 | *:Operator/deref flags:Identifier <<=:Operator/compound_assign 1:Number ;:Punctuation
+ 10 | *:Operator/deref flags:Identifier >>=:Operator/compound_assign 2:Number ;:Punctuation
+ 11 | let:Keyword product:Identifier =:Operator a:Identifier *:Operator b:Identifier ;:Punctuation
+ 12 | let:Keyword negated:Identifier =:Operator -:Operator (:Punctuation a:Identifier as:Keyword i32:Type ):Punctuation ;:Punctuation
+ 13 | let:Keyword unequal:Identifier =:Operator a:Identifier !=:Operator b:Identifier &&:Operator !:Operator/not (:Punctuation a:Identifier >:Operator b:Identifier ):Punctuation ||:Operator b:Identifier ==:Operator 0:Number ;:Punctuation
+ 14 | masked:Identifier +:Operator merged:Identifier +:Operator toggled:Identifier +:Operator shifted:Identifier +:Operator product:Identifier
+ 15 | }:Punctuation
+ 16 |
+ 17 | fn:Keyword/keyword pointers:Function (:Punctuation p:Identifier ::Punctuation *:Operator/ptr_type const:Keyword u8:Type ,:Punctuation q:Identifier ::Punctuation *:Operator/ptr_type mut:Keyword/keyword u8:Type ,:Punctuation r:Identifier ::Punctuation &:Operator/ref_type &:Operator/ref_type u8:Type ):Punctuation ->:Operator/ret_type u8:Type {:Punctuation
+ 18 | unsafe:Keyword {:Punctuation *:Operator/deref p:Identifier +:Operator *:Operator/deref q:Identifier +:Operator *:Operator/deref *:Operator/deref r:Identifier }:Punctuation
+ 19 | }:Punctuation
+ 20 |
+ 21 | struct:Keyword Handle:Type ;:Punctuation
+ 22 | impl:Keyword/impl_block !:Operator/negative_impl Send:Type for:Keyword Handle:Type {:Punctuation }:Punctuation
+ 23 |
+ 24 | fn:Keyword/keyword nested:Function (:Punctuation ):Punctuation ->:Operator/ret_type Vec:Type <:Punctuation Vec:Type <:Punctuation u8:Type >:Punctuation >:Punctuation {:Punctuation
+ 25 | Vec:Identifier :::Punctuation <:Punctuation Vec:Type <:Punctuation u8:Type >:Punctuation >:Punctuation :::Punctuation new:Function (:Punctuation ):Punctuation
+ 26 | }:Punctuation
