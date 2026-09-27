@@ -4,6 +4,12 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+readme = "../../README.md"
+description = "Parses Rust source into per-line spans with each abbreviation and symbol token expanded into words, keyed by syntactic role"
+categories = ["development-tools", "text-processing"]
 
 [dependencies]
 ra_ap_syntax.workspace = true

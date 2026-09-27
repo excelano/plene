@@ -48,5 +48,8 @@ test is broken deliberately once to watch it fail. Snapshot changes are read bef
 are accepted: in the span snapshots, a non-whitespace token classed `Plain` is a token
 kind the highlighter misses.
 
+Releases: `ship plene`, which David runs; `ship.conf` names the targets and the order
+the crates publish in. There is no release document.
+
 Both crates are `forbid(unsafe_code)`, and nothing in the dependency tree compiles C
 (`~/notes/pure_rust_preference.md`).

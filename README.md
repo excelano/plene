@@ -15,13 +15,33 @@ plene shows Rust source alongside an expanded transcription: the same code, with
 
 It is for someone who knows some Rust and finds the dense parts slow going. It is not a translator or a tutor: it spells out what is written and does not explain what it means. Words Rust already spells in full stay as they are, and every expansion depends on the role a token plays, so `&` in an expression reads `borrow` while `&` in a type reads `borrowed`. The same token in the same role always gets the same words.
 
-## Install and run
+## Install
 
-    cargo install --git https://github.com/excelano/plene plene
+On Debian and Ubuntu, add the [Excelano apt repository](https://excelano.com/apt/) once, then install it, so `apt upgrade` keeps it current:
+
+```sh
+curl -fsSL https://excelano.com/apt/setup.sh | sudo sh
+sudo apt install plene
+```
+
+With Homebrew:
+
+```sh
+brew install excelano/tap/plene
+```
+
+From crates.io, with a Rust toolchain at least as new as the one `Cargo.toml` names:
+
+```sh
+cargo install plene
+```
+
+## Run
+
     plene src/main.rs
     plene --color always src/main.rs | less -R
 
-`plene -` reads standard input. `--side-by-side` and `--expanded` change the layout, `--changed-only` keeps just the lines that change, and `plene --help` lists the rest. `Cargo.toml` names the Rust toolchain it needs.
+`plene -` reads standard input. `--side-by-side` and `--expanded` change the layout, `--changed-only` keeps just the lines that change, and `plene --help` lists the rest.
 
 The expansions come from a glossary built into plene. Entries can be overridden by token and role in `~/.config/plene/glossary.toml` or in a file passed with `--glossary`; `plene --dump-glossary` prints the glossary in effect as a starting point. `DESIGN.md` describes the glossary and why it reads the way it does.
 

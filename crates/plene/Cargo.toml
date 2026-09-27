@@ -4,6 +4,12 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+readme = "../../README.md"
+description = "Shows Rust source alongside an expanded transcription: the same code with abbreviations and symbols written out in words"
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 anstream = "1.0"
@@ -11,3 +17,20 @@ anstyle = "1.0"
 clap = { version = "4.6", features = ["derive"] }
 plene-core.workspace = true
 unicode-width = "0.2"
+
+[package.metadata.deb]
+maintainer = "David M. Anderson <david.anderson@excelano.com>"
+extended-description = """
+plene shows Rust source alongside an expanded transcription: the same code with
+Rust's abbreviations and symbols written out as words. Each expansion depends on
+the role a token plays, so & in an expression reads "borrow" while & in a type
+reads "borrowed", and the same token in the same role always reads the same way.
+It spells out what is written and does not explain what it means."""
+section = "devel"
+priority = "optional"
+depends = "libc6, libgcc-s1"
+assets = [
+    ["target/release/plene", "usr/bin/", "755"],
+    ["../../README.md", "usr/share/doc/plene/README.md", "644"],
+    ["../../LICENSE", "usr/share/doc/plene/copyright", "644"],
+]
