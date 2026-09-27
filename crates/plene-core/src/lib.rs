@@ -1,5 +1,7 @@
 //! Parses Rust source and produces its expanded transcription as per-line spans.
 
+#![forbid(unsafe_code)]
+
 mod glossary;
 mod highlight;
 mod role;

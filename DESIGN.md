@@ -1,4 +1,4 @@
-# plene — Handoff Spec
+# plene — Design
 
 **plene** shows Rust source alongside an *expanded transcription*: the same code with abbreviations and symbol tokens written out in longhand, color-matched to the original.
 

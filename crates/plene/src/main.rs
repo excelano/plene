@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 mod render;
 
 use std::io::{self, Read, Write};

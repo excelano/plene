@@ -5,6 +5,8 @@ members = ["crates/plene-core", "crates/plene"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+# The floor is ra_ap_syntax's; raise it when an upgrade of that pin raises theirs.
+rust-version = "1.98"
 license = "MIT"
 
 [workspace.dependencies]
