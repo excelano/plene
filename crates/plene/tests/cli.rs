@@ -319,3 +319,27 @@ fn dump_glossary_takes_no_file_and_a_file_is_otherwise_required() {
     );
     assert_eq!(plene(&[], "").status.code(), Some(2));
 }
+
+#[test]
+fn layouts_reach_the_output() {
+    let side = stdout(&plene(&["--side-by-side", "-"], "fn f() {}\n"));
+    assert_eq!(side, "fn f() {} │ function f() {}\n");
+    let expanded = stdout(&plene(
+        &["--expanded", "--changed-only", "-"],
+        "x;\nfn f() {}\n",
+    ));
+    assert_eq!(expanded, "2 function f() {}\n");
+}
+
+#[test]
+fn layouts_are_exclusive_and_need_a_file() {
+    let rejected: [&[&str]; 4] = [
+        &["--side-by-side", "--expanded", "-"],
+        &["--dump-glossary", "--side-by-side"],
+        &["--dump-glossary", "--expanded"],
+        &["--dump-glossary", "--changed-only"],
+    ];
+    for args in rejected {
+        assert_eq!(plene(args, "").status.code(), Some(2), "{args:?}");
+    }
+}

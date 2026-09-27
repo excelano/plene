@@ -12,7 +12,7 @@ use std::process::ExitCode;
 use anstream::{AutoStream, ColorChoice};
 use clap::{Parser, ValueEnum};
 use plene_core::{Edition, Glossary, transcribe};
-use render::{Styling, Theme};
+use render::{Layout, Styling, Theme, View};
 
 /// Shows Rust source alongside an expanded transcription: the same code with
 /// abbreviations and symbols written out in words.
@@ -35,8 +35,17 @@ struct Args {
     /// the config directory.
     #[arg(long, value_name = "PATH")]
     glossary: Option<PathBuf>,
+    /// Show the source and its expansion in two columns.
+    #[arg(long, conflicts_with = "expanded")]
+    side_by_side: bool,
+    /// Show only the expansion.
+    #[arg(long)]
+    expanded: bool,
+    /// Show only lines the expansion changes, numbered with their source lines.
+    #[arg(long)]
+    changed_only: bool,
     /// Print the glossary in effect, as a glossary file, and exit.
-    #[arg(long, conflicts_with = "file")]
+    #[arg(long, conflicts_with_all = ["file", "side_by_side", "expanded", "changed_only"])]
     dump_glossary: bool,
 }
 
@@ -101,7 +110,21 @@ fn run(args: &Args) -> Result<(), String> {
                 ColorChoice::Never => Styling::Plain,
                 _ => Styling::Colored(args.theme),
             };
-            render::interleaved(&lines, styling)
+            let layout = if args.side_by_side {
+                Layout::SideBySide
+            } else if args.expanded {
+                Layout::Expanded
+            } else {
+                Layout::Interleaved
+            };
+            render::draw(
+                &lines,
+                View {
+                    layout,
+                    changed_only: args.changed_only,
+                    styling,
+                },
+            )
         }
         None => glossary.to_toml(),
     };

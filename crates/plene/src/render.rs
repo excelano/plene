@@ -13,6 +13,7 @@ use unicode_width::UnicodeWidthStr;
 
 const SOURCE_GUTTER: &str = "  ";
 const EXPANSION_GUTTER: &str = "» ";
+const COLUMN_SEPARATOR: &str = " │ ";
 
 /// The terminal background the colors are chosen for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -37,66 +38,167 @@ pub enum Styling {
     Colored(Theme),
 }
 
-/// Each source line, followed by its expansion when the expansion differs. With
-/// color, expansion lines sit on a background band padded to the widest expansion
-/// line, so the bands form an even block.
-pub fn interleaved(lines: &[Line], styling: Styling) -> String {
-    let band = match styling {
-        Styling::Plain => None,
-        Styling::Colored(theme) => Some(theme.band()),
-    };
-    let band_width = lines
-        .iter()
-        .filter(|line| is_changed(line))
-        .map(rendered_width)
-        .max()
-        .unwrap_or(0);
-
-    let mut out = String::new();
-    for line in lines {
-        out.push_str(SOURCE_GUTTER);
-        for span in &line.spans {
-            paint(
-                &mut out,
-                &visible(&span.original),
-                span_style(span),
-                styling,
-            );
-        }
-        out.push('\n');
-        if is_changed(line) {
-            let gutter_style = Style::new().dimmed().bg_color(band);
-            paint(&mut out, EXPANSION_GUTTER, gutter_style, styling);
-            for span in &line.spans {
-                paint(
-                    &mut out,
-                    &visible(&span.rendered),
-                    span_style(span).bg_color(band),
-                    styling,
-                );
-            }
-            if band.is_some() {
-                let padding = " ".repeat(band_width - rendered_width(line));
-                paint(&mut out, &padding, Style::new().bg_color(band), styling);
-            }
-            out.push('\n');
+impl Styling {
+    /// The band behind expansions, when there is color to draw it.
+    fn band(self) -> Option<Color> {
+        match self {
+            Styling::Plain => None,
+            Styling::Colored(theme) => Some(theme.band()),
         }
     }
-    out
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Layout {
+    /// Each source line, followed by its expansion when the expansion differs.
+    Interleaved,
+    /// Source on the left, the whole transcription on the right.
+    SideBySide,
+    /// The transcription alone.
+    Expanded,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct View {
+    pub layout: Layout,
+    /// Only lines the expansion changes, each numbered with its source line.
+    pub changed_only: bool,
+    pub styling: Styling,
+}
+
+/// Draws the transcribed lines. With color, expansions sit on a background band
+/// padded to the widest one drawn, so the bands form an even block.
+pub fn draw(lines: &[Line], view: View) -> String {
+    let rows: Vec<(usize, &Line)> = lines
+        .iter()
+        .enumerate()
+        .filter(|(_, line)| !view.changed_only || is_changed(line))
+        .map(|(index, line)| (index + 1, line))
+        .collect();
+    let number_width = match rows.last() {
+        Some((number, _)) if view.changed_only => number.to_string().len(),
+        _ => 0,
+    };
+    let band_width = rows
+        .iter()
+        .filter(|(_, line)| is_changed(line))
+        .map(|(_, line)| text_width(line, |span| &span.rendered))
+        .max()
+        .unwrap_or(0);
+    let mut canvas = Canvas {
+        out: String::new(),
+        view,
+        number_width,
+        band_width,
+    };
+
+    match view.layout {
+        Layout::Interleaved => {
+            for (number, line) in &rows {
+                canvas.number(Some(*number));
+                if !line.spans.is_empty() {
+                    canvas.out.push_str(SOURCE_GUTTER);
+                }
+                canvas.source(line);
+                canvas.out.push('\n');
+                if is_changed(line) {
+                    canvas.number(None);
+                    let gutter_style = Style::new().dimmed().bg_color(view.styling.band());
+                    canvas.paint(EXPANSION_GUTTER, gutter_style);
+                    canvas.expansion(line);
+                    canvas.out.push('\n');
+                }
+            }
+        }
+        Layout::SideBySide => {
+            let left_width = rows
+                .iter()
+                .map(|(_, line)| text_width(line, |span| &span.original))
+                .max()
+                .unwrap_or(0);
+            for (number, line) in &rows {
+                canvas.number(Some(*number));
+                canvas.source(line);
+                let padding = left_width - text_width(line, |span| &span.original);
+                canvas.out.push_str(&" ".repeat(padding));
+                if is_changed(line) {
+                    canvas.paint(COLUMN_SEPARATOR, Style::new().dimmed());
+                    canvas.expansion(line);
+                } else if text_width(line, |span| &span.original) > 0 {
+                    canvas.paint(COLUMN_SEPARATOR, Style::new().dimmed());
+                    canvas.source(line);
+                } else {
+                    canvas.paint(COLUMN_SEPARATOR.trim_end(), Style::new().dimmed());
+                }
+                canvas.out.push('\n');
+            }
+        }
+        Layout::Expanded => {
+            for (number, line) in &rows {
+                canvas.number(Some(*number));
+                for span in &line.spans {
+                    canvas.paint(&visible(&span.rendered), span_style(span));
+                }
+                canvas.out.push('\n');
+            }
+        }
+    }
+    canvas.out
+}
+
+/// The output being drawn, and what every row of it shares.
+struct Canvas {
+    out: String,
+    view: View,
+    number_width: usize,
+    band_width: usize,
+}
+
+impl Canvas {
+    fn paint(&mut self, text: &str, style: Style) {
+        paint(&mut self.out, text, style, self.view.styling);
+    }
+
+    /// A source line number, or blanks of the same width, when lines are numbered.
+    fn number(&mut self, number: Option<usize>) {
+        if self.view.changed_only {
+            let text = match number {
+                Some(number) => format!("{number:>width$} ", width = self.number_width),
+                None => " ".repeat(self.number_width + 1),
+            };
+            self.paint(&text, Style::new().dimmed());
+        }
+    }
+
+    fn source(&mut self, line: &Line) {
+        for span in &line.spans {
+            self.paint(&visible(&span.original), span_style(span));
+        }
+    }
+
+    /// A line's expansion on the band, padded to the band's width.
+    fn expansion(&mut self, line: &Line) {
+        let band = self.view.styling.band();
+        for span in &line.spans {
+            self.paint(&visible(&span.rendered), span_style(span).bg_color(band));
+        }
+        if band.is_some() {
+            let padding = " ".repeat(self.band_width - text_width(line, |span| &span.rendered));
+            self.paint(&padding, Style::new().bg_color(band));
+        }
+    }
 }
 
 fn is_changed(line: &Line) -> bool {
     line.spans.iter().any(|span| span.rendered != span.original)
 }
 
-/// Display width of an expansion line, gutter included.
-fn rendered_width(line: &Line) -> usize {
-    EXPANSION_GUTTER.width()
-        + line
-            .spans
-            .iter()
-            .map(|span| visible(&span.rendered).width())
-            .sum::<usize>()
+/// Display width of one side of a line, as drawn.
+fn text_width(line: &Line, side: impl Fn(&Span) -> &str) -> usize {
+    line.spans
+        .iter()
+        .map(|span| visible(side(span)).width())
+        .sum()
 }
 
 /// Source text with every character that could act on the terminal or on how the
@@ -162,12 +264,89 @@ mod tests {
     use super::*;
 
     fn render(source: &str, styling: Styling) -> String {
+        draw_view(source, Layout::Interleaved, false, styling)
+    }
+
+    fn draw_view(source: &str, layout: Layout, changed_only: bool, styling: Styling) -> String {
         let lines = transcribe(source, Edition::default(), &Glossary::default());
-        interleaved(&lines, styling)
+        draw(
+            &lines,
+            View {
+                layout,
+                changed_only,
+                styling,
+            },
+        )
     }
 
     fn strip(styled: &str) -> String {
         anstream::adapter::strip_str(styled).to_string()
+    }
+
+    const THREE: &str = "use a;\n\nfn f(x: &u8) {}\n";
+
+    #[test]
+    fn side_by_side_repeats_unchanged_lines_and_aligns_the_columns() {
+        let expected = concat!(
+            "use a;          │ use a;\n",
+            "                │\n",
+            "fn f(x: &u8) {} │ function f(x: borrowed u8) {}\n",
+        );
+        assert_eq!(
+            draw_view(THREE, Layout::SideBySide, false, Styling::Plain),
+            expected
+        );
+    }
+
+    #[test]
+    fn expanded_is_the_transcription_alone() {
+        assert_eq!(
+            draw_view(THREE, Layout::Expanded, false, Styling::Plain),
+            "use a;\n\nfunction f(x: borrowed u8) {}\n"
+        );
+    }
+
+    #[test]
+    fn changed_only_numbers_rows_in_every_layout() {
+        let source = format!("fn a() {{}}\n{}fn b() {{}}\n", "x;\n".repeat(9));
+        assert_eq!(
+            draw_view(&source, Layout::Interleaved, true, Styling::Plain),
+            " 1   fn a() {}\n   » function a() {}\n11   fn b() {}\n   » function b() {}\n"
+        );
+        assert_eq!(
+            draw_view(&source, Layout::SideBySide, true, Styling::Plain),
+            " 1 fn a() {} │ function a() {}\n11 fn b() {} │ function b() {}\n"
+        );
+        assert_eq!(
+            draw_view(&source, Layout::Expanded, true, Styling::Plain),
+            " 1 function a() {}\n11 function b() {}\n"
+        );
+    }
+
+    #[test]
+    fn plain_layouts_leave_no_trailing_spaces() {
+        for layout in [Layout::Interleaved, Layout::SideBySide, Layout::Expanded] {
+            let plain = draw_view(THREE, layout, false, Styling::Plain);
+            assert!(
+                plain.lines().all(|line| !line.ends_with(' ')),
+                "{layout:?}: {plain:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn side_by_side_bands_only_changed_cells() {
+        let styled = draw_view(
+            THREE,
+            Layout::SideBySide,
+            false,
+            Styling::Colored(Theme::Dark),
+        );
+        let banded: Vec<bool> = styled
+            .lines()
+            .map(|line| line.contains("48;5;236"))
+            .collect();
+        assert_eq!(banded, [false, false, true]);
     }
 
     #[test]

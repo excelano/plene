@@ -166,9 +166,9 @@ pub struct Span {
 plene [OPTIONS] <FILE|->
 
   (default)          interleaved: each source line, then its expansion beneath when it differs
-  --side-by-side     two columns (for wide terminals)
-  --changed-only     only lines that differ, prefixed with line numbers
-  --expanded         expanded text only
+  --side-by-side     two columns: the source, and the whole transcription
+  --expanded         the transcription alone
+  --changed-only     only lines that differ, numbered with their source lines
   --color <auto|always|never>
   --theme <dark|light>              (default dark)
   --edition <2015|2018|2021|2024>   (default 2021)
@@ -177,6 +177,7 @@ plene [OPTIONS] <FILE|->
 ```
 
 - Interleaved output marks lines in a two-column gutter: blank for source lines, `» ` for expansion lines, so the two are distinguishable without color and indentation stays aligned. With color, expansion lines also sit on a subtle background band, padded with spaces to the widest expansion line so the bands form an even block. Padding uses spaces rather than an erase-to-end-of-line escape, which `less -R` would print literally. `--theme <dark|light>` (default dark) picks the band for the terminal's background.
+- The three layouts are exclusive; `--changed-only` filters any of them. Side by side, the left column is padded to the widest source line and never truncated, and changed lines carry the band on the right; `less -RS` scrolls a wide result. Blank lines print as empty lines in every layout, leaving no trailing spaces.
 - ANSI color via the highlight classes, from the terminal's 16-color palette so it follows the user's theme. Tokens with a glossary role are underlined on both lines, pairing each token with its expansion.
 - A closed reader (`plene file.rs | head`) ends output quietly. Errors print `plene: …` and exit 1; argument errors exit 2.
 - `-` reads stdin.
