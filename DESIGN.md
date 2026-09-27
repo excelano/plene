@@ -158,7 +158,7 @@ pub struct Span {
 - **Line correspondence is 1:1.** Every source line produces exactly one rendered line. Tokens that span lines (block comments, multi-line and raw strings) are split into one span per line. Line endings (LF or CRLF) are preserved.
 - **Macros:** the arguments of standard macros that take expressions are parsed as Rust and expanded like any other code: `assert`, `assert_eq`, `assert_ne`, `debug_assert`, `debug_assert_eq`, `debug_assert_ne`, `format`, `format_args`, `print`, `println`, `eprint`, `eprintln`, `write`, `writeln`, `panic`, `todo`, `unimplemented`, `unreachable`, `vec`, `dbg`, `addr_of` and `addr_of_mut`, matched by the last segment of the path, so `std::format!` counts. The arguments are parsed as the elements of an array, which also covers `vec![x; n]`, and an invocation expands only when they parse without error; otherwise it stays untouched. So `assert_eq!(&a, &b)` reads `assert_eq!(borrow a, borrow b)`, while `format!("{}", type = &a)` stays as written. The parsed arguments are the source's own bytes split into tokens again, so the invariants hold as they do elsewhere. Every other macro's token tree is left untouched, since syntax alone can't tell whether its arguments are Rust: `stringify!(&a)`, `quote!` bodies, and patterns in `matches!` would all read wrongly. Format strings are strings and stay unchanged. Attributes are untouched too. `macro_rules!` bodies are never expanded.
 - **Parse errors:** render everything; tokens inside error nodes are not expanded.
-- No I/O and no CLI/GUI dependencies.
+- No CLI/GUI dependencies, and no I/O except `Glossary::load`, which reads the glossary files so that the CLI and the GUI find them by the same rules.
 
 ### plene (CLI)
 

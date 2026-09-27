@@ -5,6 +5,7 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -64,6 +65,34 @@ impl Default for Glossary {
 }
 
 impl Glossary {
+    /// The glossary in effect: the built-in one, overridden by the config directory's
+    /// `plene/glossary.toml` when it exists, and then by the file at `named`. Each
+    /// warning and error names the file it came from. This is the only part of
+    /// plene-core that reads files.
+    pub fn load(named: Option<&Path>) -> Result<(Glossary, Vec<String>), String> {
+        let mut glossary = Glossary::default();
+        let mut warnings = Vec::new();
+        let config = config_path();
+        for path in config
+            .as_deref()
+            .filter(|path| path.exists())
+            .into_iter()
+            .chain(named)
+        {
+            let text = std::fs::read_to_string(path)
+                .map_err(|error| format!("{}: {error}", path.display()))?;
+            let (overrides, file_warnings) =
+                Glossary::parse(&text).map_err(|error| format!("{}: {error}", path.display()))?;
+            warnings.extend(
+                file_warnings
+                    .into_iter()
+                    .map(|warning| format!("{}: {warning}", path.display())),
+            );
+            glossary.merge(overrides);
+        }
+        Ok((glossary, warnings))
+    }
+
     /// Parses a glossary file. An entry with an unknown role, or one that repeats an
     /// earlier entry's token and role, produces a warning rather than an error.
     pub fn parse(text: &str) -> Result<(Glossary, Vec<String>), GlossaryError> {
@@ -145,6 +174,16 @@ impl Glossary {
             Some(entry.text.clone())
         }
     }
+}
+
+/// `$XDG_CONFIG_HOME/plene/glossary.toml`, or `~/.config/plene/glossary.toml` when
+/// `XDG_CONFIG_HOME` is unset or not absolute, which the XDG spec says to ignore.
+fn config_path() -> Option<PathBuf> {
+    let config_home = std::env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .filter(|path| path.is_absolute())
+        .or_else(|| std::env::home_dir().map(|home| home.join(".config")))?;
+    Some(config_home.join("plene").join("glossary.toml"))
 }
 
 /// Entries for roles that take a name are keyed by role alone.

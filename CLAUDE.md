@@ -3,7 +3,8 @@
 plene shows Rust source alongside an expanded transcription: the same code with Rust's
 abbreviations and symbol tokens written out as words. `plene-core` parses with
 `ra_ap_syntax`, classifies every token's highlight class and syntactic role, and renders
-each role through the glossary into per-line spans; it does no I/O. `plene` is the CLI.
+each role through the glossary into per-line spans; its only I/O is `Glossary::load`,
+which reads the glossary files. `plene` is the CLI.
 `DESIGN.md` is the authority on what is expanded, how, and why the glossary reads as it
 does.
 

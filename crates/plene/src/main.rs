@@ -100,7 +100,10 @@ fn main() -> ExitCode {
 }
 
 fn run(args: &Args) -> Result<(), String> {
-    let glossary = load_glossary(config_glossary_path().as_deref(), args.glossary.as_deref())?;
+    let (glossary, warnings) = Glossary::load(args.glossary.as_deref())?;
+    for warning in warnings {
+        eprintln!("plene: warning: {warning}");
+    }
     let mut stdout = AutoStream::new(io::stdout().lock(), args.color.into());
     let output = match &args.file {
         Some(file) => {
@@ -136,33 +139,6 @@ fn run(args: &Args) -> Result<(), String> {
         Err(error) if error.kind() == io::ErrorKind::BrokenPipe => Ok(()),
         result => result.map_err(|error| format!("writing output: {error}")),
     }
-}
-
-/// The built-in glossary, overridden by the config directory's glossary when there
-/// is one, and then by the file named with `--glossary`.
-fn load_glossary(config: Option<&Path>, named: Option<&Path>) -> Result<Glossary, String> {
-    let mut glossary = Glossary::default();
-    for path in config.filter(|path| path.exists()).into_iter().chain(named) {
-        let text = std::fs::read_to_string(path)
-            .map_err(|error| format!("{}: {error}", path.display()))?;
-        let (overrides, warnings) =
-            Glossary::parse(&text).map_err(|error| format!("{}: {error}", path.display()))?;
-        for warning in warnings {
-            eprintln!("plene: warning: {}: {warning}", path.display());
-        }
-        glossary.merge(overrides);
-    }
-    Ok(glossary)
-}
-
-/// `$XDG_CONFIG_HOME/plene/glossary.toml`, or `~/.config/plene/glossary.toml` when
-/// `XDG_CONFIG_HOME` is unset or not absolute, which the XDG spec says to ignore.
-fn config_glossary_path() -> Option<PathBuf> {
-    let config_home = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .filter(|path| path.is_absolute())
-        .or_else(|| std::env::home_dir().map(|home| home.join(".config")))?;
-    Some(config_home.join("plene").join("glossary.toml"))
 }
 
 fn read_source(path: &Path) -> Result<String, String> {
