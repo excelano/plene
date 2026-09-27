@@ -164,7 +164,7 @@ pub struct Span {
 ```
 plene [OPTIONS] <FILE|->
 
-  (default)          interleaved: source line, then its expansion beneath
+  (default)          interleaved: each source line, then its expansion beneath when it differs
   --side-by-side     two columns (for wide terminals)
   --changed-only     only lines that differ, prefixed with line numbers
   --expanded         expanded text only
@@ -174,7 +174,9 @@ plene [OPTIONS] <FILE|->
   --dump-glossary
 ```
 
-- ANSI color via the highlight classes; expanded spans get a distinct style (e.g. underline or background tint) in addition to their class color.
+- Interleaved output marks lines in a two-column gutter: blank for source lines, `» ` for expansion lines, so the two are distinguishable without color and indentation stays aligned.
+- ANSI color via the highlight classes, from the terminal's 16-color palette so it follows the user's theme. Tokens with a glossary role are underlined on both lines, pairing each token with its expansion.
+- A closed reader (`plene file.rs | head`) ends output quietly. Errors print `plene: …` and exit 1; argument errors exit 2.
 - `-` reads stdin.
 - Should work cleanly with `less -R`.
 
