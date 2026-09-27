@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/plene-core", "crates/plene", "crates/plene-gui"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 # The floor is ra_ap_syntax's; raise it when an upgrade of that pin raises theirs.
 rust-version = "1.98"
@@ -13,7 +13,7 @@ homepage = "https://excelano.com/plene/"
 keywords = ["rust", "readability", "syntax", "transcription", "learning"]
 
 [workspace.dependencies]
-plene-core = { path = "crates/plene-core", version = "0.1.0" }
+plene-core = { path = "crates/plene-core", version = "0.2.0" }
 ra_ap_syntax = "=0.0.352"
 
 [profile.dist]

@@ -2616,7 +2616,7 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 
 [[package]]
 name = "plene"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anstream",
  "anstyle",
@@ -2627,7 +2627,7 @@ dependencies = [
 
 [[package]]
 name = "plene-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "insta",
  "ra_ap_syntax",
@@ -2638,7 +2638,7 @@ dependencies = [
 
 [[package]]
 name = "plene-gui"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "clap",
  "eframe",
