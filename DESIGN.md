@@ -89,6 +89,7 @@ Identifiers; std types (`Vec`, `Box`, `str`, `i32`…); keywords not listed belo
 Examples and notes:
 - `&'a T` → `borrowed lifetime a T`; `&'a mut T` → `borrowed lifetime a mutable T`; `&mut self` → `borrowed mutable self`.
 - `move |x| …` → `move closure(x) …`.
+- The range roles cover range patterns as well as range expressions: `1..=9 =>` → `1 through 9 gives`.
 - `'outer: loop` → `label outer: loop`; `break 'outer` → `break label outer`.
 - `T: Clone + 'a` → `T implementing Clone and lifetime a`.
 - `write!(f, "x")?;` → `write!(f, "x") or return early;`, but `foo()?.bar()` keeps its `?`, since `foo() or return early.bar()` doesn't read.

@@ -63,6 +63,10 @@ roles! {
     InferredType => "inferred_type",
     RestPattern => "rest_pattern",
     StructUpdate => "struct_update",
+    Range => "range",
+    RangeFrom => "range_from",
+    RangeFull => "range_full",
+    RangeInclusive => "range_inclusive",
     RetType => "ret_type",
     Try => "try",
     TryChained => "try_chained",
@@ -130,6 +134,7 @@ pub(crate) fn classify(token: &SyntaxToken) -> Option<Role> {
         (UNDERSCORE, INFER_TYPE) => Some(Role::InferredType),
         (DOT2, REST_PAT) => Some(Role::RestPattern),
         (DOT2, RECORD_EXPR_FIELD_LIST) => Some(Role::StructUpdate),
+        (DOT2 | DOT2EQ, RANGE_EXPR | RANGE_PAT) => Some(range_role(token, &parent)),
         (THIN_ARROW, RET_TYPE) => Some(Role::RetType),
         (QUESTION, TRY_EXPR) if is_receiver(&parent) => Some(Role::TryChained),
         (QUESTION, TRY_EXPR) => Some(Role::Try),
@@ -161,6 +166,25 @@ fn is_let_pattern(pattern: &SyntaxNode) -> bool {
     pattern
         .parent()
         .is_some_and(|owner| owner.kind() == LET_STMT)
+}
+
+/// A range reads by which ends it has, found from the positions of its children
+/// around the operator: `a..b` and `..b` go up to, `a..` goes onward, `..` alone
+/// is everything, and `..=` always goes through its end.
+fn range_role(token: &SyntaxToken, range: &SyntaxNode) -> Role {
+    let at = token.text_range();
+    let has_start = range
+        .children()
+        .any(|end| end.text_range().end() <= at.start());
+    let has_end = range
+        .children()
+        .any(|end| end.text_range().start() >= at.end());
+    match (token.kind(), has_start, has_end) {
+        (DOT2EQ, _, _) => Role::RangeInclusive,
+        (_, true, false) => Role::RangeFrom,
+        (_, false, false) => Role::RangeFull,
+        _ => Role::Range,
+    }
 }
 
 fn is_closure_params(param_list: &SyntaxNode) -> bool {

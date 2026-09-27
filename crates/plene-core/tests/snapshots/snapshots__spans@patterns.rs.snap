@@ -11,7 +11,7 @@ input_file: crates/plene-core/tests/fixtures/patterns.rs
   6 | match:Keyword value:Identifier {:Punctuation
   7 | Some:Identifier (:Punctuation 0:Number ):Punctuation |:Operator/pattern_or None:Identifier =>:Operator/match_arm 0:Number ,:Punctuation
   8 | |:Operator/pattern_or Some:Identifier (:Punctuation 1:Number ):Punctuation |:Operator/pattern_or Some:Identifier (:Punctuation 2:Number ):Punctuation =>:Operator/match_arm 1:Number ,:Punctuation
-  9 | Some:Identifier (:Punctuation n:Identifier @:Operator/pattern_binding 3:Number ..=:Operator 9:Number ):Punctuation =>:Operator/match_arm n:Identifier ,:Punctuation
+  9 | Some:Identifier (:Punctuation n:Identifier @:Operator/pattern_binding 3:Number ..=:Operator/range_inclusive 9:Number ):Punctuation =>:Operator/match_arm n:Identifier ,:Punctuation
  10 | Some:Identifier (:Punctuation _:Keyword/wildcard ):Punctuation =>:Operator/match_arm 2:Number ,:Punctuation
  11 | }:Punctuation
  12 | let:Keyword Point:Identifier {:Punctuation x:Identifier ,:Punctuation ..:Operator/rest_pattern }:Punctuation =:Operator point:Identifier ;:Punctuation

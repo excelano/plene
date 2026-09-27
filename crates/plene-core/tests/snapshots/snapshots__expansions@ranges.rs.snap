@@ -1,0 +1,34 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/ranges.rs
+---
+  1 | fn ranges(v: &[u8], n: usize) -> u8 {
+    | function ranges(v: borrowed [u8], n: usize) returns u8 {
+  2 |     for i in 0..n {}
+    |     for i in 0 up to n {}
+  3 |     for i in 1..=n {}
+    |     for i in 1 through n {}
+  4 |     let tail = &v[1..];
+    |     let tail = borrow v[1 onward];
+  5 |     let head = &v[..n];
+    |     let head = borrow v[up to n];
+  6 |     let through = &v[..=n];
+    |     let through = borrow v[through n];
+  7 |     let all = &v[..];
+    |     let all = borrow v[all];
+  8 |     let count = (2..n).len();
+    |     let count = (2 up to n).len();
+  9 |     match n {
+ 10 |         0 => 0,
+    |         0 gives 0,
+ 11 |         1..=9 => 1,
+    |         1 through 9 gives 1,
+ 12 |         10..20 => 2,
+    |         10 up to 20 gives 2,
+ 13 |         100.. => 3,
+    |         100 onward gives 3,
+ 14 |         _ => 4,
+    |         anything gives 4,
+ 15 |     }
+ 16 | }

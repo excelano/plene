@@ -18,7 +18,7 @@ input_file: crates/plene-core/tests/fixtures/patterns.rs
   8 |         | Some(1) | Some(2) => 1,
     |         or Some(1) or Some(2) gives 1,
   9 |         Some(n @ 3..=9) => n,
-    |         Some(n bound as 3..=9) gives n,
+    |         Some(n bound as 3 through 9) gives n,
  10 |         Some(_) => 2,
     |         Some(anything) gives 2,
  11 |     }

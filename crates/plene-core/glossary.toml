@@ -213,6 +213,30 @@ text = "rest from"
 note = "Takes every field not already listed from another value of the same struct type."
 
 [[expand]]
+token = ".."
+role = "range"
+text = "up to"
+note = "A range that stops before its end: 0..n counts 0 through n - 1."
+
+[[expand]]
+token = ".."
+role = "range_from"
+text = "onward"
+note = "A range with a start and no end: everything from the start on."
+
+[[expand]]
+token = ".."
+role = "range_full"
+text = "all"
+note = "The full range, with neither start nor end: every element."
+
+[[expand]]
+token = "..="
+role = "range_inclusive"
+text = "through"
+note = "A range that includes its end: 1..=n counts 1 through n."
+
+[[expand]]
 token = "->"
 role = "ret_type"
 text = "returns"

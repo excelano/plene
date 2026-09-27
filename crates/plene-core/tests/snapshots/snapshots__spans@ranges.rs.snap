@@ -1,0 +1,21 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_spans(&source)
+input_file: crates/plene-core/tests/fixtures/ranges.rs
+---
+  1 | fn:Keyword/keyword ranges:Function (:Punctuation v:Identifier ::Punctuation &:Operator/ref_type [:Punctuation u8:Type ]:Punctuation ,:Punctuation n:Identifier ::Punctuation usize:Type ):Punctuation ->:Operator/ret_type u8:Type {:Punctuation
+  2 | for:Keyword i:Identifier in:Keyword 0:Number ..:Operator/range n:Identifier {:Punctuation }:Punctuation
+  3 | for:Keyword i:Identifier in:Keyword 1:Number ..=:Operator/range_inclusive n:Identifier {:Punctuation }:Punctuation
+  4 | let:Keyword tail:Identifier =:Operator &:Operator/ref_expr v:Identifier [:Punctuation 1:Number ..:Operator/range_from ]:Punctuation ;:Punctuation
+  5 | let:Keyword head:Identifier =:Operator &:Operator/ref_expr v:Identifier [:Punctuation ..:Operator/range n:Identifier ]:Punctuation ;:Punctuation
+  6 | let:Keyword through:Identifier =:Operator &:Operator/ref_expr v:Identifier [:Punctuation ..=:Operator/range_inclusive n:Identifier ]:Punctuation ;:Punctuation
+  7 | let:Keyword all:Identifier =:Operator &:Operator/ref_expr v:Identifier [:Punctuation ..:Operator/range_full ]:Punctuation ;:Punctuation
+  8 | let:Keyword count:Identifier =:Operator (:Punctuation 2:Number ..:Operator/range n:Identifier ):Punctuation .:Punctuation len:Function (:Punctuation ):Punctuation ;:Punctuation
+  9 | match:Keyword n:Identifier {:Punctuation
+ 10 | 0:Number =>:Operator/match_arm 0:Number ,:Punctuation
+ 11 | 1:Number ..=:Operator/range_inclusive 9:Number =>:Operator/match_arm 1:Number ,:Punctuation
+ 12 | 10:Number ..:Operator/range 20:Number =>:Operator/match_arm 2:Number ,:Punctuation
+ 13 | 100:Number ..:Operator/range_from =>:Operator/match_arm 3:Number ,:Punctuation
+ 14 | _:Keyword/wildcard =>:Operator/match_arm 4:Number ,:Punctuation
+ 15 | }:Punctuation
+ 16 | }:Punctuation

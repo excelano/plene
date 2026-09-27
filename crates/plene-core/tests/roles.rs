@@ -187,3 +187,28 @@ fn dot_dot_reads_by_where_it_stands() {
         .collect();
     assert_eq!(dots, [Role::RestPattern, Role::StructUpdate]);
 }
+
+#[test]
+fn ranges_read_by_their_ends() {
+    for (source, expected) in [
+        ("fn f() { a..b; }", Role::Range),
+        ("fn f() { ..b; }", Role::Range),
+        ("fn f() { a..; }", Role::RangeFrom),
+        ("fn f() { v[..]; }", Role::RangeFull),
+        ("fn f() { a..=b; }", Role::RangeInclusive),
+        ("fn f() { ..=b; }", Role::RangeInclusive),
+        (
+            "fn f() { match n { 1..=9 => 0, _ => 1 } }",
+            Role::RangeInclusive,
+        ),
+        ("fn f() { match n { 10..20 => 0, _ => 1 } }", Role::Range),
+        ("fn f() { match n { 100.. => 0, _ => 1 } }", Role::RangeFrom),
+    ] {
+        let roles = roles_in(source);
+        let range = roles
+            .iter()
+            .find(|(text, _)| text.starts_with(".."))
+            .unwrap();
+        assert_eq!(range.1, expected, "in {source:?}");
+    }
+}
