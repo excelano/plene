@@ -63,6 +63,18 @@ fn color_is_off_for_pipes_and_never_but_on_for_always() {
 }
 
 #[test]
+fn theme_picks_the_expansion_band() {
+    let dark = stdout(&plene(&["--color", "always", "-"], SOURCE));
+    let light = stdout(&plene(
+        &["--color", "always", "--theme", "light", "-"],
+        SOURCE,
+    ));
+    assert!(dark.contains("\x1b[48;5;236m"), "{dark:?}");
+    assert!(light.contains("\x1b[48;5;254m"), "{light:?}");
+    assert!(!light.contains("\x1b[48;5;236m"), "{light:?}");
+}
+
+#[test]
 fn edition_changes_keyword_lexing() {
     let keyword_async = "\x1b[35masync";
     let in_2015 = stdout(&plene(

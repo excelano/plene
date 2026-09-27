@@ -169,12 +169,13 @@ plene [OPTIONS] <FILE|->
   --changed-only     only lines that differ, prefixed with line numbers
   --expanded         expanded text only
   --color <auto|always|never>
+  --theme <dark|light>              (default dark)
   --edition <2015|2018|2021|2024>   (default 2021)
   --glossary <PATH>
   --dump-glossary
 ```
 
-- Interleaved output marks lines in a two-column gutter: blank for source lines, `» ` for expansion lines, so the two are distinguishable without color and indentation stays aligned.
+- Interleaved output marks lines in a two-column gutter: blank for source lines, `» ` for expansion lines, so the two are distinguishable without color and indentation stays aligned. With color, expansion lines also sit on a subtle background band, padded with spaces to the widest expansion line so the bands form an even block. Padding uses spaces rather than an erase-to-end-of-line escape, which `less -R` would print literally. `--theme <dark|light>` (default dark) picks the band for the terminal's background.
 - ANSI color via the highlight classes, from the terminal's 16-color palette so it follows the user's theme. Tokens with a glossary role are underlined on both lines, pairing each token with its expansion.
 - A closed reader (`plene file.rs | head`) ends output quietly. Errors print `plene: …` and exit 1; argument errors exit 2.
 - `-` reads stdin.

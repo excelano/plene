@@ -7,6 +7,7 @@ use std::process::ExitCode;
 use anstream::{AutoStream, ColorChoice};
 use clap::{Parser, ValueEnum};
 use plene_core::{Edition, Glossary, transcribe};
+use render::{Styling, Theme};
 
 /// Shows Rust source alongside an expanded transcription: the same code with
 /// abbreviations and symbols written out in words.
@@ -21,6 +22,9 @@ struct Args {
     /// Rust edition to parse with.
     #[arg(long, value_enum, default_value_t = EditionArg::E2021)]
     edition: EditionArg,
+    /// Terminal background the colors are chosen for.
+    #[arg(long, value_enum, default_value_t = Theme::Dark)]
+    theme: Theme,
     /// Glossary file whose entries override the built-in glossary.
     #[arg(long, value_name = "PATH")]
     glossary: Option<PathBuf>,
@@ -80,9 +84,12 @@ fn run(args: &Args) -> Result<(), String> {
     let glossary = load_glossary(args.glossary.as_deref())?;
     let source = read_source(&args.file)?;
     let lines = transcribe(&source, args.edition.into(), &glossary);
-    let output = render::interleaved(&lines);
-
     let mut stdout = AutoStream::new(io::stdout().lock(), args.color.into());
+    let styling = match stdout.current_choice() {
+        ColorChoice::Never => Styling::Plain,
+        _ => Styling::Colored(args.theme),
+    };
+    let output = render::interleaved(&lines, styling);
     match stdout
         .write_all(output.as_bytes())
         .and_then(|()| stdout.flush())
