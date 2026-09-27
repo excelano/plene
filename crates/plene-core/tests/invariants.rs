@@ -1,3 +1,6 @@
+//! Author: David M. Anderson
+//! Built with AI assistance (Claude, Anthropic)
+
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;

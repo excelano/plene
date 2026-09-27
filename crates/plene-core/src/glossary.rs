@@ -1,4 +1,7 @@
 //! The glossary: the expansion text and hover note for each token in each role.
+//!
+//! Author: David M. Anderson
+//! Built with AI assistance (Claude, Anthropic)
 
 use std::collections::BTreeMap;
 use std::fmt;

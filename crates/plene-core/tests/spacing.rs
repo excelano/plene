@@ -1,3 +1,6 @@
+//! Author: David M. Anderson
+//! Built with AI assistance (Claude, Anthropic)
+
 use plene_core::{Edition, Glossary, HighlightClass, transcribe};
 
 /// The rendered text of the single line inside `fn f() { … }` wrapping `body`.

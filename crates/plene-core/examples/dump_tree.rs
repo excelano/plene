@@ -1,6 +1,9 @@
 //! Prints the ra_ap_syntax tree for a Rust file, for working out token roles.
 //!
 //! cargo run -p plene-core --example dump_tree -- <FILE>
+//!
+//! Author: David M. Anderson
+//! Built with AI assistance (Claude, Anthropic)
 
 use ra_ap_syntax::{Edition, SourceFile};
 

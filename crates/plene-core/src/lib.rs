@@ -1,4 +1,7 @@
 //! Parses Rust source and produces its expanded transcription as per-line spans.
+//!
+//! Author: David M. Anderson
+//! Built with AI assistance (Claude, Anthropic)
 
 #![forbid(unsafe_code)]
 

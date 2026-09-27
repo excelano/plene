@@ -1,5 +1,8 @@
 //! Syntactic roles: what a token does where it appears. The glossary keys expansions
 //! by token and role.
+//!
+//! Author: David M. Anderson
+//! Built with AI assistance (Claude, Anthropic)
 
 use std::fmt;
 use std::str::FromStr;

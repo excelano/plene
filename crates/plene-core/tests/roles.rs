@@ -1,3 +1,6 @@
+//! Author: David M. Anderson
+//! Built with AI assistance (Claude, Anthropic)
+
 use std::collections::BTreeSet;
 
 use plene_core::{Edition, Glossary, Role, transcribe};

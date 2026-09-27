@@ -1,3 +1,6 @@
+//! Author: David M. Anderson
+//! Built with AI assistance (Claude, Anthropic)
+
 use plene_core::{Glossary, Role};
 
 const BUILTIN: &str = include_str!("../glossary.toml");

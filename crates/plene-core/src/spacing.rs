@@ -1,4 +1,7 @@
 //! Spaces inserted so that an expansion reads as a separate word.
+//!
+//! Author: David M. Anderson
+//! Built with AI assistance (Claude, Anthropic)
 
 use crate::{HighlightClass, Span};
 

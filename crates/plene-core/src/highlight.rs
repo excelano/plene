@@ -1,4 +1,7 @@
 //! Highlight classes, derived from the same token kinds and parent nodes that drive expansion.
+//!
+//! Author: David M. Anderson
+//! Built with AI assistance (Claude, Anthropic)
 
 use ra_ap_syntax::SyntaxKind::{self, *};
 use ra_ap_syntax::{Edition, SyntaxNode, SyntaxToken};
