@@ -4,10 +4,10 @@ expression: render_spans(&source)
 input_file: crates/plene-core/tests/fixtures/patterns.rs
 ---
   1 | fn:Keyword/keyword classify:Function (:Punctuation value:Identifier ::Punctuation Option:Type <:Punctuation u8:Type >:Punctuation ,:Punctuation point:Identifier ::Punctuation Point:Type ,:Punctuation items:Identifier ::Punctuation &:Operator/ref_type [:Punctuation u8:Type ]:Punctuation ):Punctuation ->:Operator/ret_type u8:Type {:Punctuation
-  2 | let:Keyword _:Keyword/let_discard =:Operator cleanup:Function (:Punctuation ):Punctuation ;:Punctuation
+  2 | let:Keyword _:Keyword/discard =:Operator cleanup:Function (:Punctuation ):Punctuation ;:Punctuation
   3 | let:Keyword (:Punctuation first:Identifier ,:Punctuation _:Keyword/wildcard ):Punctuation =:Operator pair:Function (:Punctuation ):Punctuation ;:Punctuation
   4 | let:Keyword numbers:Identifier ::Punctuation Vec:Type <:Punctuation _:Keyword/inferred_type >:Punctuation =:Operator items:Identifier .:Punctuation iter:Function (:Punctuation ):Punctuation .:Punctuation collect:Function (:Punctuation ):Punctuation ;:Punctuation
-  5 | _:Keyword =:Operator flush:Function (:Punctuation ):Punctuation ;:Punctuation
+  5 | _:Keyword/discard =:Operator flush:Function (:Punctuation ):Punctuation ;:Punctuation
   6 | match:Keyword value:Identifier {:Punctuation
   7 | Some:Identifier (:Punctuation 0:Number ):Punctuation |:Operator/pattern_or None:Identifier =>:Operator/match_arm 0:Number ,:Punctuation
   8 | |:Operator/pattern_or Some:Identifier (:Punctuation 1:Number ):Punctuation |:Operator/pattern_or Some:Identifier (:Punctuation 2:Number ):Punctuation =>:Operator/match_arm 1:Number ,:Punctuation

@@ -12,6 +12,7 @@ input_file: crates/plene-core/tests/fixtures/patterns.rs
   4 |     let numbers: Vec<_> = items.iter().collect();
     |     let numbers: Vec<inferred> = items.iter().collect();
   5 |     _ = flush();
+    |     discard = flush();
   6 |     match value {
   7 |         Some(0) | None => 0,
     |         Some(0) or None gives 0,

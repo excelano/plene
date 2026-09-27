@@ -35,6 +35,9 @@ fn spaces_separate_words() {
         ("&-x;", "borrow -x;"),
         ("x=&y;", "x= borrow y;"),
         ("let c = &|x| x;", "let c = borrow closure(x) x;"),
+        ("!(a > b);", "not (a > b);"),
+        ("&(a);", "borrow (a);"),
+        ("x[a..(b)];", "x[a up to (b)];"),
     ] {
         assert_eq!(render_body(body), expected, "for {body:?}");
     }
@@ -47,7 +50,6 @@ fn hugging_punctuation_takes_no_space() {
         ("[&x];", "[borrow x];"),
         ("{&x};", "{borrow x};"),
         ("g(x?, y);", "g(x or return early, y);"),
-        ("&(a);", "borrow(a);"),
         ("g()?.h();", "g()?.h();"),
     ] {
         assert_eq!(render_body(body), expected, "for {body:?}");
@@ -65,6 +67,11 @@ fn spaces_in_signatures() {
         ),
         ("fn f(x: fn(u8)) {}", "function f(x: function(u8)) {}"),
         ("fn f(&self) {}", "function f(borrowed self) {}"),
+        ("impl<T> S<T> {}", "implement<T> S<T> {}"),
+        (
+            "fn f() -> <T as Tr>::X {}",
+            "function f() returns <T as Tr>::X {}",
+        ),
     ] {
         assert_eq!(render(source), expected, "for {source:?}");
     }

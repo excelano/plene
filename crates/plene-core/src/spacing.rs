@@ -7,9 +7,13 @@ use crate::{HighlightClass, Span};
 
 /// Characters that attach to a following word without a space, as in `(borrow x)`.
 const HUGS_BEFORE: &str = "([{<";
-/// Characters that attach to a preceding word without a space, as in `lifetime a,`
-/// and `public(crate)`.
-const HUGS_AFTER: &str = ")]}>,;:.(";
+/// Characters that attach to a preceding word without a space, as in `lifetime a,`.
+const HUGS_AFTER: &str = ")]}>,;:.";
+/// Characters that attach after an expanded keyword as they do in the source, as in
+/// `public(crate)`, `function(u8)` and `implement<T>`. After any other expansion
+/// they start an expression or a qualified path, so they take a space:
+/// `not (a > b)`, `returns <T as Trait>::Output`.
+const HUGS_AFTER_KEYWORD: &str = "(<";
 
 /// Inserts a space span wherever an expansion's word edge touches a character that is
 /// neither whitespace nor punctuation that hugs the word from that side.
@@ -43,7 +47,8 @@ fn needs_space(left: &Span, right: &Span) -> bool {
     let word_ends_left = is_expanded(left)
         && is_word(left_edge)
         && !right_edge.is_whitespace()
-        && !HUGS_AFTER.contains(right_edge);
+        && !HUGS_AFTER.contains(right_edge)
+        && !(left.class == HighlightClass::Keyword && HUGS_AFTER_KEYWORD.contains(right_edge));
     let word_starts_right = is_expanded(right)
         && is_word(right_edge)
         && !left_edge.is_whitespace()

@@ -157,13 +157,15 @@ fn shifts_are_operators_but_nested_generics_are_not() {
 #[test]
 fn underscore_reads_by_where_it_stands() {
     for (source, expected) in [
-        ("fn f() { let _ = g(); }", Some(Role::LetDiscard)),
-        ("fn f() { let _: u8 = g(); }", Some(Role::LetDiscard)),
+        ("fn f() { let _ = g(); }", Some(Role::Discard)),
+        ("fn f() { let _: u8 = g(); }", Some(Role::Discard)),
         ("fn f() { let (a, _) = g(); }", Some(Role::Wildcard)),
         ("fn f() { match x { _ => 0 }; }", Some(Role::Wildcard)),
         ("fn f(_: u8) {}", Some(Role::Wildcard)),
         ("fn f() { let v: Vec<_> = g(); }", Some(Role::InferredType)),
-        ("fn f() { _ = g(); }", None),
+        ("fn f() { _ = g(); }", Some(Role::Discard)),
+        ("fn f() { (a, _) = g(); }", Some(Role::Wildcard)),
+        ("fn f() { _ += 1; }", Some(Role::Wildcard)),
         ("use std::fmt::Write as _;", None),
     ] {
         let lines = transcribe(source, Edition::default(), &Glossary::default());

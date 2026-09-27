@@ -80,7 +80,7 @@ Identifiers; std types (`Vec`, `Box`, `str`, `i32`…); keywords not listed belo
 | `\|` | `pattern_or` | pattern alternative | `or` |
 | `@` | `pattern_binding` | | `bound as` |
 | `_` | `wildcard` | wildcard pattern | `anything` |
-| `_` | `let_discard` | `_` as the whole pattern of a `let` | `discard` |
+| `_` | `discard` | `_` as the whole pattern of a `let`, or the whole left side of an assignment | `discard` |
 | `_` | `inferred_type` | `Vec<_>` | `inferred` |
 | `:` | `trait_bound` | generics, `where`, supertraits, when the first bound is a trait | `implementing` |
 | `:` | `lifetime_bound` | `'a: 'b`, `T: 'a`, when the first bound is a lifetime | `outliving` |
@@ -154,7 +154,7 @@ pub struct Span {
 
 - The public API exposes no `ra_ap_syntax` types, so the CLI and GUI don't depend on it.
 - **Highlighting is driven by the same token kinds that drive expansion.** Do not use a separate highlighter such as syntect. An expanded token keeps its original token's highlight class, so `&mut` and `borrow mutable` share a color by construction.
-- **Whitespace:** never alter source whitespace or indentation. Where an expansion's word edge touches a character that is not whitespace, insert a space, unless that character is punctuation that hugs the word from its side: `( [ { <` before it, or `) ] } > , ; : . (` after it. So `foo()?;` → `foo() or return early;`, `&mut` → `borrow mutable`, `&[u8]` → `borrowed [u8]`, and `()->u8` → `() returns u8`, but `(&x)` → `(borrow x)`, `<'a>` → `<lifetime a>`, and `pub(crate)` → `public(crate)`. The cost of `(` hugging is that the rare `&(a, b)` reads `borrow(a, b)`. An inserted space is its own span with an empty `original`, so each expansion's `rendered` is exactly its glossary text.
+- **Whitespace:** never alter source whitespace or indentation. Where an expansion's word edge touches a character that is not whitespace, insert a space, unless that character is punctuation that hugs the word from its side: `( [ { <` before it, or `) ] } > , ; : .` after it. After an expanded keyword, `(` and `<` also attach, as they do in the source. So `foo()?;` → `foo() or return early;`, `&mut` → `borrow mutable`, `&[u8]` → `borrowed [u8]`, `()->u8` → `() returns u8` and `!(a > b)` → `not (a > b)`, but `(&x)` → `(borrow x)`, `<'a>` → `<lifetime a>`, `pub(crate)` → `public(crate)` and `impl<T>` → `implement<T>`. An inserted space is its own span with an empty `original`, so each expansion's `rendered` is exactly its glossary text.
 - **Line correspondence is 1:1.** Every source line produces exactly one rendered line. Tokens that span lines (block comments, multi-line and raw strings) are split into one span per line. Line endings (LF or CRLF) are preserved.
 - **Macros:** v1 leaves the token trees of macro invocations untouched, since they aren't parsed as Rust. Attributes are untouched too. `macro_rules!` bodies are never expanded.
 - **Parse errors:** render everything; tokens inside error nodes are not expanded.

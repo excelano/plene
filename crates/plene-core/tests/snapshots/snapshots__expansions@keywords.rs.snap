@@ -16,7 +16,7 @@ input_file: crates/plene-core/tests/fixtures/keywords.rs
   7 | impl Shape for Square {}
     | implement Shape for Square {}
   8 | impl<T: Clone> Wrapper<T> {}
-    | implement <T implementing Clone> Wrapper<T> {}
+    | implement<T implementing Clone> Wrapper<T> {}
   9 | unsafe impl Send for Square {}
     | unsafe implement Send for Square {}
  10 | 

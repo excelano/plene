@@ -190,7 +190,7 @@ note = "Matches any value and binds nothing."
 
 [[expand]]
 token = "_"
-role = "let_discard"
+role = "discard"
 text = "discard"
 note = "Evaluates the right-hand side and drops the result immediately instead of binding it."
 

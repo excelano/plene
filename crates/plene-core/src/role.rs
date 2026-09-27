@@ -59,7 +59,7 @@ roles! {
     PatternOr => "pattern_or",
     PatternBinding => "pattern_binding",
     Wildcard => "wildcard",
-    LetDiscard => "let_discard",
+    Discard => "discard",
     InferredType => "inferred_type",
     RestPattern => "rest_pattern",
     StructUpdate => "struct_update",
@@ -133,7 +133,9 @@ pub(crate) fn classify(token: &SyntaxToken) -> Option<Role> {
         (FAT_ARROW, MATCH_ARM) => Some(Role::MatchArm),
         (PIPE, OR_PAT) => Some(Role::PatternOr),
         (AT, IDENT_PAT) => Some(Role::PatternBinding),
-        (UNDERSCORE, WILDCARD_PAT) if is_let_pattern(&parent) => Some(Role::LetDiscard),
+        (UNDERSCORE, WILDCARD_PAT) if is_let_pattern(&parent) => Some(Role::Discard),
+        (UNDERSCORE, UNDERSCORE_EXPR) if is_assignment_target(&parent) => Some(Role::Discard),
+        (UNDERSCORE, UNDERSCORE_EXPR) => Some(Role::Wildcard),
         (UNDERSCORE, WILDCARD_PAT) => Some(Role::Wildcard),
         (UNDERSCORE, INFER_TYPE) => Some(Role::InferredType),
         (DOT2, REST_PAT) => Some(Role::RestPattern),
@@ -213,6 +215,17 @@ fn bound_colon_role(colon: &SyntaxToken) -> Option<Role> {
         Role::LifetimeBound
     } else {
         Role::TraitBound
+    })
+}
+
+/// Whether `expr` is the whole left side of an assignment, as in `_ = f();`.
+fn is_assignment_target(expr: &SyntaxNode) -> bool {
+    expr.parent().is_some_and(|assignment| {
+        assignment.kind() == BIN_EXPR
+            && assignment.first_child().as_ref() == Some(expr)
+            && assignment
+                .children_with_tokens()
+                .any(|element| element.kind() == EQ)
     })
 }
 

@@ -21,7 +21,7 @@ input_file: crates/plene-core/tests/fixtures/highlight.rs
  15 | }
  16 | 
  17 | impl<T: Clone> Point<T> {
-    | implement <T implementing Clone> Point<T> {
+    | implement<T implementing Clone> Point<T> {
  18 |     fn read_all(reader: &mut impl Read) -> io::Result<String> {
     |     function read_all(reader: borrowed mutable some Read) returns io::Result<String> {
  19 |         let mut text = String::new();
