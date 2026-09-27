@@ -17,6 +17,7 @@ does.
     cargo run -p plene -- path/to/file.rs                     # --color always | less -R
     cargo run -p plene-gui -- path/to/file.rs
     cargo deb -p plene-gui && packaging/linux/check-libraries.sh   # needs a display
+    packaging/screenshots/render.sh ~/excelano.com/plene/img       # the site's window shots
     cargo test --release -p plene-core -- --ignored           # smoke test over the corpus
     cargo llvm-cov --workspace --summary-only                 # then read the uncovered lines:
     cargo llvm-cov report --workspace --text | grep -E '^\s+[0-9]+\|\s+0\|'

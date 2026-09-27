@@ -1,0 +1,17 @@
+# Renders the window's screenshots for excelano.com/plene/ from plene-gui's own
+# modules. Its own workspace, so the main build, tests and CI never compile it and
+# its GPU renderer stays out of plene's tree. Run through render.sh.
+[package]
+name = "plene-screenshots"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+eframe = "0.36"
+plene-core = { path = "../../crates/plene-core" }
+# plene-gui's app module opens files through rfd.
+rfd = "0.17"
+egui_kittest = { version = "0.36", features = ["wgpu"] }
+
+[workspace]
