@@ -10,3 +10,6 @@ ra_ap_syntax.workspace = true
 # unicode-properties share a Unicode version; unicode-ident 1.0.25 moved to Unicode 18
 # while unicode-properties 0.1.4 is on 17. Lift this cap when unicode-properties catches up.
 unicode-ident = ">=1.0.22, <1.0.25"
+
+[dev-dependencies]
+insta = { version = "1.48", features = ["glob"] }

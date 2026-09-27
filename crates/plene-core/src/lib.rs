@@ -1,8 +1,12 @@
 //! Parses Rust source and produces its expanded transcription as per-line spans.
 
+mod highlight;
+
 use std::ops::Range;
 
 use ra_ap_syntax::SourceFile;
+
+pub use highlight::HighlightClass;
 
 /// The Rust edition to parse with. The edition changes which words lex as keywords.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -32,6 +36,8 @@ pub struct Span {
     pub original: String,
     /// The expansion, or the same text as `original`.
     pub rendered: String,
+    /// The original token's class; an expansion keeps it, so both sides share a color.
+    pub class: HighlightClass,
     /// Byte offsets of `original` in the input.
     pub source_range: Range<usize>,
 }
@@ -48,7 +54,8 @@ pub struct Line {
 /// Transcribes `source` into one `Line` per source line, matching `str::lines`:
 /// a trailing line ending does not start an extra empty line.
 pub fn transcribe(source: &str, edition: Edition) -> Vec<Line> {
-    let parse = SourceFile::parse(source, edition.to_ra());
+    let edition = edition.to_ra();
+    let parse = SourceFile::parse(source, edition);
     let mut lines = Vec::new();
     let mut spans = Vec::new();
 
@@ -57,6 +64,7 @@ pub fn transcribe(source: &str, edition: Edition) -> Vec<Line> {
         .descendants_with_tokens()
         .filter_map(|element| element.into_token());
     for token in tokens {
+        let class = highlight::classify(&token, edition);
         let mut offset = usize::from(token.text_range().start());
         for piece in token.text().split_inclusive('\n') {
             let (text, ending) = split_line_ending(piece);
@@ -64,6 +72,7 @@ pub fn transcribe(source: &str, edition: Edition) -> Vec<Line> {
                 spans.push(Span {
                     original: text.to_string(),
                     rendered: text.to_string(),
+                    class,
                     source_range: offset..offset + text.len(),
                 });
             }

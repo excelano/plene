@@ -1,0 +1,17 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_highlights(&source)
+input_file: crates/plene-core/tests/fixtures/multiline_tokens.rs
+---
+  1 | /// Doc comment:Comment
+  2 | /// over two lines.:Comment
+  3 | fn:Keyword f:Function (:Punctuation ):Punctuation {:Punctuation
+  4 | /* block comment:Comment
+  5 |        spanning lines */:Comment
+  6 | let:Keyword s:Identifier =:Operator "string:String
+  7 | over lines":String ;:Punctuation
+  8 | let:Keyword r:Identifier =:Operator r#"raw:String
+  9 | "string"#:String ;:Punctuation
+ 10 | let:Keyword b:Identifier =:Operator b"bytes\:String
+ 11 |         continued":String ;:Punctuation
+ 12 | }:Punctuation
