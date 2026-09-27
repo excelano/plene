@@ -54,6 +54,14 @@ roles! {
     Label => "label",
 }
 
+impl Role {
+    /// Whether the role's expansion carries the token's own name through `{name}`,
+    /// so that one glossary entry covers every lifetime or label.
+    pub fn takes_name(self) -> bool {
+        matches!(self, Role::Lifetime | Role::Label)
+    }
+}
+
 impl fmt::Display for Role {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.as_str())

@@ -1,5 +1,6 @@
 //! Parses Rust source and produces its expanded transcription as per-line spans.
 
+mod glossary;
 mod highlight;
 mod role;
 
@@ -7,6 +8,7 @@ use std::ops::Range;
 
 use ra_ap_syntax::SourceFile;
 
+pub use glossary::{Glossary, GlossaryEntry, GlossaryError};
 pub use highlight::HighlightClass;
 pub use role::{Role, UnknownRole};
 

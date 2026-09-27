@@ -1,0 +1,93 @@
+# plene default glossary. Each entry expands one token in one syntactic role.
+# `{name}` in `text` is replaced with a lifetime or label name, without its `'`.
+# An entry whose `text` equals its `token` keeps the token as written.
+
+[[expand]]
+token = "fn"
+role = "keyword"
+text = "function"
+note = "Declares a function."
+
+[[expand]]
+token = "pub"
+role = "keyword"
+text = "public"
+note = "Makes an item visible outside its module. pub(crate) limits that to the current crate."
+
+[[expand]]
+token = "mut"
+role = "keyword"
+text = "mutable"
+note = "Allows a value, or what a reference points to, to be changed."
+
+[[expand]]
+token = "&"
+role = "ref_expr"
+text = "borrow"
+note = "Takes a shared reference to a value without moving it. &mut takes an exclusive reference that allows changes."
+
+[[expand]]
+token = "&"
+role = "ref_type"
+text = "borrowed"
+note = "A reference to a value owned elsewhere. &mut T allows changes through it."
+
+[[expand]]
+token = "&"
+role = "ref_pattern"
+text = "borrowed"
+note = "Matches a reference and binds the value it points to."
+
+[[expand]]
+token = "&"
+role = "self_param"
+text = "borrowed"
+note = "The method borrows the value it is called on instead of taking ownership of it."
+
+[[expand]]
+token = "->"
+role = "ret_type"
+text = "returns"
+note = "Introduces the type a function or closure returns."
+
+[[expand]]
+token = "?"
+role = "try"
+text = "or return early"
+note = "Unwraps an Ok or Some value. On Err or None, returns from the enclosing function, converting the error with From."
+
+[[expand]]
+token = "?"
+role = "try_chained"
+text = "?"
+note = "Unwraps an Ok or Some value. On Err or None, returns from the enclosing function, converting the error with From."
+
+[[expand]]
+token = "|"
+role = "closure_open"
+text = "closure("
+note = "Starts a closure's parameter list."
+
+[[expand]]
+token = "|"
+role = "closure_close"
+text = ")"
+note = "Ends a closure's parameter list."
+
+[[expand]]
+token = "'a"
+role = "lifetime"
+text = "lifetime {name}"
+note = "A named lifetime: the region of code over which a reference is valid. 'static lasts for the whole program."
+
+[[expand]]
+token = "'_"
+role = "lifetime_anonymous"
+text = "lifetime inferred"
+note = "An anonymous lifetime, left for the compiler to infer."
+
+[[expand]]
+token = "'label"
+role = "label"
+text = "label {name}"
+note = "Names a loop or block so that break and continue can target it."
