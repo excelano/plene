@@ -20,7 +20,8 @@ use render::{Styling, Theme};
 #[command(version)]
 struct Args {
     /// Rust source file, or `-` to read stdin.
-    file: PathBuf,
+    #[arg(required_unless_present = "dump_glossary")]
+    file: Option<PathBuf>,
     /// When to color output.
     #[arg(long, value_enum, default_value_t = ColorArg::Auto)]
     color: ColorArg,
@@ -30,9 +31,13 @@ struct Args {
     /// Terminal background the colors are chosen for.
     #[arg(long, value_enum, default_value_t = Theme::Dark)]
     theme: Theme,
-    /// Glossary file whose entries override the built-in glossary.
+    /// Glossary file whose entries override the built-in glossary and the one in
+    /// the config directory.
     #[arg(long, value_name = "PATH")]
     glossary: Option<PathBuf>,
+    /// Print the glossary in effect, as a glossary file, and exit.
+    #[arg(long, conflicts_with = "file")]
+    dump_glossary: bool,
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -86,15 +91,20 @@ fn main() -> ExitCode {
 }
 
 fn run(args: &Args) -> Result<(), String> {
-    let glossary = load_glossary(args.glossary.as_deref())?;
-    let source = read_source(&args.file)?;
-    let lines = transcribe(&source, args.edition.into(), &glossary);
+    let glossary = load_glossary(config_glossary_path().as_deref(), args.glossary.as_deref())?;
     let mut stdout = AutoStream::new(io::stdout().lock(), args.color.into());
-    let styling = match stdout.current_choice() {
-        ColorChoice::Never => Styling::Plain,
-        _ => Styling::Colored(args.theme),
+    let output = match &args.file {
+        Some(file) => {
+            let source = read_source(file)?;
+            let lines = transcribe(&source, args.edition.into(), &glossary);
+            let styling = match stdout.current_choice() {
+                ColorChoice::Never => Styling::Plain,
+                _ => Styling::Colored(args.theme),
+            };
+            render::interleaved(&lines, styling)
+        }
+        None => glossary.to_toml(),
     };
-    let output = render::interleaved(&lines, styling);
     match stdout
         .write_all(output.as_bytes())
         .and_then(|()| stdout.flush())
@@ -105,9 +115,11 @@ fn run(args: &Args) -> Result<(), String> {
     }
 }
 
-fn load_glossary(path: Option<&Path>) -> Result<Glossary, String> {
+/// The built-in glossary, overridden by the config directory's glossary when there
+/// is one, and then by the file named with `--glossary`.
+fn load_glossary(config: Option<&Path>, named: Option<&Path>) -> Result<Glossary, String> {
     let mut glossary = Glossary::default();
-    if let Some(path) = path {
+    for path in config.filter(|path| path.exists()).into_iter().chain(named) {
         let text = std::fs::read_to_string(path)
             .map_err(|error| format!("{}: {error}", path.display()))?;
         let (overrides, warnings) =
@@ -118,6 +130,16 @@ fn load_glossary(path: Option<&Path>) -> Result<Glossary, String> {
         glossary.merge(overrides);
     }
     Ok(glossary)
+}
+
+/// `$XDG_CONFIG_HOME/plene/glossary.toml`, or `~/.config/plene/glossary.toml` when
+/// `XDG_CONFIG_HOME` is unset or not absolute, which the XDG spec says to ignore.
+fn config_glossary_path() -> Option<PathBuf> {
+    let config_home = std::env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .filter(|path| path.is_absolute())
+        .or_else(|| std::env::home_dir().map(|home| home.join(".config")))?;
+    Some(config_home.join("plene").join("glossary.toml"))
 }
 
 fn read_source(path: &Path) -> Result<String, String> {

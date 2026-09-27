@@ -99,7 +99,7 @@ Examples and notes:
 
 ## Glossary file format
 
-The default glossary lives at `crates/plene-core/glossary.toml` and is embedded via `include_str!`. It sits inside the crate so `cargo publish` packages it. The user may override entries with `~/.config/plene/glossary.toml` or `--glossary <path>`; overrides merge by `(token, role)`.
+The default glossary lives at `crates/plene-core/glossary.toml` and is embedded via `include_str!`. It sits inside the crate so `cargo publish` packages it. Two files may override it, merging by `(token, role)`: the config directory's `plene/glossary.toml`, then the file named with `--glossary`, so the named file wins. The config directory is `$XDG_CONFIG_HOME`, or `~/.config` when that is unset or not an absolute path, on every platform. A missing config file is silent; one that exists and fails to parse is an error, as a bad `--glossary` file is.
 
 ```toml
 [[expand]]
@@ -118,7 +118,7 @@ note = "A named lifetime: how long a reference is valid."
 - Role names are the stable string identifiers in the tables above, defined in `plene-core` and mapped from `ra_ap_syntax` node/token kinds.
 - `{name}` in `text` is replaced with the lifetime or label name without its leading `'`. The `token` field for these roles is a representative form (`'a`, `'label`).
 - `note` is shown as hover text in the GUI (a built-in dictionary).
-- `plene --dump-glossary` prints the effective glossary.
+- `plene --dump-glossary` prints the effective glossary, all layers merged, as a glossary file that reads back to the same entries; it is the starting point for writing overrides.
 - Unknown roles in a user file produce a warning, not an error.
 
 ## Architecture

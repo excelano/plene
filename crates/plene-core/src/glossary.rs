@@ -6,7 +6,7 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::role::Role;
 
@@ -38,19 +38,20 @@ impl fmt::Display for GlossaryError {
 
 impl std::error::Error for GlossaryError {}
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct GlossaryFile {
     #[serde(default)]
     expand: Vec<EntryFile>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct EntryFile {
     token: String,
     role: String,
     text: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     note: Option<String>,
 }
 
@@ -105,6 +106,25 @@ impl Glossary {
             }
             self.entries.insert(key, entry);
         }
+    }
+
+    /// The glossary as a file `parse` reads back to the same entries, ordered by role
+    /// and then token.
+    pub fn to_toml(&self) -> String {
+        let mut entries: Vec<&GlossaryEntry> = self.entries().collect();
+        entries.sort_by(|a, b| (a.role, &a.token).cmp(&(b.role, &b.token)));
+        let file = GlossaryFile {
+            expand: entries
+                .into_iter()
+                .map(|entry| EntryFile {
+                    token: entry.token.clone(),
+                    role: entry.role.to_string(),
+                    text: entry.text.clone(),
+                    note: entry.note.clone(),
+                })
+                .collect(),
+        };
+        toml::to_string(&file).expect("a glossary serializes")
     }
 
     pub fn entries(&self) -> impl Iterator<Item = &GlossaryEntry> {

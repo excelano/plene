@@ -23,7 +23,7 @@ It is for someone who knows some Rust and finds the dense parts slow going. It i
 
 `plene -` reads standard input, and `plene --help` lists the rest. `Cargo.toml` names the Rust toolchain it needs.
 
-The expansions come from a glossary built into plene. A TOML file passed with `--glossary` overrides entries by token and role; `DESIGN.md` describes the glossary and why it reads the way it does.
+The expansions come from a glossary built into plene. Entries can be overridden by token and role in `~/.config/plene/glossary.toml` or in a file passed with `--glossary`; `plene --dump-glossary` prints the glossary in effect as a starting point. `DESIGN.md` describes the glossary and why it reads the way it does.
 
 ## The name
 

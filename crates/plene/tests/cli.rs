@@ -1,13 +1,26 @@
 //! Author: David M. Anderson
 //! Built with AI assistance (Claude, Anthropic)
 
-use std::io::Write;
+use std::io::{ErrorKind, Write};
 use std::path::PathBuf;
 use std::process::{Command, Output, Stdio};
 
+/// Runs plene with its config directory pointed at one that never exists, so a
+/// glossary on the machine running the tests cannot change what they see.
 fn plene(args: &[&str], stdin: &str) -> Output {
+    let config_home = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("no-config");
+    plene_in(
+        args,
+        stdin,
+        &[("XDG_CONFIG_HOME", config_home.to_str().unwrap())],
+    )
+}
+
+fn plene_in(args: &[&str], stdin: &str, env: &[(&str, &str)]) -> Output {
     let mut child = Command::new(env!("CARGO_BIN_EXE_plene"))
         .args(args)
+        .env_remove("XDG_CONFIG_HOME")
+        .envs(env.iter().copied())
         .env_remove("NO_COLOR")
         .env_remove("CLICOLOR_FORCE")
         .stdin(Stdio::piped())
@@ -15,12 +28,11 @@ fn plene(args: &[&str], stdin: &str) -> Output {
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    child
-        .stdin
-        .take()
-        .unwrap()
-        .write_all(stdin.as_bytes())
-        .unwrap();
+    // plene can exit before reading its input, as it does on a bad glossary, and
+    // then the write meets a closed pipe.
+    if let Err(error) = child.stdin.take().unwrap().write_all(stdin.as_bytes()) {
+        assert_eq!(error.kind(), ErrorKind::BrokenPipe, "{error}");
+    }
     child.wait_with_output().unwrap()
 }
 
@@ -35,8 +47,21 @@ fn stderr(output: &Output) -> String {
 /// Writes `contents` to a file under cargo's per-target temporary directory.
 fn temp_file(name: &str, contents: &str) -> PathBuf {
     let path = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(name);
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
     std::fs::write(&path, contents).unwrap();
     path
+}
+
+/// A fresh, empty directory under cargo's per-target temporary directory.
+fn temp_dir(name: &str) -> PathBuf {
+    let path = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(name);
+    let _ = std::fs::remove_dir_all(&path);
+    std::fs::create_dir_all(&path).unwrap();
+    path
+}
+
+fn fn_entry(text: &str) -> String {
+    format!("[[expand]]\ntoken = \"fn\"\nrole = \"keyword\"\ntext = \"{text}\"\n")
 }
 
 const SOURCE: &str = "fn f(x: &u8) {\n    g(x)?;\n}\n";
@@ -196,4 +221,101 @@ fn closed_reader_is_not_an_error() {
     let output = child.wait_with_output().unwrap();
     assert!(output.status.success(), "{}", stderr(&output));
     assert!(output.stderr.is_empty(), "{}", stderr(&output));
+}
+
+#[test]
+fn config_glossary_applies_and_the_named_glossary_wins_over_it() {
+    let config_home = temp_dir("layered-config");
+    temp_file("layered-config/plene/glossary.toml", &fn_entry("config-fn"));
+    let env = [("XDG_CONFIG_HOME", config_home.to_str().unwrap())];
+
+    let from_config = plene_in(&["-"], "fn f() {}", &env);
+    assert_eq!(stdout(&from_config), "  fn f() {}\n» config-fn f() {}\n");
+
+    let named = temp_file("named.toml", &fn_entry("named-fn"));
+    let both = plene_in(
+        &["--glossary", named.to_str().unwrap(), "-"],
+        "fn f() {}",
+        &env,
+    );
+    assert_eq!(stdout(&both), "  fn f() {}\n» named-fn f() {}\n");
+}
+
+#[test]
+fn config_falls_back_to_home_when_xdg_config_home_is_unset_or_relative() {
+    let home = temp_dir("home");
+    temp_file("home/.config/plene/glossary.toml", &fn_entry("home-fn"));
+    let home = home.to_str().unwrap();
+    for env in [
+        vec![("HOME", home)],
+        vec![("HOME", home), ("XDG_CONFIG_HOME", "relative/dir")],
+    ] {
+        let output = plene_in(&["-"], "fn f() {}", &env);
+        assert_eq!(
+            stdout(&output),
+            "  fn f() {}\n» home-fn f() {}\n",
+            "{env:?}"
+        );
+    }
+}
+
+#[test]
+fn missing_config_is_silent() {
+    let output = plene(&["-"], SOURCE);
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty(), "{}", stderr(&output));
+}
+
+#[test]
+fn invalid_config_is_an_error_naming_it() {
+    let config_home = temp_dir("invalid-config");
+    let path = temp_file("invalid-config/plene/glossary.toml", "[[expand]\n");
+    let output = plene_in(
+        &["-"],
+        SOURCE,
+        &[("XDG_CONFIG_HOME", config_home.to_str().unwrap())],
+    );
+    assert_eq!(output.status.code(), Some(1));
+    let expected = format!("plene: {}: invalid glossary: ", path.display());
+    assert!(
+        stderr(&output).starts_with(&expected),
+        "{}",
+        stderr(&output)
+    );
+}
+
+#[test]
+fn dump_glossary_prints_a_glossary_that_reads_back() {
+    let output = plene(&["--dump-glossary"], "");
+    assert!(output.status.success(), "{}", stderr(&output));
+    let (dumped, warnings) = plene_core::Glossary::parse(&stdout(&output)).unwrap();
+    assert!(warnings.is_empty(), "{warnings:?}");
+    let builtin = plene_core::Glossary::default();
+    assert_eq!(
+        dumped.entries().collect::<Vec<_>>(),
+        builtin.entries().collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn dump_glossary_includes_overrides() {
+    let named = temp_file("dump-override.toml", &fn_entry("func"));
+    let output = plene(
+        &["--dump-glossary", "--glossary", named.to_str().unwrap()],
+        "",
+    );
+    assert!(
+        stdout(&output).contains("text = \"func\""),
+        "{}",
+        stdout(&output)
+    );
+}
+
+#[test]
+fn dump_glossary_takes_no_file_and_a_file_is_otherwise_required() {
+    assert_eq!(
+        plene(&["--dump-glossary", "x.rs"], "").status.code(),
+        Some(2)
+    );
+    assert_eq!(plene(&[], "").status.code(), Some(2));
 }

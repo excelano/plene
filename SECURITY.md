@@ -12,7 +12,7 @@ The latest release receives security fixes. Older releases are not supported. A 
 
 ## What plene can access
 
-plene reads the Rust source it is given, from a file or from standard input, and a glossary file when one is named with `--glossary`. It parses that source and writes a transcription to standard output. It does not compile, expand or run the code it reads, and it opens no other files.
+plene reads the Rust source it is given, from a file or from standard input, and up to two glossary files: `plene/glossary.toml` in the config directory (`$XDG_CONFIG_HOME`, or `~/.config`) when it exists, and the file named with `--glossary`. It parses that source and writes a transcription to standard output. It does not compile, expand or run the code it reads, and it opens no other files.
 
 The source is untrusted as far as the terminal is concerned. Control characters other than tab, which could move the cursor or restyle the screen, and the Unicode bidirectional controls, which could show code in a different order from the order it compiles in, are written as Rust escapes such as `\u{1b}` and `\u{202e}` rather than passed to the terminal.
 

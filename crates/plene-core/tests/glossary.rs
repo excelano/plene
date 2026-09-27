@@ -198,3 +198,34 @@ fn merge_replaces_text_and_keeps_notes_unless_given() {
         1
     );
 }
+
+#[test]
+fn to_toml_reads_back_to_the_same_entries() {
+    let mut glossary = Glossary::default();
+    let (overrides, _) =
+        parse("[[expand]]\ntoken = \"fn\"\nrole = \"keyword\"\ntext = \"func \\\"quoted\\\"\"\n");
+    glossary.merge(overrides);
+    let (read_back, warnings) = parse(&glossary.to_toml());
+    assert!(warnings.is_empty(), "{warnings:?}");
+    let original: Vec<_> = glossary.entries().collect();
+    let round_tripped: Vec<_> = read_back.entries().collect();
+    assert_eq!(original, round_tripped);
+    assert_eq!(
+        read_back.expand("fn", Role::Keyword).as_deref(),
+        Some("func \"quoted\"")
+    );
+}
+
+#[test]
+fn to_toml_omits_missing_notes_and_orders_by_role() {
+    let (glossary, _) = parse(
+        "[[expand]]\ntoken = \"->\"\nrole = \"ret_type\"\ntext = \"returns\"\n\n\
+         [[expand]]\ntoken = \"fn\"\nrole = \"keyword\"\ntext = \"function\"\n",
+    );
+    let toml = glossary.to_toml();
+    assert!(!toml.contains("note"), "{toml}");
+    assert!(
+        toml.find("\"fn\"").unwrap() < toml.find("\"->\"").unwrap(),
+        "{toml}"
+    );
+}
