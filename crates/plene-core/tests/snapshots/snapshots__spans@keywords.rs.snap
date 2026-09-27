@@ -1,0 +1,30 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_spans(&source)
+input_file: crates/plene-core/tests/fixtures/keywords.rs
+---
+  1 | mod:Keyword/keyword parser:Identifier ;:Punctuation
+  2 | extern:Keyword/keyword crate:Keyword alloc:Identifier ;:Punctuation
+  3 |
+  4 | pub:Keyword/keyword trait:Keyword Shape:Type {:Punctuation }:Punctuation
+  5 | pub:Keyword/keyword struct:Keyword Square:Type ;:Punctuation
+  6 |
+  7 | impl:Keyword/impl_block Shape:Type for:Keyword Square:Type {:Punctuation }:Punctuation
+  8 | impl:Keyword/impl_block <:Punctuation T:Type ::Punctuation Clone:Type >:Punctuation Wrapper:Type <:Punctuation T:Type >:Punctuation {:Punctuation }:Punctuation
+  9 | unsafe:Keyword impl:Keyword/impl_block Send:Type for:Keyword Square:Type {:Punctuation }:Punctuation
+ 10 |
+ 11 | unsafe:Keyword extern:Keyword/keyword "C":String {:Punctuation
+ 12 | fn:Keyword/keyword abs:Function (:Punctuation x:Identifier ::Punctuation i32:Type ):Punctuation ->:Operator/ret_type i32:Type ;:Punctuation
+ 13 | }:Punctuation
+ 14 |
+ 15 | extern:Keyword/keyword "C":String fn:Keyword/keyword callback:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+ 16 |
+ 17 | type:Keyword Shapes:Type =:Operator impl:Keyword/impl_trait_type Iterator:Type <:Punctuation Item:Identifier =:Operator u8:Type >:Punctuation ;:Punctuation
+ 18 |
+ 19 | fn:Keyword/keyword shapes:Function (:Punctuation items:Identifier ::Punctuation &:Operator/ref_type [:Punctuation Box:Type <:Punctuation dyn:Keyword/keyword Shape:Type >:Punctuation ]:Punctuation ):Punctuation ->:Operator/ret_type impl:Keyword/impl_trait_type Iterator:Type <:Punctuation Item:Identifier =:Operator u8:Type >:Punctuation {:Punctuation
+ 20 | let:Keyword Some:Identifier (:Punctuation ref:Keyword/keyword mut:Keyword/keyword first:Identifier ):Punctuation =:Operator items:Identifier .:Punctuation first:Function (:Punctuation ):Punctuation else:Keyword {:Punctuation return:Keyword std:Identifier :::Punctuation iter:Identifier :::Punctuation empty:Function (:Punctuation ):Punctuation }:Punctuation ;:Punctuation
+ 21 | let:Keyword ref:Keyword/keyword second:Identifier =:Operator items:Identifier [:Punctuation 1:Number ]:Punctuation ;:Punctuation
+ 22 | std:Identifier :::Punctuation iter:Identifier :::Punctuation empty:Function (:Punctuation ):Punctuation
+ 23 | }:Punctuation
+ 24 |
+ 25 | fn:Keyword/keyword show:Function (:Punctuation shape:Identifier ::Punctuation impl:Keyword/impl_trait_type Shape:Type +:Operator Send:Type ,:Punctuation action:Identifier ::Punctuation &:Operator/ref_type dyn:Keyword/keyword Fn:Type (:Punctuation u8:Type ):Punctuation ->:Operator/ret_type u8:Type ):Punctuation {:Punctuation }:Punctuation

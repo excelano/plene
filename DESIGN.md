@@ -203,7 +203,7 @@ plene [OPTIONS] <FILE|->
 ## Milestones
 
 1. **Core + CLI, minimum subset:** `fn`, `pub`, `mut`, `&` (expression, type, self param), `->`, `?`, closures, lifetimes; interleaved output; snapshot tests; the byte-for-byte invariant.
-2. **Full glossary v1:** all roles in the tables, user overrides, `--dump-glossary`, all CLI modes, role coverage test.
+2. **Full glossary v1:** all roles in the tables, user overrides, `--dump-glossary`, all CLI modes, role coverage test; the first release, 0.1.0, through `ship` to crates.io, apt and Homebrew.
 3. **Macro arguments:** parse the arguments of function-like macro invocations as comma-separated expressions (`ra_ap_syntax::hacks::parse_expr_from_str`) when they parse cleanly, and expand them. This covers `println!`, `format!`, `vec!`, `assert_eq!` and similar. Invocations that don't parse cleanly stay untouched.
 4. **GUI:** two-column view, matching highlights, aligned rows.
 5. **GUI polish:** hover dictionary, changed-only toggle, themes, reload on change.

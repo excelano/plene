@@ -43,6 +43,8 @@ macro_rules! roles {
 
 roles! {
     Keyword => "keyword",
+    ImplBlock => "impl_block",
+    ImplTraitType => "impl_trait_type",
     RefExpr => "ref_expr",
     RefType => "ref_type",
     RefPattern => "ref_pattern",
@@ -92,7 +94,9 @@ pub(crate) fn classify(token: &SyntaxToken) -> Option<Role> {
         return None;
     }
     match (token.kind(), parent.kind()) {
-        (FN_KW | PUB_KW | MUT_KW, _) => Some(Role::Keyword),
+        (FN_KW | PUB_KW | MUT_KW | MOD_KW | DYN_KW | REF_KW | EXTERN_KW, _) => Some(Role::Keyword),
+        (IMPL_KW, IMPL) => Some(Role::ImplBlock),
+        (IMPL_KW, IMPL_TRAIT_TYPE) => Some(Role::ImplTraitType),
         (AMP, REF_EXPR) => Some(Role::RefExpr),
         (AMP, REF_TYPE) => Some(Role::RefType),
         (AMP, REF_PAT) => Some(Role::RefPattern),

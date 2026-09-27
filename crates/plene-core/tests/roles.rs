@@ -94,3 +94,33 @@ fn tokens_in_error_nodes_have_no_role() {
         "`&mut` in an error node took roles: {broken:?}"
     );
 }
+
+#[test]
+fn impl_reads_by_where_it_stands() {
+    let roles = roles_in("impl<T> S<T> {}\nfn f(x: impl Tr) -> impl Tr { x }");
+    let impls: Vec<_> = roles
+        .iter()
+        .filter(|(text, _)| text == "impl")
+        .map(|(_, role)| *role)
+        .collect();
+    assert_eq!(
+        impls,
+        [Role::ImplBlock, Role::ImplTraitType, Role::ImplTraitType]
+    );
+}
+
+#[test]
+fn dyn_is_a_keyword_role_in_2015_type_position() {
+    let lines = transcribe(
+        "fn f(x: Box<dyn Tr>) {}",
+        Edition::E2015,
+        &Glossary::default(),
+    );
+    let role = lines[0]
+        .spans
+        .iter()
+        .find(|span| span.original == "dyn")
+        .unwrap()
+        .role;
+    assert_eq!(role, Some(Role::Keyword));
+}

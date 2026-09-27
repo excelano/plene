@@ -21,6 +21,42 @@ text = "mutable"
 note = "Allows a value, or what a reference points to, to be changed."
 
 [[expand]]
+token = "impl"
+role = "impl_block"
+text = "implement"
+note = "Implements methods for a type, or a trait for a type: impl Trait for Type."
+
+[[expand]]
+token = "impl"
+role = "impl_trait_type"
+text = "some"
+note = "Some type that implements the trait, chosen by the caller in argument position and by the function in return position."
+
+[[expand]]
+token = "mod"
+role = "keyword"
+text = "module"
+note = "Declares a module: a named scope for items, inline or in its own file."
+
+[[expand]]
+token = "dyn"
+role = "keyword"
+text = "dynamic"
+note = "A trait object: the concrete type is known only at run time, and calls go through a vtable."
+
+[[expand]]
+token = "ref"
+role = "keyword"
+text = "by reference"
+note = "Binds by reference instead of moving the matched value into the binding."
+
+[[expand]]
+token = "extern"
+role = "keyword"
+text = "external"
+note = "Links to code outside Rust's own conventions: an extern crate, a foreign function block, or an ABI such as extern \"C\"."
+
+[[expand]]
 token = "&"
 role = "ref_expr"
 text = "borrow"

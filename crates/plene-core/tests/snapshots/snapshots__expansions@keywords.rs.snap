@@ -1,0 +1,45 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/keywords.rs
+---
+  1 | mod parser;
+    | module parser;
+  2 | extern crate alloc;
+    | external crate alloc;
+  3 | 
+  4 | pub trait Shape {}
+    | public trait Shape {}
+  5 | pub struct Square;
+    | public struct Square;
+  6 | 
+  7 | impl Shape for Square {}
+    | implement Shape for Square {}
+  8 | impl<T: Clone> Wrapper<T> {}
+    | implement <T: Clone> Wrapper<T> {}
+  9 | unsafe impl Send for Square {}
+    | unsafe implement Send for Square {}
+ 10 | 
+ 11 | unsafe extern "C" {
+    | unsafe external "C" {
+ 12 |     fn abs(x: i32) -> i32;
+    |     function abs(x: i32) returns i32;
+ 13 | }
+ 14 | 
+ 15 | extern "C" fn callback() {}
+    | external "C" function callback() {}
+ 16 | 
+ 17 | type Shapes = impl Iterator<Item = u8>;
+    | type Shapes = some Iterator<Item = u8>;
+ 18 | 
+ 19 | fn shapes(items: &[Box<dyn Shape>]) -> impl Iterator<Item = u8> {
+    | function shapes(items: borrowed [Box<dynamic Shape>]) returns some Iterator<Item = u8> {
+ 20 |     let Some(ref mut first) = items.first() else { return std::iter::empty() };
+    |     let Some(by reference mutable first) = items.first() else { return std::iter::empty() };
+ 21 |     let ref second = items[1];
+    |     let by reference second = items[1];
+ 22 |     std::iter::empty()
+ 23 | }
+ 24 | 
+ 25 | fn show(shape: impl Shape + Send, action: &dyn Fn(u8) -> u8) {}
+    | function show(shape: some Shape + Send, action: borrowed dynamic Fn(u8) returns u8) {}
