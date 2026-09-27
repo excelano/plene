@@ -1,0 +1,12 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/parse_error.rs
+---
+  1 | fn broken(x: &mut {
+    | function broken(x: borrowed mutable {
+  2 |     let y = x?
+    |     let y = x or return early
+  3 |     let z = │;
+  4 |     struct
+  5 | }

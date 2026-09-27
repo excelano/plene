@@ -1,0 +1,12 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/script.rs
+---
+  1 | #!/usr/bin/env cargo
+  2 | ---
+  3 | [dependencies]
+  4 | ---
+  5 | 
+  6 | fn main() {}
+    | function main() {}

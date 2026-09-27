@@ -1,0 +1,35 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/highlight.rs
+---
+  1 | #![allow(dead_code)]
+  2 | 
+  3 | use std::io::{self, Read};
+  4 | 
+  5 | /// A documented struct.
+  6 | #[derive(Debug, Clone)]
+  7 | pub struct Point<T> {
+    | public struct Point<T> {
+  8 |     x: T,
+  9 | }
+ 10 | 
+ 11 | macro_rules! square {
+ 12 |     ($x:expr) => {
+ 13 |         $x * $x
+ 14 |     };
+ 15 | }
+ 16 | 
+ 17 | impl<T: Clone> Point<T> {
+ 18 |     fn read_all(reader: &mut impl Read) -> io::Result<String> {
+    |     function read_all(reader: borrowed mutable impl Read) returns io::Result<String> {
+ 19 |         let mut text = String::new();
+    |         let mutable text = String::new();
+ 20 |         reader.read_to_string(&mut text)?;
+    |         reader.read_to_string(borrow mutable text) or return early;
+ 21 |         let big = 3.5 > 2.0 && 'c' < 'd';
+ 22 |         let raw = square!(4) + Vec::<u8>::with_capacity(1).len();
+ 23 |         println!("{} {big} {raw}", self::VALUE);
+ 24 |         Ok(text)
+ 25 |     }
+ 26 | }

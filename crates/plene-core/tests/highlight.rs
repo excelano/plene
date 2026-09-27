@@ -1,8 +1,8 @@
-use plene_core::{Edition, HighlightClass, transcribe};
+use plene_core::{Edition, Glossary, HighlightClass, transcribe};
 
 /// The class of the first span whose text is `text`.
 fn class_of(source: &str, edition: Edition, text: &str) -> HighlightClass {
-    transcribe(source, edition)
+    transcribe(source, edition, &Glossary::default())
         .into_iter()
         .flat_map(|line| line.spans)
         .find(|span| span.original == text)
@@ -48,7 +48,7 @@ fn dyn_in_type_position_is_a_keyword_in_2015() {
 #[test]
 fn contextual_keywords_are_identifiers_outside_their_context() {
     let source = "union U { a: u8 }\nfn f() { let union = 1; }";
-    let lines = transcribe(source, Edition::default());
+    let lines = transcribe(source, Edition::default(), &Glossary::default());
     let unions: Vec<_> = lines
         .iter()
         .flat_map(|line| &line.spans)

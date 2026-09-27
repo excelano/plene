@@ -1,0 +1,21 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/highlight_kinds.rs
+---
+  1 | //! Inner doc comment.
+  2 | 
+  3 | enum Shape { Circle }
+  4 | union Bits { int: u32 }
+  5 | trait Draw {}
+  6 | type Id = u64;
+  7 | macro m($x:expr) { $x }
+  8 | 
+  9 | fn literals() {
+    | function literals() {
+ 10 |     let raw = b'a';
+ 11 |     let bytes = b"bytes";
+ 12 |     let c = c"c string";
+ 13 |     let _ = raw;
+ 14 |     let default = 1;
+ 15 | }

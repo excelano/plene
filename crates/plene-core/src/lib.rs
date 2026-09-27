@@ -3,6 +3,7 @@
 mod glossary;
 mod highlight;
 mod role;
+mod spacing;
 
 use std::ops::Range;
 
@@ -33,7 +34,8 @@ impl Edition {
     }
 }
 
-/// One piece of a source line: a token, or the part of a multi-line token on this line.
+/// One piece of a source line: a token, the part of a multi-line token on this line, or
+/// a space inserted between words, whose `original` is empty.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Span {
     /// Exact source text. Never contains a line ending.
@@ -59,7 +61,7 @@ pub struct Line {
 
 /// Transcribes `source` into one `Line` per source line, matching `str::lines`:
 /// a trailing line ending does not start an extra empty line.
-pub fn transcribe(source: &str, edition: Edition) -> Vec<Line> {
+pub fn transcribe(source: &str, edition: Edition, glossary: &Glossary) -> Vec<Line> {
     let edition = edition.to_ra();
     let parse = SourceFile::parse(source, edition);
     let mut lines = Vec::new();
@@ -72,13 +74,14 @@ pub fn transcribe(source: &str, edition: Edition) -> Vec<Line> {
     for token in tokens {
         let class = highlight::classify(&token, edition);
         let role = role::classify(&token);
+        let expansion = role.and_then(|role| glossary.expand(token.text(), role));
         let mut offset = usize::from(token.text_range().start());
         for piece in token.text().split_inclusive('\n') {
             let (text, ending) = split_line_ending(piece);
             if !text.is_empty() {
                 spans.push(Span {
                     original: text.to_string(),
-                    rendered: text.to_string(),
+                    rendered: expansion.clone().unwrap_or_else(|| text.to_string()),
                     class,
                     role,
                     source_range: offset..offset + text.len(),
@@ -95,6 +98,9 @@ pub fn transcribe(source: &str, edition: Edition) -> Vec<Line> {
             spans,
             ending: String::new(),
         });
+    }
+    for line in &mut lines {
+        spacing::insert_spaces(&mut line.spans);
     }
     lines
 }

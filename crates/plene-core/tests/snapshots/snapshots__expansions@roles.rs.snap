@@ -1,0 +1,44 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/roles.rs
+---
+  1 | pub fn roles<'a>(&mut self, text: &'a str, items: &[u8]) -> Result<&'static str, Error> {
+    | public function roles<lifetime a>(borrowed mutable self, text: borrowed lifetime a str, items: borrowed [u8]) returns Result<borrowed lifetime static str, Error> {
+  2 |     let mut total = 0;
+    |     let mutable total = 0;
+  3 |     let &first = &items[0];
+    |     let borrowed first = borrow items[0];
+  4 |     let bytes = read(text)?;
+    |     let bytes = read(text) or return early;
+  5 |     let length = parse(text)?.len();
+  6 |     let field = parse(text)?.value;
+  7 |     let entry = lookup(text)?[0];
+  8 |     let joined = fetch(text)?.await;
+  9 |     let add = |x: u8, y: u8| -> u8 { x + y };
+    |     let add = closure(x: u8, y: u8) returns u8 { x + y };
+ 10 |     let noop = || {};
+    |     let noop = closure() {};
+ 11 |     let any: &'_ str = text;
+    |     let any: borrowed lifetime inferred str = text;
+ 12 |     'outer: for item in items {
+    |     label outer: for item in items {
+ 13 |         if *item == 0 {
+ 14 |             continue 'outer;
+    |             continue label outer;
+ 15 |         }
+ 16 |         break 'outer;
+    |         break label outer;
+ 17 |     }
+ 18 |     total
+ 19 | }
+ 20 | 
+ 21 | // Tokens that take no milestone 1 role.
+ 22 | fn unroled<T: ?Sized>(a: u8, b: u8) -> u8 {
+    | function unroled<T: ?Sized>(a: u8, b: u8) returns u8 {
+ 23 |     let masked = a & b;
+ 24 |     println!("{}", &a);
+ 25 |     #[route(&mut state, fn() -> u8)]
+ 26 |     let attributed = masked;
+ 27 |     a | b
+ 28 | }

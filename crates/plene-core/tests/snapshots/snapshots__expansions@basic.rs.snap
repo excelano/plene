@@ -1,0 +1,17 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/basic.rs
+---
+  1 | use std::collections::HashMap;
+  2 | 
+  3 | // A line comment.
+  4 | pub fn count<'a>(words: &[&'a str]) -> HashMap<&'a str, usize> {
+    | public function count<lifetime a>(words: borrowed [borrowed lifetime a str]) returns HashMap<borrowed lifetime a str, usize> {
+  5 |     let mut counts = HashMap::new();
+    |     let mutable counts = HashMap::new();
+  6 |     for word in words {
+  7 |         *counts.entry(*word).or_insert(0) += 1;
+  8 |     }
+  9 |     counts
+ 10 | }

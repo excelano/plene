@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use plene_core::{Edition, Line, transcribe};
+use plene_core::{Edition, Glossary, Line, transcribe};
 
 mod common;
 use common::fixtures;
@@ -21,7 +21,7 @@ fn reassemble(lines: &[Line]) -> String {
 /// Checks byte-for-byte reassembly, 1:1 line correspondence, span ranges, and that
 /// no span carries a line ending.
 fn assert_invariants(source: &str, label: &str) {
-    let lines = transcribe(source, Edition::default());
+    let lines = transcribe(source, Edition::default(), &Glossary::default());
     assert_eq!(
         reassemble(&lines),
         source,
@@ -48,6 +48,10 @@ fn assert_invariants(source: &str, label: &str) {
             assert!(
                 !span.original.contains('\n'),
                 "{label}: span contains a newline"
+            );
+            assert!(
+                !span.rendered.contains('\n'),
+                "{label}: rendering contains a newline"
             );
         }
     }
@@ -85,7 +89,11 @@ fn edge_cases_hold_invariants() {
 
 #[test]
 fn crlf_ending_moves_out_of_line_comment() {
-    let lines = transcribe("// comment\r\nfn f() {}\r\n", Edition::default());
+    let lines = transcribe(
+        "// comment\r\nfn f() {}\r\n",
+        Edition::default(),
+        &Glossary::default(),
+    );
     assert_eq!(lines[0].ending, "\r\n");
     assert_eq!(lines[0].spans.last().unwrap().original, "// comment");
 }

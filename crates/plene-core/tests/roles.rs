@@ -1,12 +1,12 @@
 use std::collections::BTreeSet;
 
-use plene_core::{Edition, Role, transcribe};
+use plene_core::{Edition, Glossary, Role, transcribe};
 
 mod common;
 use common::fixtures;
 
 fn roles_in(source: &str) -> Vec<(String, Role)> {
-    transcribe(source, Edition::default())
+    transcribe(source, Edition::default(), &Glossary::default())
         .into_iter()
         .flat_map(|line| line.spans)
         .filter_map(|span| span.role.map(|role| (span.original, role)))

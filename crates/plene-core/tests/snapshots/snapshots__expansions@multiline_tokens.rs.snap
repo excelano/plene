@@ -1,0 +1,18 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/multiline_tokens.rs
+---
+  1 | /// Doc comment
+  2 | /// over two lines.
+  3 | fn f() {
+    | function f() {
+  4 |     /* block comment
+  5 |        spanning lines */
+  6 |     let s = "string
+  7 | over lines";
+  8 |     let r = r#"raw
+  9 | "string"#;
+ 10 |     let b = b"bytes\
+ 11 |         continued";
+ 12 | }
