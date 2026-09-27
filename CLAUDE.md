@@ -50,9 +50,10 @@ before a commit, because a match arm with several patterns counts as covered whe
 one of them is hit; an uncovered line is either tested or shown to be unreachable. A new
 test is broken deliberately once to watch it fail, and the break is confirmed to have
 applied first: rustfmt reflows lines, so a text substitution can match nothing and leave
-a passing run that proves nothing. Snapshot changes are read before they are accepted:
-in the span snapshots, a non-whitespace token classed `Plain` is a token kind the
-highlighter misses.
+a passing run that proves nothing. A test's Rust source has to parse: a top-level `let`
+is an error node, so nothing in it takes a role and a test about roles passes for the
+wrong reason. Snapshot changes are read before they are accepted: in the span snapshots,
+a non-whitespace token classed `Plain` is a token kind the highlighter misses.
 
 Releases: `ship plene`, which David runs; `ship.conf` names the targets and the order
 the crates publish in. There is no release document.
