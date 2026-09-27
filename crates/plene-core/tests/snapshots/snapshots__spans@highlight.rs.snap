@@ -1,6 +1,6 @@
 ---
 source: crates/plene-core/tests/snapshots.rs
-expression: render_highlights(&source)
+expression: render_spans(&source)
 input_file: crates/plene-core/tests/fixtures/highlight.rs
 ---
   1 | #:Attribute !:Attribute [:Attribute allow:Attribute (:Attribute dead_code:Attribute ):Attribute ]:Attribute
@@ -9,7 +9,7 @@ input_file: crates/plene-core/tests/fixtures/highlight.rs
   4 |
   5 | /// A documented struct.:Comment
   6 | #:Attribute [:Attribute derive:Attribute (:Attribute Debug:Attribute ,:Attribute Clone:Attribute ):Attribute ]:Attribute
-  7 | pub:Keyword struct:Keyword Point:Type <:Punctuation T:Type >:Punctuation {:Punctuation
+  7 | pub:Keyword/keyword struct:Keyword Point:Type <:Punctuation T:Type >:Punctuation {:Punctuation
   8 | x:Identifier ::Punctuation T:Type ,:Punctuation
   9 | }:Punctuation
  10 |
@@ -20,9 +20,9 @@ input_file: crates/plene-core/tests/fixtures/highlight.rs
  15 | }:Punctuation
  16 |
  17 | impl:Keyword <:Punctuation T:Type ::Punctuation Clone:Type >:Punctuation Point:Type <:Punctuation T:Type >:Punctuation {:Punctuation
- 18 | fn:Keyword read_all:Function (:Punctuation reader:Identifier ::Punctuation &:Operator mut:Keyword impl:Keyword Read:Type ):Punctuation ->:Operator io:Identifier :::Punctuation Result:Type <:Punctuation String:Type >:Punctuation {:Punctuation
- 19 | let:Keyword mut:Keyword text:Identifier =:Operator String:Identifier :::Punctuation new:Function (:Punctuation ):Punctuation ;:Punctuation
- 20 | reader:Identifier .:Punctuation read_to_string:Function (:Punctuation &:Operator mut:Keyword text:Identifier ):Punctuation ?:Operator ;:Punctuation
+ 18 | fn:Keyword/keyword read_all:Function (:Punctuation reader:Identifier ::Punctuation &:Operator/ref_type mut:Keyword/keyword impl:Keyword Read:Type ):Punctuation ->:Operator/ret_type io:Identifier :::Punctuation Result:Type <:Punctuation String:Type >:Punctuation {:Punctuation
+ 19 | let:Keyword mut:Keyword/keyword text:Identifier =:Operator String:Identifier :::Punctuation new:Function (:Punctuation ):Punctuation ;:Punctuation
+ 20 | reader:Identifier .:Punctuation read_to_string:Function (:Punctuation &:Operator/ref_expr mut:Keyword/keyword text:Identifier ):Punctuation ?:Operator/try ;:Punctuation
  21 | let:Keyword big:Identifier =:Operator 3.5:Number >:Operator 2.0:Number &&:Operator 'c':String <:Operator 'd':String ;:Punctuation
  22 | let:Keyword raw:Identifier =:Operator square:Macro !:Macro (:Punctuation 4:Number ):Punctuation +:Operator Vec:Identifier :::Punctuation <:Punctuation u8:Type >:Punctuation :::Punctuation with_capacity:Function (:Punctuation 1:Number ):Punctuation .:Punctuation len:Function (:Punctuation ):Punctuation ;:Punctuation
  23 | println:Macro !:Macro (:Punctuation "{} {big} {raw}":String ,:Punctuation self:Keyword ::Punctuation ::Punctuation VALUE:Identifier ):Punctuation ;:Punctuation

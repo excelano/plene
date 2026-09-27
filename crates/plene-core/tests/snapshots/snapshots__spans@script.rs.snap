@@ -1,6 +1,6 @@
 ---
 source: crates/plene-core/tests/snapshots.rs
-expression: render_highlights(&source)
+expression: render_spans(&source)
 input_file: crates/plene-core/tests/fixtures/script.rs
 ---
   1 | #!/usr/bin/env cargo:Comment
@@ -8,4 +8,4 @@ input_file: crates/plene-core/tests/fixtures/script.rs
   3 | [dependencies]:Comment
   4 | ---:Comment
   5 |
-  6 | fn:Keyword main:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+  6 | fn:Keyword/keyword main:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation

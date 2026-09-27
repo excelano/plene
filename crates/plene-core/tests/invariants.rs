@@ -4,6 +4,9 @@ use std::process::Command;
 
 use plene_core::{Edition, Line, transcribe};
 
+mod common;
+use common::fixtures;
+
 fn reassemble(lines: &[Line]) -> String {
     let mut out = String::new();
     for line in lines {
@@ -48,23 +51,6 @@ fn assert_invariants(source: &str, label: &str) {
             );
         }
     }
-}
-
-fn fixtures() -> Vec<(String, String)> {
-    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures");
-    let mut fixtures: Vec<_> = fs::read_dir(dir)
-        .unwrap()
-        .map(|entry| entry.unwrap().path())
-        .filter(|path| path.extension().is_some_and(|ext| ext == "rs"))
-        .map(|path| {
-            (
-                path.display().to_string(),
-                fs::read_to_string(&path).unwrap(),
-            )
-        })
-        .collect();
-    fixtures.sort();
-    fixtures
 }
 
 #[test]

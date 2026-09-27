@@ -1,12 +1,14 @@
 //! Parses Rust source and produces its expanded transcription as per-line spans.
 
 mod highlight;
+mod role;
 
 use std::ops::Range;
 
 use ra_ap_syntax::SourceFile;
 
 pub use highlight::HighlightClass;
+pub use role::{Role, UnknownRole};
 
 /// The Rust edition to parse with. The edition changes which words lex as keywords.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -38,6 +40,8 @@ pub struct Span {
     pub rendered: String,
     /// The original token's class; an expansion keeps it, so both sides share a color.
     pub class: HighlightClass,
+    /// Set when the token has a glossary role.
+    pub role: Option<Role>,
     /// Byte offsets of `original` in the input.
     pub source_range: Range<usize>,
 }
@@ -65,6 +69,7 @@ pub fn transcribe(source: &str, edition: Edition) -> Vec<Line> {
         .filter_map(|element| element.into_token());
     for token in tokens {
         let class = highlight::classify(&token, edition);
+        let role = role::classify(&token);
         let mut offset = usize::from(token.text_range().start());
         for piece in token.text().split_inclusive('\n') {
             let (text, ending) = split_line_ending(piece);
@@ -73,6 +78,7 @@ pub fn transcribe(source: &str, edition: Edition) -> Vec<Line> {
                     original: text.to_string(),
                     rendered: text.to_string(),
                     class,
+                    role,
                     source_range: offset..offset + text.len(),
                 });
             }

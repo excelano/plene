@@ -1,0 +1,10 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_spans(&source)
+input_file: crates/plene-core/tests/fixtures/parse_error.rs
+---
+  1 | fn:Keyword/keyword broken:Function (:Punctuation x:Identifier ::Punctuation &:Operator/ref_type mut:Keyword/keyword {:Punctuation
+  2 | let:Keyword y:Identifier =:Operator x:Identifier ?:Operator/try
+  3 | let:Keyword z:Identifier =:Operator │:Plain ;:Punctuation
+  4 | struct:Keyword
+  5 | }:Punctuation

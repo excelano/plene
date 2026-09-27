@@ -1,6 +1,6 @@
 ---
 source: crates/plene-core/tests/snapshots.rs
-expression: render_highlights(&source)
+expression: render_spans(&source)
 input_file: crates/plene-core/tests/fixtures/highlight_kinds.rs
 ---
   1 | //! Inner doc comment.:Comment
@@ -11,7 +11,7 @@ input_file: crates/plene-core/tests/fixtures/highlight_kinds.rs
   6 | type:Keyword Id:Type =:Operator u64:Type ;:Punctuation
   7 | macro:Keyword m:Macro (:Punctuation $:Punctuation x:Identifier ::Punctuation expr:Identifier ):Punctuation {:Punctuation $:Punctuation x:Identifier }:Punctuation
   8 |
-  9 | fn:Keyword literals:Function (:Punctuation ):Punctuation {:Punctuation
+  9 | fn:Keyword/keyword literals:Function (:Punctuation ):Punctuation {:Punctuation
  10 | let:Keyword raw:Identifier =:Operator b'a':String ;:Punctuation
  11 | let:Keyword bytes:Identifier =:Operator b"bytes":String ;:Punctuation
  12 | let:Keyword c:Identifier =:Operator c"c string":String ;:Punctuation

@@ -1,13 +1,13 @@
 ---
 source: crates/plene-core/tests/snapshots.rs
-expression: render_highlights(&source)
+expression: render_spans(&source)
 input_file: crates/plene-core/tests/fixtures/basic.rs
 ---
   1 | use:Keyword std:Identifier :::Punctuation collections:Identifier :::Punctuation HashMap:Identifier ;:Punctuation
   2 |
   3 | // A line comment.:Comment
-  4 | pub:Keyword fn:Keyword count:Function <:Punctuation 'a:Lifetime >:Punctuation (:Punctuation words:Identifier ::Punctuation &:Operator [:Punctuation &:Operator 'a:Lifetime str:Type ]:Punctuation ):Punctuation ->:Operator HashMap:Type <:Punctuation &:Operator 'a:Lifetime str:Type ,:Punctuation usize:Type >:Punctuation {:Punctuation
-  5 | let:Keyword mut:Keyword counts:Identifier =:Operator HashMap:Identifier :::Punctuation new:Function (:Punctuation ):Punctuation ;:Punctuation
+  4 | pub:Keyword/keyword fn:Keyword/keyword count:Function <:Punctuation 'a:Lifetime/lifetime >:Punctuation (:Punctuation words:Identifier ::Punctuation &:Operator/ref_type [:Punctuation &:Operator/ref_type 'a:Lifetime/lifetime str:Type ]:Punctuation ):Punctuation ->:Operator/ret_type HashMap:Type <:Punctuation &:Operator/ref_type 'a:Lifetime/lifetime str:Type ,:Punctuation usize:Type >:Punctuation {:Punctuation
+  5 | let:Keyword mut:Keyword/keyword counts:Identifier =:Operator HashMap:Identifier :::Punctuation new:Function (:Punctuation ):Punctuation ;:Punctuation
   6 | for:Keyword word:Identifier in:Keyword words:Identifier {:Punctuation
   7 | *:Operator counts:Identifier .:Punctuation entry:Function (:Punctuation *:Operator word:Identifier ):Punctuation .:Punctuation or_insert:Function (:Punctuation 0:Number ):Punctuation +=:Operator 1:Number ;:Punctuation
   8 | }:Punctuation
