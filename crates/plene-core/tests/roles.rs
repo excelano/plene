@@ -153,3 +153,37 @@ fn shifts_are_operators_but_nested_generics_are_not() {
     let texts: Vec<_> = roles.iter().map(|(text, _)| text.as_str()).collect();
     assert_eq!(texts, ["fn", "->", ">>"]);
 }
+
+#[test]
+fn underscore_reads_by_where_it_stands() {
+    for (source, expected) in [
+        ("fn f() { let _ = g(); }", Some(Role::LetDiscard)),
+        ("fn f() { let _: u8 = g(); }", Some(Role::LetDiscard)),
+        ("fn f() { let (a, _) = g(); }", Some(Role::Wildcard)),
+        ("fn f() { match x { _ => 0 }; }", Some(Role::Wildcard)),
+        ("fn f(_: u8) {}", Some(Role::Wildcard)),
+        ("fn f() { let v: Vec<_> = g(); }", Some(Role::InferredType)),
+        ("fn f() { _ = g(); }", None),
+        ("use std::fmt::Write as _;", None),
+    ] {
+        let lines = transcribe(source, Edition::default(), &Glossary::default());
+        let role = lines[0]
+            .spans
+            .iter()
+            .find(|span| span.original == "_")
+            .unwrap()
+            .role;
+        assert_eq!(role, expected, "in {source:?}");
+    }
+}
+
+#[test]
+fn dot_dot_reads_by_where_it_stands() {
+    let roles = roles_in("fn f() { let S { a, .. } = s; let t = S { a: 1, ..s }; }");
+    let dots: Vec<_> = roles
+        .iter()
+        .filter(|(text, _)| text == "..")
+        .map(|(_, role)| *role)
+        .collect();
+    assert_eq!(dots, [Role::RestPattern, Role::StructUpdate]);
+}

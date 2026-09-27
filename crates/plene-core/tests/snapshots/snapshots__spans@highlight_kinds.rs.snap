@@ -15,6 +15,6 @@ input_file: crates/plene-core/tests/fixtures/highlight_kinds.rs
  10 | let:Keyword raw:Identifier =:Operator b'a':String ;:Punctuation
  11 | let:Keyword bytes:Identifier =:Operator b"bytes":String ;:Punctuation
  12 | let:Keyword c:Identifier =:Operator c"c string":String ;:Punctuation
- 13 | let:Keyword _:Keyword =:Operator raw:Identifier ;:Punctuation
+ 13 | let:Keyword _:Keyword/let_discard =:Operator raw:Identifier ;:Punctuation
  14 | let:Keyword default:Identifier =:Operator 1:Number ;:Punctuation
  15 | }:Punctuation

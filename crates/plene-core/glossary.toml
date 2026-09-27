@@ -165,6 +165,54 @@ text = "not"
 note = "Declares that a type does not implement an auto trait such as Send or Sync."
 
 [[expand]]
+token = "=>"
+role = "match_arm"
+text = "gives"
+note = "Separates a match arm's pattern from the value the arm produces."
+
+[[expand]]
+token = "|"
+role = "pattern_or"
+text = "or"
+note = "Matches if either pattern matches."
+
+[[expand]]
+token = "@"
+role = "pattern_binding"
+text = "bound as"
+note = "Binds the matched value to a name while also testing it against the pattern that follows."
+
+[[expand]]
+token = "_"
+role = "wildcard"
+text = "anything"
+note = "Matches any value and binds nothing."
+
+[[expand]]
+token = "_"
+role = "let_discard"
+text = "discard"
+note = "Evaluates the right-hand side and drops the result immediately instead of binding it."
+
+[[expand]]
+token = "_"
+role = "inferred_type"
+text = "inferred"
+note = "A type left for the compiler to infer."
+
+[[expand]]
+token = ".."
+role = "rest_pattern"
+text = "and the rest"
+note = "Matches the remaining fields or elements without naming them."
+
+[[expand]]
+token = ".."
+role = "struct_update"
+text = "rest from"
+note = "Takes every field not already listed from another value of the same struct type."
+
+[[expand]]
 token = "->"
 role = "ret_type"
 text = "returns"

@@ -55,6 +55,14 @@ roles! {
     PtrType => "ptr_type",
     Not => "not",
     NegativeImpl => "negative_impl",
+    MatchArm => "match_arm",
+    PatternOr => "pattern_or",
+    PatternBinding => "pattern_binding",
+    Wildcard => "wildcard",
+    LetDiscard => "let_discard",
+    InferredType => "inferred_type",
+    RestPattern => "rest_pattern",
+    StructUpdate => "struct_update",
     RetType => "ret_type",
     Try => "try",
     TryChained => "try_chained",
@@ -114,6 +122,14 @@ pub(crate) fn classify(token: &SyntaxToken) -> Option<Role> {
         (STAR, PTR_TYPE) => Some(Role::PtrType),
         (BANG, PREFIX_EXPR) => Some(Role::Not),
         (BANG, IMPL) => Some(Role::NegativeImpl),
+        (FAT_ARROW, MATCH_ARM) => Some(Role::MatchArm),
+        (PIPE, OR_PAT) => Some(Role::PatternOr),
+        (AT, IDENT_PAT) => Some(Role::PatternBinding),
+        (UNDERSCORE, WILDCARD_PAT) if is_let_pattern(&parent) => Some(Role::LetDiscard),
+        (UNDERSCORE, WILDCARD_PAT) => Some(Role::Wildcard),
+        (UNDERSCORE, INFER_TYPE) => Some(Role::InferredType),
+        (DOT2, REST_PAT) => Some(Role::RestPattern),
+        (DOT2, RECORD_EXPR_FIELD_LIST) => Some(Role::StructUpdate),
         (THIN_ARROW, RET_TYPE) => Some(Role::RetType),
         (QUESTION, TRY_EXPR) if is_receiver(&parent) => Some(Role::TryChained),
         (QUESTION, TRY_EXPR) => Some(Role::Try),
@@ -138,6 +154,13 @@ fn is_receiver(expr: &SyntaxNode) -> bool {
             METHOD_CALL_EXPR | FIELD_EXPR | INDEX_EXPR | AWAIT_EXPR
         ) && outer.first_child().as_ref() == Some(expr)
     })
+}
+
+/// Whether `pattern` is the whole pattern of a `let`, as in `let _ = f();`.
+fn is_let_pattern(pattern: &SyntaxNode) -> bool {
+    pattern
+        .parent()
+        .is_some_and(|owner| owner.kind() == LET_STMT)
 }
 
 fn is_closure_params(param_list: &SyntaxNode) -> bool {

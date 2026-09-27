@@ -1,0 +1,42 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/patterns.rs
+---
+  1 | fn classify(value: Option<u8>, point: Point, items: &[u8]) -> u8 {
+    | function classify(value: Option<u8>, point: Point, items: borrowed [u8]) returns u8 {
+  2 |     let _ = cleanup();
+    |     let discard = cleanup();
+  3 |     let (first, _) = pair();
+    |     let (first, anything) = pair();
+  4 |     let numbers: Vec<_> = items.iter().collect();
+    |     let numbers: Vec<inferred> = items.iter().collect();
+  5 |     _ = flush();
+  6 |     match value {
+  7 |         Some(0) | None => 0,
+    |         Some(0) or None gives 0,
+  8 |         | Some(1) | Some(2) => 1,
+    |         or Some(1) or Some(2) gives 1,
+  9 |         Some(n @ 3..=9) => n,
+    |         Some(n bound as 3..=9) gives n,
+ 10 |         Some(_) => 2,
+    |         Some(anything) gives 2,
+ 11 |     }
+ 12 |     let Point { x, .. } = point;
+    |     let Point { x, and the rest } = point;
+ 13 |     let (head, ..) = triple();
+    |     let (head, and the rest) = triple();
+ 14 |     let [start, rest @ ..] = items else { return 0 };
+    |     let [start, rest bound as and the rest] = items else { return 0 };
+ 15 |     let moved = Point { x: 1, ..point };
+    |     let moved = Point { x: 1, rest from point };
+ 16 |     for _ in items {}
+    |     for anything in items {}
+ 17 |     items.iter().map(|_| 1).count();
+    |     items.iter().map(closure(anything) 1).count();
+ 18 |     x
+ 19 | }
+ 20 | 
+ 21 | fn ignored(_: u8, _unused: u8) {}
+    | function ignored(anything: u8, _unused: u8) {}
+ 22 | use std::fmt::Write as _;

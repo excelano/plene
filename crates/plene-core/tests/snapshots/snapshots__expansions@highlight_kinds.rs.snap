@@ -17,5 +17,6 @@ input_file: crates/plene-core/tests/fixtures/highlight_kinds.rs
  11 |     let bytes = b"bytes";
  12 |     let c = c"c string";
  13 |     let _ = raw;
+    |     let discard = raw;
  14 |     let default = 1;
  15 | }

@@ -1,0 +1,27 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_spans(&source)
+input_file: crates/plene-core/tests/fixtures/patterns.rs
+---
+  1 | fn:Keyword/keyword classify:Function (:Punctuation value:Identifier ::Punctuation Option:Type <:Punctuation u8:Type >:Punctuation ,:Punctuation point:Identifier ::Punctuation Point:Type ,:Punctuation items:Identifier ::Punctuation &:Operator/ref_type [:Punctuation u8:Type ]:Punctuation ):Punctuation ->:Operator/ret_type u8:Type {:Punctuation
+  2 | let:Keyword _:Keyword/let_discard =:Operator cleanup:Function (:Punctuation ):Punctuation ;:Punctuation
+  3 | let:Keyword (:Punctuation first:Identifier ,:Punctuation _:Keyword/wildcard ):Punctuation =:Operator pair:Function (:Punctuation ):Punctuation ;:Punctuation
+  4 | let:Keyword numbers:Identifier ::Punctuation Vec:Type <:Punctuation _:Keyword/inferred_type >:Punctuation =:Operator items:Identifier .:Punctuation iter:Function (:Punctuation ):Punctuation .:Punctuation collect:Function (:Punctuation ):Punctuation ;:Punctuation
+  5 | _:Keyword =:Operator flush:Function (:Punctuation ):Punctuation ;:Punctuation
+  6 | match:Keyword value:Identifier {:Punctuation
+  7 | Some:Identifier (:Punctuation 0:Number ):Punctuation |:Operator/pattern_or None:Identifier =>:Operator/match_arm 0:Number ,:Punctuation
+  8 | |:Operator/pattern_or Some:Identifier (:Punctuation 1:Number ):Punctuation |:Operator/pattern_or Some:Identifier (:Punctuation 2:Number ):Punctuation =>:Operator/match_arm 1:Number ,:Punctuation
+  9 | Some:Identifier (:Punctuation n:Identifier @:Operator/pattern_binding 3:Number ..=:Operator 9:Number ):Punctuation =>:Operator/match_arm n:Identifier ,:Punctuation
+ 10 | Some:Identifier (:Punctuation _:Keyword/wildcard ):Punctuation =>:Operator/match_arm 2:Number ,:Punctuation
+ 11 | }:Punctuation
+ 12 | let:Keyword Point:Identifier {:Punctuation x:Identifier ,:Punctuation ..:Operator/rest_pattern }:Punctuation =:Operator point:Identifier ;:Punctuation
+ 13 | let:Keyword (:Punctuation head:Identifier ,:Punctuation ..:Operator/rest_pattern ):Punctuation =:Operator triple:Function (:Punctuation ):Punctuation ;:Punctuation
+ 14 | let:Keyword [:Punctuation start:Identifier ,:Punctuation rest:Identifier @:Operator/pattern_binding ..:Operator/rest_pattern ]:Punctuation =:Operator items:Identifier else:Keyword {:Punctuation return:Keyword 0:Number }:Punctuation ;:Punctuation
+ 15 | let:Keyword moved:Identifier =:Operator Point:Identifier {:Punctuation x:Identifier ::Punctuation 1:Number ,:Punctuation ..:Operator/struct_update point:Identifier }:Punctuation ;:Punctuation
+ 16 | for:Keyword _:Keyword/wildcard in:Keyword items:Identifier {:Punctuation }:Punctuation
+ 17 | items:Identifier .:Punctuation iter:Function (:Punctuation ):Punctuation .:Punctuation map:Function (:Punctuation |:Operator/closure_open _:Keyword/wildcard |:Operator/closure_close 1:Number ):Punctuation .:Punctuation count:Function (:Punctuation ):Punctuation ;:Punctuation
+ 18 | x:Identifier
+ 19 | }:Punctuation
+ 20 |
+ 21 | fn:Keyword/keyword ignored:Function (:Punctuation _:Keyword/wildcard ::Punctuation u8:Type ,:Punctuation _unused:Identifier ::Punctuation u8:Type ):Punctuation {:Punctuation }:Punctuation
+ 22 | use:Keyword std:Identifier :::Punctuation fmt:Identifier :::Punctuation Write:Identifier as:Keyword _:Keyword ;:Punctuation
