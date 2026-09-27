@@ -212,3 +212,29 @@ fn ranges_read_by_their_ends() {
         assert_eq!(range.1, expected, "in {source:?}");
     }
 }
+
+#[test]
+fn colons_are_bounds_only_before_a_bound_list() {
+    for (source, expected) in [
+        ("fn f<T: Clone>() {}", Some(Role::TraitBound)),
+        ("fn f<'a: 'b, 'b>() {}", Some(Role::LifetimeBound)),
+        ("fn f<T: 'a + Clone>() {}", Some(Role::LifetimeBound)),
+        ("fn f<T>() where T: Clone {}", Some(Role::TraitBound)),
+        ("trait A: B {}", Some(Role::TraitBound)),
+        ("trait A { type B: Copy; }", Some(Role::TraitBound)),
+        ("fn f<I: Iterator<Item: Copy>>() {}", Some(Role::TraitBound)),
+        ("fn f(x: u8) {}", None),
+        ("struct S { x: u8 }", None),
+        ("fn f() { 'a: loop {} }", None),
+        ("fn f<const N: usize>() {}", None),
+    ] {
+        let lines = transcribe(source, Edition::default(), &Glossary::default());
+        let role = lines[0]
+            .spans
+            .iter()
+            .find(|span| span.original == ":")
+            .unwrap()
+            .role;
+        assert_eq!(role, expected, "in {source:?}");
+    }
+}

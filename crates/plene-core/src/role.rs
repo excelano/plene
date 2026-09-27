@@ -8,7 +8,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use ra_ap_syntax::SyntaxKind::*;
-use ra_ap_syntax::{SyntaxNode, SyntaxToken};
+use ra_ap_syntax::{Direction, SyntaxNode, SyntaxToken};
 
 /// Declares `Role` with each variant's stable string identifier, used in glossary files.
 macro_rules! roles {
@@ -67,6 +67,10 @@ roles! {
     RangeFrom => "range_from",
     RangeFull => "range_full",
     RangeInclusive => "range_inclusive",
+    TraitBound => "trait_bound",
+    LifetimeBound => "lifetime_bound",
+    BoundSeparator => "bound_separator",
+    MaybeBound => "maybe_bound",
     RetType => "ret_type",
     Try => "try",
     TryChained => "try_chained",
@@ -135,6 +139,9 @@ pub(crate) fn classify(token: &SyntaxToken) -> Option<Role> {
         (DOT2, REST_PAT) => Some(Role::RestPattern),
         (DOT2, RECORD_EXPR_FIELD_LIST) => Some(Role::StructUpdate),
         (DOT2 | DOT2EQ, RANGE_EXPR | RANGE_PAT) => Some(range_role(token, &parent)),
+        (COLON, _) => bound_colon_role(token),
+        (PLUS, TYPE_BOUND_LIST) => Some(Role::BoundSeparator),
+        (QUESTION, TYPE_BOUND) => Some(Role::MaybeBound),
         (THIN_ARROW, RET_TYPE) => Some(Role::RetType),
         (QUESTION, TRY_EXPR) if is_receiver(&parent) => Some(Role::TryChained),
         (QUESTION, TRY_EXPR) => Some(Role::Try),
@@ -185,6 +192,28 @@ fn range_role(token: &SyntaxToken, range: &SyntaxNode) -> Role {
         (_, false, false) => Role::RangeFull,
         _ => Role::Range,
     }
+}
+
+/// A colon introduces bounds when a bound list follows it, as in `T: Clone`,
+/// `'a: 'b`, `trait A: B` and `where T: 'a`; every other colon is left alone. The
+/// first bound decides the reading: a lifetime is outlived, a trait implemented.
+fn bound_colon_role(colon: &SyntaxToken) -> Option<Role> {
+    let next = colon
+        .siblings_with_tokens(Direction::Next)
+        .skip(1)
+        .find(|element| !matches!(element.kind(), WHITESPACE | COMMENT))?;
+    let bounds = next
+        .into_node()
+        .filter(|node| node.kind() == TYPE_BOUND_LIST)?;
+    let first_is_lifetime = bounds
+        .children()
+        .next()
+        .is_some_and(|bound| bound.children().any(|child| child.kind() == LIFETIME));
+    Some(if first_is_lifetime {
+        Role::LifetimeBound
+    } else {
+        Role::TraitBound
+    })
 }
 
 fn is_closure_params(param_list: &SyntaxNode) -> bool {

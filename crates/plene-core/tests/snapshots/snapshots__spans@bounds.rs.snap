@@ -1,0 +1,38 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_spans(&source)
+input_file: crates/plene-core/tests/fixtures/bounds.rs
+---
+  1 | trait:Keyword Shape:Type ::Punctuation/trait_bound Clone:Type +:Operator/bound_separator Send:Type {:Punctuation
+  2 | type:Keyword Corner:Type ::Punctuation/trait_bound Copy:Type ;:Punctuation
+  3 | }:Punctuation
+  4 |
+  5 | fn:Keyword/keyword largest:Function <:Punctuation T:Type ::Punctuation/trait_bound PartialOrd:Type +:Operator/bound_separator Copy:Type >:Punctuation (:Punctuation items:Identifier ::Punctuation &:Operator/ref_type [:Punctuation T:Type ]:Punctuation ):Punctuation ->:Operator/ret_type T:Type {:Punctuation
+  6 | items:Identifier [:Punctuation 0:Number ]:Punctuation
+  7 | }:Punctuation
+  8 |
+  9 | fn:Keyword/keyword longest:Function <:Punctuation 'a:Lifetime/lifetime ,:Punctuation 'b:Lifetime/lifetime ::Punctuation/lifetime_bound 'a:Lifetime/lifetime >:Punctuation (:Punctuation x:Identifier ::Punctuation &:Operator/ref_type 'a:Lifetime/lifetime str:Type ,:Punctuation y:Identifier ::Punctuation &:Operator/ref_type 'b:Lifetime/lifetime str:Type ):Punctuation ->:Operator/ret_type &:Operator/ref_type 'a:Lifetime/lifetime str:Type {:Punctuation
+ 10 | x:Identifier
+ 11 | }:Punctuation
+ 12 |
+ 13 | fn:Keyword/keyword hold:Function <:Punctuation T:Type ::Punctuation/trait_bound ?:Operator/maybe_bound Sized:Type +:Operator/bound_separator 'static:Lifetime/lifetime >:Punctuation (:Punctuation value:Identifier ::Punctuation Box:Type <:Punctuation T:Type >:Punctuation ):Punctuation {:Punctuation }:Punctuation
+ 14 |
+ 15 | fn:Keyword/keyword show:Function <:Punctuation T:Type >:Punctuation (:Punctuation value:Identifier ::Punctuation T:Type ):Punctuation ->:Operator/ret_type String:Type
+ 16 | where:Keyword
+ 17 | T:Type ::Punctuation/trait_bound std:Identifier :::Punctuation fmt:Identifier :::Punctuation Display:Type +:Operator/bound_separator 'static:Lifetime/lifetime ,:Punctuation
+ 18 | for:Keyword <:Punctuation 'c:Lifetime/lifetime >:Punctuation &:Operator/ref_type 'c:Lifetime/lifetime T:Type ::Punctuation/trait_bound Into:Type <:Punctuation String:Type >:Punctuation ,:Punctuation
+ 19 | {:Punctuation
+ 20 | value:Identifier .:Punctuation to_string:Function (:Punctuation ):Punctuation
+ 21 | }:Punctuation
+ 22 |
+ 23 | fn:Keyword/keyword boxed:Function (:Punctuation error:Identifier ::Punctuation Box:Type <:Punctuation dyn:Keyword/keyword std:Identifier :::Punctuation error:Identifier :::Punctuation Error:Type +:Operator/bound_separator Send:Type +:Operator/bound_separator Sync:Type >:Punctuation ):Punctuation {:Punctuation }:Punctuation
+ 24 |
+ 25 | fn:Keyword/keyword items:Function (:Punctuation ):Punctuation ->:Operator/ret_type impl:Keyword/impl_trait_type Iterator:Type <:Punctuation Item:Identifier =:Operator u8:Type >:Punctuation +:Operator/bound_separator Clone:Type {:Punctuation
+ 26 | [:Punctuation 1:Number ]:Punctuation .:Punctuation into_iter:Function (:Punctuation ):Punctuation
+ 27 | }:Punctuation
+ 28 |
+ 29 | struct:Keyword Holder:Type <:Punctuation 'a:Lifetime/lifetime ,:Punctuation T:Type ::Punctuation/lifetime_bound 'a:Lifetime/lifetime >:Punctuation {:Punctuation
+ 30 | value:Identifier ::Punctuation &:Operator/ref_type 'a:Lifetime/lifetime T:Type ,:Punctuation
+ 31 | }:Punctuation
+ 32 |
+ 33 | fn:Keyword/keyword assoc:Function <:Punctuation I:Type ::Punctuation/trait_bound Iterator:Type <:Punctuation Item:Identifier ::Punctuation/trait_bound Copy:Type >:Punctuation >:Punctuation (:Punctuation iter:Identifier ::Punctuation I:Type ):Punctuation {:Punctuation }:Punctuation

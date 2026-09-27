@@ -10,7 +10,7 @@ input_file: crates/plene-core/tests/fixtures/keywords.rs
   5 | pub:Keyword/keyword struct:Keyword Square:Type ;:Punctuation
   6 |
   7 | impl:Keyword/impl_block Shape:Type for:Keyword Square:Type {:Punctuation }:Punctuation
-  8 | impl:Keyword/impl_block <:Punctuation T:Type ::Punctuation Clone:Type >:Punctuation Wrapper:Type <:Punctuation T:Type >:Punctuation {:Punctuation }:Punctuation
+  8 | impl:Keyword/impl_block <:Punctuation T:Type ::Punctuation/trait_bound Clone:Type >:Punctuation Wrapper:Type <:Punctuation T:Type >:Punctuation {:Punctuation }:Punctuation
   9 | unsafe:Keyword impl:Keyword/impl_block Send:Type for:Keyword Square:Type {:Punctuation }:Punctuation
  10 |
  11 | unsafe:Keyword extern:Keyword/keyword "C":String {:Punctuation
@@ -27,4 +27,4 @@ input_file: crates/plene-core/tests/fixtures/keywords.rs
  22 | std:Identifier :::Punctuation iter:Identifier :::Punctuation empty:Function (:Punctuation ):Punctuation
  23 | }:Punctuation
  24 |
- 25 | fn:Keyword/keyword show:Function (:Punctuation shape:Identifier ::Punctuation impl:Keyword/impl_trait_type Shape:Type +:Operator Send:Type ,:Punctuation action:Identifier ::Punctuation &:Operator/ref_type dyn:Keyword/keyword Fn:Type (:Punctuation u8:Type ):Punctuation ->:Operator/ret_type u8:Type ):Punctuation {:Punctuation }:Punctuation
+ 25 | fn:Keyword/keyword show:Function (:Punctuation shape:Identifier ::Punctuation impl:Keyword/impl_trait_type Shape:Type +:Operator/bound_separator Send:Type ,:Punctuation action:Identifier ::Punctuation &:Operator/ref_type dyn:Keyword/keyword Fn:Type (:Punctuation u8:Type ):Punctuation ->:Operator/ret_type u8:Type ):Punctuation {:Punctuation }:Punctuation

@@ -19,7 +19,7 @@ input_file: crates/plene-core/tests/fixtures/highlight.rs
  14 | }:Punctuation ;:Punctuation
  15 | }:Punctuation
  16 |
- 17 | impl:Keyword/impl_block <:Punctuation T:Type ::Punctuation Clone:Type >:Punctuation Point:Type <:Punctuation T:Type >:Punctuation {:Punctuation
+ 17 | impl:Keyword/impl_block <:Punctuation T:Type ::Punctuation/trait_bound Clone:Type >:Punctuation Point:Type <:Punctuation T:Type >:Punctuation {:Punctuation
  18 | fn:Keyword/keyword read_all:Function (:Punctuation reader:Identifier ::Punctuation &:Operator/ref_type mut:Keyword/keyword impl:Keyword/impl_trait_type Read:Type ):Punctuation ->:Operator/ret_type io:Identifier :::Punctuation Result:Type <:Punctuation String:Type >:Punctuation {:Punctuation
  19 | let:Keyword mut:Keyword/keyword text:Identifier =:Operator String:Identifier :::Punctuation new:Function (:Punctuation ):Punctuation ;:Punctuation
  20 | reader:Identifier .:Punctuation read_to_string:Function (:Punctuation &:Operator/ref_expr mut:Keyword/keyword text:Identifier ):Punctuation ?:Operator/try ;:Punctuation

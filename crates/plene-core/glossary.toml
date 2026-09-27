@@ -237,6 +237,30 @@ text = "through"
 note = "A range that includes its end: 1..=n counts 1 through n."
 
 [[expand]]
+token = ":"
+role = "trait_bound"
+text = "implementing"
+note = "Requires the type to implement the traits that follow."
+
+[[expand]]
+token = ":"
+role = "lifetime_bound"
+text = "outliving"
+note = "Requires the type or lifetime to outlive the lifetime that follows."
+
+[[expand]]
+token = "+"
+role = "bound_separator"
+text = "and"
+note = "Joins bounds: every one of them must hold."
+
+[[expand]]
+token = "?"
+role = "maybe_bound"
+text = "maybe"
+note = "Relaxes a bound that applies by default: ?Sized lets the type be unsized."
+
+[[expand]]
 token = "->"
 role = "ret_type"
 text = "returns"

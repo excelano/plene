@@ -1,0 +1,51 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/bounds.rs
+---
+  1 | trait Shape: Clone + Send {
+    | trait Shape implementing Clone and Send {
+  2 |     type Corner: Copy;
+    |     type Corner implementing Copy;
+  3 | }
+  4 | 
+  5 | fn largest<T: PartialOrd + Copy>(items: &[T]) -> T {
+    | function largest<T implementing PartialOrd and Copy>(items: borrowed [T]) returns T {
+  6 |     items[0]
+  7 | }
+  8 | 
+  9 | fn longest<'a, 'b: 'a>(x: &'a str, y: &'b str) -> &'a str {
+    | function longest<lifetime a, lifetime b outliving lifetime a>(x: borrowed lifetime a str, y: borrowed lifetime b str) returns borrowed lifetime a str {
+ 10 |     x
+ 11 | }
+ 12 | 
+ 13 | fn hold<T: ?Sized + 'static>(value: Box<T>) {}
+    | function hold<T implementing maybe Sized and lifetime static>(value: Box<T>) {}
+ 14 | 
+ 15 | fn show<T>(value: T) -> String
+    | function show<T>(value: T) returns String
+ 16 | where
+ 17 |     T: std::fmt::Display + 'static,
+    |     T implementing std::fmt::Display and lifetime static,
+ 18 |     for<'c> &'c T: Into<String>,
+    |     for<lifetime c> borrowed lifetime c T implementing Into<String>,
+ 19 | {
+ 20 |     value.to_string()
+ 21 | }
+ 22 | 
+ 23 | fn boxed(error: Box<dyn std::error::Error + Send + Sync>) {}
+    | function boxed(error: Box<dynamic std::error::Error and Send and Sync>) {}
+ 24 | 
+ 25 | fn items() -> impl Iterator<Item = u8> + Clone {
+    | function items() returns some Iterator<Item = u8> and Clone {
+ 26 |     [1].into_iter()
+ 27 | }
+ 28 | 
+ 29 | struct Holder<'a, T: 'a> {
+    | struct Holder<lifetime a, T outliving lifetime a> {
+ 30 |     value: &'a T,
+    |     value: borrowed lifetime a T,
+ 31 | }
+ 32 | 
+ 33 | fn assoc<I: Iterator<Item: Copy>>(iter: I) {}
+    | function assoc<I implementing Iterator<Item implementing Copy>>(iter: I) {}
