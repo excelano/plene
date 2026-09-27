@@ -44,9 +44,11 @@ API breaks between releases; upgrading it is deliberate and is followed by the s
 Tests land in the same change as the code they cover. Coverage is read line by line
 before a commit, because a match arm with several patterns counts as covered when any
 one of them is hit; an uncovered line is either tested or shown to be unreachable. A new
-test is broken deliberately once to watch it fail. Snapshot changes are read before they
-are accepted: in the span snapshots, a non-whitespace token classed `Plain` is a token
-kind the highlighter misses.
+test is broken deliberately once to watch it fail, and the break is confirmed to have
+applied first: rustfmt reflows lines, so a text substitution can match nothing and leave
+a passing run that proves nothing. Snapshot changes are read before they are accepted:
+in the span snapshots, a non-whitespace token classed `Plain` is a token kind the
+highlighter misses.
 
 Releases: `ship plene`, which David runs; `ship.conf` names the targets and the order
 the crates publish in. There is no release document.
