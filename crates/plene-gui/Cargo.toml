@@ -1,0 +1,53 @@
+[package]
+name = "plene-gui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+readme = "../../README.md"
+description = "A window showing Rust source beside its expanded transcription: the same code with abbreviations and symbols written out in words"
+categories = ["development-tools", "gui"]
+
+[dependencies]
+clap = { version = "4.6", features = ["derive"] }
+# Defaults carry wgpu and accesskit. The tree compiles no C, and the display
+# libraries are opened by name at run time, so the .deb names them in Depends.
+eframe = "0.36"
+plene-core.workspace = true
+# Defaults are `xdg-portal` and `wayland`, both pure Rust. The `gtk3` feature
+# links C through gtk-sys and stays off.
+rfd = "0.17"
+
+[dev-dependencies]
+egui_kittest = "0.36"
+
+# Homebrew carries the CLI only; the window installs through cargo or apt.
+[package.metadata.dist]
+dist = false
+
+# The executable links libc and libgcc alone. The display stack, the graphics
+# driver loader and the keyboard map libraries are opened by name at run time,
+# so dpkg-shlibdeps finds none of them and they are named here; the list is
+# segler-desktop's, which runs on the same eframe, less the media-type packages.
+# `packaging/linux/check-libraries.sh` measures it against a running window.
+# libxkbcommon-x11-0 is opened only on X11, which starts without it and panics.
+[package.metadata.deb]
+maintainer = "David M. Anderson <david.anderson@excelano.com>"
+extended-description = """
+plene shows Rust source alongside an expanded transcription: the same code with
+Rust's abbreviations and symbols written out as words. This is its window: the
+source and the transcription in two columns, one row per source line, and a
+card on hovering a token that names its role and says what it does."""
+section = "devel"
+priority = "optional"
+depends = "libc6, libgcc-s1, libwayland-client0, libxkbcommon0, libxkbcommon-x11-0, libegl1, libvulkan1 | libgl1, libx11-6, libx11-xcb1, libxi6, libxcursor1, libxrandr2, desktop-file-utils, hicolor-icon-theme"
+assets = [
+    ["target/release/plene-gui", "usr/bin/", "755"],
+    ["../../packaging/linux/plene-gui.desktop", "usr/share/applications/", "644"],
+    ["../../packaging/linux/plene-gui.svg", "usr/share/icons/hicolor/scalable/apps/", "644"],
+    ["../../README.md", "usr/share/doc/plene-gui/README.md", "644"],
+    ["../../LICENSE", "usr/share/doc/plene-gui/copyright", "644"],
+]

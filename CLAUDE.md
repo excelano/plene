@@ -4,7 +4,7 @@ plene shows Rust source alongside an expanded transcription: the same code with 
 abbreviations and symbol tokens written out as words. `plene-core` parses with
 `ra_ap_syntax`, classifies every token's highlight class and syntactic role, and renders
 each role through the glossary into per-line spans; its only I/O is `Glossary::load`,
-which reads the glossary files. `plene` is the CLI.
+which reads the glossary files. `plene` is the CLI and `plene-gui` the eframe window.
 `DESIGN.md` is the authority on what is expanded, how, and why the glossary reads as it
 does.
 
@@ -15,6 +15,8 @@ does.
     cargo clippy --all-targets -- -D warnings                 # must be silent
     cargo fmt --check
     cargo run -p plene -- path/to/file.rs                     # --color always | less -R
+    cargo run -p plene-gui -- path/to/file.rs
+    cargo deb -p plene-gui && packaging/linux/check-libraries.sh   # needs a display
     cargo test --release -p plene-core -- --ignored           # smoke test over the corpus
     cargo llvm-cov --workspace --summary-only                 # then read the uncovered lines:
     cargo llvm-cov report --workspace --text | grep -E '^\s+[0-9]+\|\s+0\|'
@@ -54,5 +56,11 @@ highlighter misses.
 Releases: `ship plene`, which David runs; `ship.conf` names the targets and the order
 the crates publish in. There is no release document.
 
-Both crates are `forbid(unsafe_code)`, and nothing in the dependency tree compiles C
-(`~/notes/pure_rust_preference.md`).
+Every crate is `forbid(unsafe_code)`, and nothing in the dependency tree compiles C
+(`~/notes/pure_rust_preference.md`). The window's display libraries are opened by name
+at run time, so the plene-gui package names them in `Depends` by hand; a change to
+eframe or its features is followed by `check-libraries.sh` on both display backends.
+
+Coverage has one exception: code that needs a display. The native file dialog
+(`App::pick_file` and the two lines that call it), `eframe::App::ui` and `main` run by
+hand, never in a test, and are the only uncovered lines `plene-gui` is allowed.

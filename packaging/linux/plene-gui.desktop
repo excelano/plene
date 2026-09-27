@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=plene
+GenericName=Rust Transcription Viewer
+Comment=Read Rust source beside the same code written out in words
+Exec=plene-gui %f
+Icon=plene-gui
+Terminal=false
+MimeType=text/rust;
+Categories=Development;
+Keywords=rust;source;readability;transcription;
+StartupNotify=true
+StartupWMClass=plene-gui

@@ -186,13 +186,22 @@ plene [OPTIONS] <FILE|->
 
 ### plene-gui (eframe/egui)
 
-- Open a `.rs` file via a dialog, drag-and-drop, or CLI argument.
-- Two columns, original on the left and expansion on the right, with line numbers.
-- One scroll area holding one row per source line, each row with two cells. Rows stay aligned and scroll together by construction: long lines wrap, and each row's height is the taller of its two cells. Wrapped rows rule out `show_rows` virtualization, a cost taken for the alignment.
-- Syntax highlighting on both sides uses matching colors. Expanded spans are visually marked.
-- Hovering an expanded span shows the original token, its role, and the glossary `note`.
+```
+plene-gui [OPTIONS] [FILE]
+
+  --edition <2015|2018|2021|2024>   (default 2021)
+  --glossary <PATH>
+```
+
+- Opens a `.rs` file named on the command line, dropped on the window, or chosen with the Open button or Ctrl+O. The file dialog is the XDG portal on Linux, so nothing links GTK.
+- The glossary is found by the CLI's rules, through `Glossary::load`. A glossary that fails to load, or a file that can't be opened, is reported in the window rather than ending it; a bad glossary falls back to the built-in one.
+- Two panes, original on the left and expansion on the right, each with its own line numbers. A toggle in the toolbar hides the transcription's pane and gives the source the whole width; it shows at start, and the choice holds across the files opened.
+- A click selects a row, marked by a band across both panes. The Up and Down arrows move the selection, starting from the first row in view, and scroll to keep it there. Page Up and Page Down scroll by the height of the view and leave the selection where it is. Opening a file clears the selection.
+- One scroll area holding one row per source line, each row with two cells. Rows stay aligned and scroll together by construction: long lines wrap, and each row's height is the taller of its two cells. Row heights are measured once per column width and kept with each row's top, so only the rows in view are laid out and painted; a change of width measures them again.
+- Syntax highlighting on both sides uses matching colors, from a dark and a light palette in the CLI's color families. Tokens with a glossary role are underlined on both sides, as in the CLI.
+- Hovering a token with a glossary role, on either side, shows the token and its expansion, its role, and the glossary `note`. egui merges neighbouring text of one format, so the token under the pointer is found from the spans' own lengths, not from the laid-out sections.
 - A toggle for changed-only lines.
-- Light and dark themes.
+- Light and dark themes, with a switch; on Linux the system theme comes from the XDG portal, since winit reports none there.
 - Reload when the file changes on disk (nice to have).
 
 ## Testing
@@ -201,3 +210,4 @@ plene [OPTIONS] <FILE|->
 - **Invariant:** concatenating `original` across all spans reproduces the input byte-for-byte. Test this on every fixture and on real crates.
 - **Smoke test** (`#[ignore]`; `cargo test --release -- --ignored`): run over every `.rs` file under `PLENE_SMOKE_DIRS` (colon-separated) and assert the invariants, no panics, and 1:1 line counts. The default corpus is `~/plene-corpus` (shallow clones of ripgrep, serde and rust-analyzer, whose `crates/parser/test_data` holds deliberately malformed edge cases) plus the standard library from `rustup component add rust-src`.
 - **Role coverage test:** every role in the default glossary is exercised by at least one fixture.
+- **GUI tests** run headless with `egui_kittest`, with no display and no GPU: they drive the pointer and input and check the app's state and the labels it shows. Painted text has no accessibility node, so rows are checked through state and hover cards, not by reading the columns.

@@ -36,12 +36,18 @@ From crates.io, with a Rust toolchain at least as new as the one `Cargo.toml` na
 cargo install plene
 ```
 
+The window is a separate package, `plene-gui`, from the same apt repository (`sudo apt install plene-gui`) or from crates.io (`cargo install plene-gui`). Homebrew carries the command-line tool only.
+
 ## Run
 
     plene src/main.rs
     plene --color always src/main.rs | less -R
 
 `plene -` reads standard input. `--side-by-side` and `--expanded` change the layout, `--changed-only` keeps just the lines that change, and `plene --help` lists the rest.
+
+    plene-gui src/main.rs
+
+`plene-gui` shows the source and its transcription in two columns, one row per source line. Hovering a token with a glossary entry shows its role and what the glossary says about it. Clicking a row selects it, the arrow keys move the selection, and the Transcription button hides the right-hand pane when the source alone will do. A file can also be dropped on the window or opened with Ctrl+O.
 
 The expansions come from a glossary built into plene. Entries can be overridden by token and role in `~/.config/plene/glossary.toml` or in a file passed with `--glossary`; `plene --dump-glossary` prints the glossary in effect as a starting point. `DESIGN.md` describes the glossary and why it reads the way it does.
 

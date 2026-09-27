@@ -39,3 +39,14 @@ jobs:
       tag: ${{ github.event.release.tag_name || inputs.tag }}
       package: plene
       dry_run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+
+  # The window's package. Its command is not in ship.conf's `commands`, which
+  # names the Homebrew formulas and the tap carries the CLI only, so it is named
+  # here for the install check.
+  deb-gui:
+    uses: excelano/.github/.github/workflows/deb.yml@main
+    with:
+      tag: ${{ github.event.release.tag_name || inputs.tag }}
+      package: plene-gui
+      commands: plene-gui
+      dry_run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
