@@ -23,7 +23,7 @@ The name comes from Hebrew *plene spelling* (ktiv male): the same words in the s
 - Expansions are keyed by **token + syntactic role**, never by token text alone.
 - **Every expansion replaces exactly one token.** Multi-token forms compose: `&mut x` is `&` → `borrow` plus `mut` → `mutable`, giving `borrow mutable x`; `*const T` gives `raw pointer const T`.
 
-## Glossary v1
+## Glossary
 
 ### Keep as-is
 
@@ -156,7 +156,7 @@ pub struct Span {
 - **Highlighting is driven by the same token kinds that drive expansion.** Do not use a separate highlighter such as syntect. An expanded token keeps its original token's highlight class, so `&mut` and `borrow mutable` share a color by construction.
 - **Whitespace:** never alter source whitespace or indentation. Where an expansion's word edge touches a character that is not whitespace, insert a space, unless that character is punctuation that hugs the word from its side: `( [ { <` before it, or `) ] } > , ; : .` after it. After an expanded keyword, `(` and `<` also attach, as they do in the source. So `foo()?;` → `foo() or return early;`, `&mut` → `borrow mutable`, `&[u8]` → `borrowed [u8]`, `()->u8` → `() returns u8` and `!(a > b)` → `not (a > b)`, but `(&x)` → `(borrow x)`, `<'a>` → `<lifetime a>`, `pub(crate)` → `public(crate)` and `impl<T>` → `implement<T>`. An inserted space is its own span with an empty `original`, so each expansion's `rendered` is exactly its glossary text.
 - **Line correspondence is 1:1.** Every source line produces exactly one rendered line. Tokens that span lines (block comments, multi-line and raw strings) are split into one span per line. Line endings (LF or CRLF) are preserved.
-- **Macros:** v1 leaves the token trees of macro invocations untouched, since they aren't parsed as Rust. Attributes are untouched too. `macro_rules!` bodies are never expanded.
+- **Macros:** the token trees of macro invocations are left untouched, since they aren't parsed as Rust. Attributes are untouched too. `macro_rules!` bodies are never expanded.
 - **Parse errors:** render everything; tokens inside error nodes are not expanded.
 - No I/O and no CLI/GUI dependencies.
 
@@ -188,7 +188,7 @@ plene [OPTIONS] <FILE|->
 
 - Open a `.rs` file via a dialog, drag-and-drop, or CLI argument.
 - Two columns, original on the left and expansion on the right, with line numbers.
-- One scroll area holding one row per source line, each row with two cells. Rows stay aligned and scroll together by construction: long lines wrap, and each row's height is the taller of its two cells. Wrapped rows rule out `show_rows` virtualization, which is acceptable for v1.
+- One scroll area holding one row per source line, each row with two cells. Rows stay aligned and scroll together by construction: long lines wrap, and each row's height is the taller of its two cells. Wrapped rows rule out `show_rows` virtualization, a cost taken for the alignment.
 - Syntax highlighting on both sides uses matching colors. Expanded spans are visually marked.
 - Hovering an expanded span shows the original token, its role, and the glossary `note`.
 - A toggle for changed-only lines.
@@ -201,11 +201,3 @@ plene [OPTIONS] <FILE|->
 - **Invariant:** concatenating `original` across all spans reproduces the input byte-for-byte. Test this on every fixture and on real crates.
 - **Smoke test** (`#[ignore]`; `cargo test --release -- --ignored`): run over every `.rs` file under `PLENE_SMOKE_DIRS` (colon-separated) and assert the invariants, no panics, and 1:1 line counts. The default corpus is `~/plene-corpus` (shallow clones of ripgrep, serde and rust-analyzer, whose `crates/parser/test_data` holds deliberately malformed edge cases) plus the standard library from `rustup component add rust-src`.
 - **Role coverage test:** every role in the default glossary is exercised by at least one fixture.
-
-## Milestones
-
-1. **Core + CLI, minimum subset:** `fn`, `pub`, `mut`, `&` (expression, type, self param), `->`, `?`, closures, lifetimes; interleaved output; snapshot tests; the byte-for-byte invariant.
-2. **Full glossary v1:** all roles in the tables, user overrides, `--dump-glossary`, all CLI modes, role coverage test; the first release, 0.1.0, through `ship` to crates.io, apt and Homebrew.
-3. **Macro arguments:** parse the arguments of function-like macro invocations as comma-separated expressions (`ra_ap_syntax::hacks::parse_expr_from_str`) when they parse cleanly, and expand them. This covers `println!`, `format!`, `vec!`, `assert_eq!` and similar. Invocations that don't parse cleanly stay untouched.
-4. **GUI:** two-column view, matching highlights, aligned rows.
-5. **GUI polish:** hover dictionary, changed-only toggle, themes, reload on change.
