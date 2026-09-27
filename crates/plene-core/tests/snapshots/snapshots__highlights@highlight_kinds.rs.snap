@@ -1,0 +1,20 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_highlights(&source)
+input_file: crates/plene-core/tests/fixtures/highlight_kinds.rs
+---
+  1 | //! Inner doc comment.:Comment
+  2 |
+  3 | enum:Keyword Shape:Type {:Punctuation Circle:Identifier }:Punctuation
+  4 | union:Keyword Bits:Type {:Punctuation int:Identifier ::Punctuation u32:Type }:Punctuation
+  5 | trait:Keyword Draw:Type {:Punctuation }:Punctuation
+  6 | type:Keyword Id:Type =:Operator u64:Type ;:Punctuation
+  7 | macro:Keyword m:Macro (:Punctuation $:Punctuation x:Identifier ::Punctuation expr:Identifier ):Punctuation {:Punctuation $:Punctuation x:Identifier }:Punctuation
+  8 |
+  9 | fn:Keyword literals:Function (:Punctuation ):Punctuation {:Punctuation
+ 10 | let:Keyword raw:Identifier =:Operator b'a':String ;:Punctuation
+ 11 | let:Keyword bytes:Identifier =:Operator b"bytes":String ;:Punctuation
+ 12 | let:Keyword c:Identifier =:Operator c"c string":String ;:Punctuation
+ 13 | let:Keyword _:Keyword =:Operator raw:Identifier ;:Punctuation
+ 14 | let:Keyword default:Identifier =:Operator 1:Number ;:Punctuation
+ 15 | }:Punctuation

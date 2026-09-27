@@ -5,5 +5,6 @@ input_file: crates/plene-core/tests/fixtures/parse_error.rs
 ---
   1 | fn:Keyword broken:Function (:Punctuation x:Identifier ::Punctuation &:Operator mut:Keyword {:Punctuation
   2 | let:Keyword y:Identifier =:Operator x:Identifier ?:Operator
-  3 | struct:Keyword
-  4 | }:Punctuation
+  3 | let:Keyword z:Identifier =:Operator │:Plain ;:Punctuation
+  4 | struct:Keyword
+  5 | }:Punctuation

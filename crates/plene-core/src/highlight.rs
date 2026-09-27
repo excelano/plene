@@ -76,16 +76,10 @@ fn classify_ident(parent: &SyntaxNode) -> HighlightClass {
 /// final segment's `PATH` sits directly under the type, while `std` and `io` sit in
 /// nested qualifier paths.
 fn classify_path_segment(segment: &SyntaxNode) -> HighlightClass {
-    let Some(path) = segment.parent() else {
-        return HighlightClass::Identifier;
-    };
-    let Some(owner) = path.parent() else {
-        return HighlightClass::Identifier;
-    };
-    match owner.kind() {
-        PATH_TYPE => HighlightClass::Type,
-        MACRO_CALL => HighlightClass::Macro,
-        PATH_EXPR if is_callee(&owner) => HighlightClass::Function,
+    match segment.parent().and_then(|path| path.parent()) {
+        Some(owner) if owner.kind() == PATH_TYPE => HighlightClass::Type,
+        Some(owner) if owner.kind() == MACRO_CALL => HighlightClass::Macro,
+        Some(owner) if owner.kind() == PATH_EXPR && is_callee(&owner) => HighlightClass::Function,
         _ => HighlightClass::Identifier,
     }
 }

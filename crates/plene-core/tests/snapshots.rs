@@ -1,9 +1,10 @@
 use std::fmt::Write;
 use std::fs;
 
-use plene_core::{Edition, HighlightClass, transcribe};
+use plene_core::{Edition, transcribe};
 
-/// One line per source line: each non-plain span as `text:class`.
+/// One line per source line: each span as `text:class`, skipping whitespace. Showing
+/// non-whitespace `Plain` spans makes any token kind the classifier misses visible.
 fn render_highlights(source: &str) -> String {
     let mut out = String::new();
     for (number, line) in transcribe(source, Edition::default()).iter().enumerate() {
@@ -11,7 +12,7 @@ fn render_highlights(source: &str) -> String {
         for span in line
             .spans
             .iter()
-            .filter(|span| span.class != HighlightClass::Plain)
+            .filter(|span| !span.original.trim().is_empty())
         {
             write!(out, " {}:{:?}", span.original, span.class).unwrap();
         }
