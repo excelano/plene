@@ -34,10 +34,10 @@ input_file: crates/plene-core/tests/fixtures/roles.rs
  18 |     total
  19 | }
  20 | 
- 21 | // Tokens in macro and attribute arguments take no role.
+ 21 | // Tokens in unlisted macro arguments and in attribute arguments take no role.
  22 | fn unroled(a: u8) {
     | function unroled(a: u8) {
- 23 |     println!("{}", &a);
+ 23 |     log!("{}", &a);
  24 |     #[route(&mut state, fn() -> u8)]
  25 |     let attributed = a;
  26 | }

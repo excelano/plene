@@ -9,6 +9,7 @@ mod glossary;
 mod highlight;
 mod role;
 mod spacing;
+mod walk;
 
 use std::ops::Range;
 
@@ -72,15 +73,10 @@ pub fn transcribe(source: &str, edition: Edition, glossary: &Glossary) -> Vec<Li
     let mut lines = Vec::new();
     let mut spans = Vec::new();
 
-    let tokens = parse
-        .syntax_node()
-        .descendants_with_tokens()
-        .filter_map(|element| element.into_token());
-    for token in tokens {
+    for (token, mut offset) in walk::tokens(&parse.syntax_node(), edition) {
         let class = highlight::classify(&token, edition);
         let role = role::classify(&token);
         let expansion = role.and_then(|role| glossary.expand(token.text(), role));
-        let mut offset = usize::from(token.text_range().start());
         for piece in token.text().split_inclusive('\n') {
             let (text, ending) = split_line_ending(piece);
             if !text.is_empty() {

@@ -1,0 +1,29 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_spans(&source)
+input_file: crates/plene-core/tests/fixtures/macros.rs
+---
+  1 | // The arguments of standard macros that take expressions are expanded.:Comment
+  2 | fn:Keyword/keyword listed:Function (:Punctuation a:Identifier ::Punctuation &:Operator/ref_type mut:Keyword/keyword Vec:Type <:Punctuation u8:Type >:Punctuation ,:Punctuation f:Identifier ::Punctuation &:Operator/ref_type mut:Keyword/keyword Formatter:Type <:Punctuation '_:Lifetime/lifetime_anonymous >:Punctuation ):Punctuation ->:Operator/ret_type Result:Type {:Punctuation
+  3 | assert:Macro !:Macro (:Punctuation !:Operator/not a:Identifier .:Punctuation is_empty:Function (:Punctuation ):Punctuation ,:Punctuation "{} left":String ,:Punctuation a:Identifier .:Punctuation len:Function (:Punctuation ):Punctuation ):Punctuation ;:Punctuation
+  4 | assert_eq:Macro !:Macro (:Punctuation a:Identifier .:Punctuation first:Function (:Punctuation ):Punctuation ,:Punctuation Some:Function (:Punctuation &:Operator/ref_expr 1:Number ):Punctuation ):Punctuation ;:Punctuation
+  5 | debug_assert_ne:Macro !:Macro (:Punctuation *:Operator/deref a:Identifier ,:Punctuation vec:Macro !:Macro [:Punctuation 0:Number ;:Punctuation 3:Number ]:Punctuation ):Punctuation ;:Punctuation
+  6 | let:Keyword halves:Identifier =:Operator vec:Macro !:Macro [:Punctuation &:Operator/ref_expr a:Identifier [:Punctuation ..:Operator/range 2:Number ]:Punctuation ,:Punctuation &:Operator/ref_expr a:Identifier [:Punctuation 2:Number ..:Operator/range_from ]:Punctuation ]:Punctuation ;:Punctuation
+  7 | let:Keyword masks:Identifier =:Operator vec:Macro !:Macro {:Punctuation |:Operator/closure_open x:Identifier ::Punctuation u8:Type |:Operator/closure_close x:Identifier &:Operator/binary 1:Number ,:Punctuation |:Operator/closure_open x:Identifier ::Punctuation u8:Type |:Operator/closure_close x:Identifier >>:Operator/binary 1:Number }:Punctuation ;:Punctuation
+  8 | println:Macro !:Macro (:Punctuation ):Punctuation ;:Punctuation
+  9 | let:Keyword total:Identifier =:Operator std:Identifier :::Punctuation format:Macro !:Macro (:Punctuation "{n}":String ,:Punctuation n:Identifier =:Operator a:Identifier .:Punctuation iter:Function (:Punctuation ):Punctuation .:Punctuation map:Function (:Punctuation |:Operator/closure_open b:Identifier |:Operator/closure_close *:Operator/deref b:Identifier as:Keyword u32:Type ):Punctuation .:Punctuation sum:Function :::Punctuation <:Punctuation u32:Type >:Punctuation (:Punctuation ):Punctuation ):Punctuation ;:Punctuation
+ 10 | write:Macro !:Macro (:Punctuation
+ 11 | f:Identifier ,:Punctuation
+ 12 | "{}":String ,:Punctuation // the count:Comment
+ 13 | a:Identifier .:Punctuation len:Function (:Punctuation ):Punctuation
+ 14 | ):Punctuation ?:Operator/try ;:Punctuation
+ 15 | Ok:Function (:Punctuation (:Punctuation ):Punctuation ):Punctuation
+ 16 | }:Punctuation
+ 17 |
+ 18 | // Arguments that do not parse as expressions, and other macros, are left alone.:Comment
+ 19 | fn:Keyword/keyword unlisted:Function (:Punctuation a:Identifier ::Punctuation &:Operator/ref_type u8:Type ):Punctuation {:Punctuation
+ 20 | format:Macro !:Macro (:Punctuation "{}":String ,:Punctuation type:Keyword =:Operator &:Operator a:Identifier ):Punctuation ;:Punctuation
+ 21 | stringify:Macro !:Macro (:Punctuation &:Operator a:Identifier ):Punctuation ;:Punctuation
+ 22 | assert_eq:Macro !:Macro (:Punctuation &:Operator/ref_expr a:Identifier ,:Punctuation T:Macro !:Macro [:Punctuation _:Keyword ]:Punctuation ):Punctuation ;:Punctuation
+ 23 | assert:Macro !:Macro (:Punctuation matches:Macro !:Macro (:Punctuation a:Identifier ,:Punctuation &:Operator 1:Number |:Operator &:Operator 2:Number ):Punctuation ):Punctuation ;:Punctuation
+ 24 | }:Punctuation

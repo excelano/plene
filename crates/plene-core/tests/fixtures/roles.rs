@@ -18,9 +18,9 @@ pub fn roles<'a>(&mut self, text: &'a str, items: &[u8]) -> Result<&'static str,
     total
 }
 
-// Tokens in macro and attribute arguments take no role.
+// Tokens in unlisted macro arguments and in attribute arguments take no role.
 fn unroled(a: u8) {
-    println!("{}", &a);
+    log!("{}", &a);
     #[route(&mut state, fn() -> u8)]
     let attributed = a;
 }

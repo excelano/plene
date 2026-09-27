@@ -96,6 +96,42 @@ fn tokens_in_error_nodes_have_no_role() {
 }
 
 #[test]
+fn listed_macro_arguments_take_roles() {
+    for source in [
+        "fn f() { assert!(!x); }",
+        "fn f() { std::assert!(!x); }",
+        "fn f() { assert![!x]; }",
+        "fn f() { assert! { !x }; }",
+        "fn f() { assert!(y, \"{}\", format!(\"{}\", !x)); }",
+    ] {
+        let roles = roles_in(source);
+        assert!(
+            roles
+                .iter()
+                .any(|(text, role)| text == "!" && *role == Role::Not),
+            "{source}: {roles:?}"
+        );
+    }
+}
+
+#[test]
+fn other_macro_arguments_take_no_role() {
+    for source in [
+        "fn f() { log!(&a); }",
+        "fn f() { format!(\"{}\", type = &a); }",
+        "fn f() { println!(&a, b; }",
+        "fn f() { println!(&a, ()",
+        "{ println!(&a); }",
+    ] {
+        let roles = roles_in(source);
+        assert!(
+            !roles.iter().any(|(text, _)| text == "&"),
+            "{source}: {roles:?}"
+        );
+    }
+}
+
+#[test]
 fn impl_reads_by_where_it_stands() {
     let roles = roles_in("impl<T> S<T> {}\nfn f(x: impl Tr) -> impl Tr { x }");
     let impls: Vec<_> = roles

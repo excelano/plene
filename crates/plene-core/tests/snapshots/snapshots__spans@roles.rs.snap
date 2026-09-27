@@ -23,9 +23,9 @@ input_file: crates/plene-core/tests/fixtures/roles.rs
  18 | total:Identifier
  19 | }:Punctuation
  20 |
- 21 | // Tokens in macro and attribute arguments take no role.:Comment
+ 21 | // Tokens in unlisted macro arguments and in attribute arguments take no role.:Comment
  22 | fn:Keyword/keyword unroled:Function (:Punctuation a:Identifier ::Punctuation u8:Type ):Punctuation {:Punctuation
- 23 | println:Macro !:Macro (:Punctuation "{}":String ,:Punctuation &:Operator a:Identifier ):Punctuation ;:Punctuation
+ 23 | log:Macro !:Macro (:Punctuation "{}":String ,:Punctuation &:Operator a:Identifier ):Punctuation ;:Punctuation
  24 | #:Attribute [:Attribute route:Attribute (:Attribute &:Attribute mut:Attribute state:Attribute ,:Attribute fn:Attribute (:Attribute ):Attribute -:Attribute >:Attribute u8:Attribute ):Attribute ]:Attribute
  25 | let:Keyword attributed:Identifier =:Operator a:Identifier ;:Punctuation
  26 | }:Punctuation
