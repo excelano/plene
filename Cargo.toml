@@ -1,0 +1,12 @@
+[workspace]
+resolver = "3"
+members = ["crates/plene-core", "crates/plene"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[workspace.dependencies]
+plene-core = { path = "crates/plene-core" }
+ra_ap_syntax = "=0.0.352"

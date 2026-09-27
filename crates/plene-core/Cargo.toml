@@ -1,0 +1,12 @@
+[package]
+name = "plene-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+ra_ap_syntax.workspace = true
+# Not used directly. ra-ap-rustc_lexer asserts at compile time that unicode-ident and
+# unicode-properties share a Unicode version; unicode-ident 1.0.25 moved to Unicode 18
+# while unicode-properties 0.1.4 is on 17. Lift this cap when unicode-properties catches up.
+unicode-ident = ">=1.0.22, <1.0.25"
