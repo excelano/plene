@@ -3,6 +3,7 @@
 //! Author: David M. Anderson
 //! Built with AI assistance (Claude, Anthropic)
 
+use std::borrow::Cow;
 use std::fmt::Write;
 
 use anstyle::{Ansi256Color, AnsiColor, Color, Style};
@@ -55,7 +56,12 @@ pub fn interleaved(lines: &[Line], styling: Styling) -> String {
     for line in lines {
         out.push_str(SOURCE_GUTTER);
         for span in &line.spans {
-            paint(&mut out, &span.original, span_style(span), styling);
+            paint(
+                &mut out,
+                &visible(&span.original),
+                span_style(span),
+                styling,
+            );
         }
         out.push('\n');
         if is_changed(line) {
@@ -64,7 +70,7 @@ pub fn interleaved(lines: &[Line], styling: Styling) -> String {
             for span in &line.spans {
                 paint(
                     &mut out,
-                    &span.rendered,
+                    &visible(&span.rendered),
                     span_style(span).bg_color(band),
                     styling,
                 );
@@ -89,8 +95,32 @@ fn rendered_width(line: &Line) -> usize {
         + line
             .spans
             .iter()
-            .map(|span| span.rendered.width())
+            .map(|span| visible(&span.rendered).width())
             .sum::<usize>()
+}
+
+/// Source text with every character that could act on the terminal or on how the
+/// line displays written as a Rust escape instead: control characters other than
+/// tab, which could move the cursor or restyle the screen, and the Unicode
+/// bidirectional controls, which could show code in a different order from the
+/// order it compiles in.
+fn visible(text: &str) -> Cow<'_, str> {
+    if !text.chars().any(is_hazard) {
+        return Cow::Borrowed(text);
+    }
+    let mut escaped = String::with_capacity(text.len() + 8);
+    for c in text.chars() {
+        if is_hazard(c) {
+            write!(escaped, "\\u{{{:x}}}", u32::from(c)).unwrap();
+        } else {
+            escaped.push(c);
+        }
+    }
+    Cow::Owned(escaped)
+}
+
+fn is_hazard(c: char) -> bool {
+    (c.is_control() && c != '\t') || matches!(c, '\u{202a}'..='\u{202e}' | '\u{2066}'..='\u{2069}')
 }
 
 fn paint(out: &mut String, text: &str, style: Style, styling: Styling) {
@@ -200,6 +230,29 @@ mod tests {
             .collect();
         let widest = "»     let x = borrow y;".width();
         assert_eq!(widths, [widest, widest]);
+    }
+
+    #[test]
+    fn terminal_and_bidi_controls_are_shown_escaped() {
+        let source = "fn f() { let s = \"\u{1b}[2J\u{7}\u{9b}\u{202e}\u{2066}\tok\"; }\n";
+        let rendered = render(source, Styling::Plain);
+        let expected = "let s = \"\\u{1b}[2J\\u{7}\\u{9b}\\u{202e}\\u{2066}\tok\";";
+        assert_eq!(rendered.matches(expected).count(), 2, "{rendered:?}");
+        assert!(
+            rendered.lines().all(|line| !line.chars().any(is_hazard)),
+            "{rendered:?}"
+        );
+    }
+
+    #[test]
+    fn escaped_text_counts_toward_band_width() {
+        let styled = render("fn f() { \"\u{1b}\"; }\n", Styling::Colored(Theme::Dark));
+        let expansion = styled
+            .lines()
+            .map(strip)
+            .find(|line| line.starts_with('»'))
+            .unwrap();
+        assert_eq!(expansion, "» function f() { \"\\u{1b}\"; }");
     }
 
     #[test]

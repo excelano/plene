@@ -179,6 +179,7 @@ plene [OPTIONS] <FILE|->
 - ANSI color via the highlight classes, from the terminal's 16-color palette so it follows the user's theme. Tokens with a glossary role are underlined on both lines, pairing each token with its expansion.
 - A closed reader (`plene file.rs | head`) ends output quietly. Errors print `plene: …` and exit 1; argument errors exit 2.
 - `-` reads stdin.
+- Control characters other than tab, and the Unicode bidirectional controls, are printed as Rust escapes (`\u{1b}`), so source cannot drive the terminal or reorder how a line displays.
 - Should work cleanly with `less -R`.
 
 ### plene-gui (eframe/egui)

@@ -1,0 +1,20 @@
+# Dependabot keeps this repository's GitHub Actions current, so a security fix
+# arrives as a pull request rather than slipping past. The bumps are grouped
+# into one pull request so they land together.
+#
+# Crate versions are not Dependabot's work here: ra_ap_syntax is pinned to an
+# exact version, and moving it is deliberate and followed by the smoke test.
+# Security alerts are a separate switch and stay on.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns:
+          - "*"
