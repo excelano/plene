@@ -12,7 +12,7 @@ use std::process::ExitCode;
 use anstream::{AutoStream, ColorChoice};
 use clap::{Parser, ValueEnum};
 use plene_core::{Edition, Glossary, transcribe};
-use render::{Layout, Styling, Theme, View};
+use render::{Layout, LineRange, Styling, Theme, View};
 
 /// Shows Rust source alongside an expanded transcription: the same code with
 /// abbreviations and symbols written out in words.
@@ -44,8 +44,15 @@ struct Args {
     /// Show only lines the expansion changes, numbered with their source lines.
     #[arg(long)]
     changed_only: bool,
+    /// Show only these source lines, as START:END, counted from 1. Either end may be
+    /// left out.
+    #[arg(long, value_name = "START:END")]
+    lines: Option<LineRange>,
     /// Print the glossary in effect, as a glossary file, and exit.
-    #[arg(long, conflicts_with_all = ["file", "side_by_side", "expanded", "changed_only"])]
+    #[arg(
+        long,
+        conflicts_with_all = ["file", "side_by_side", "expanded", "changed_only", "lines"]
+    )]
     dump_glossary: bool,
 }
 
@@ -109,6 +116,13 @@ fn run(args: &Args) -> Result<(), String> {
         Some(file) => {
             let source = read_source(file)?;
             let lines = transcribe(&source, args.edition.into(), &glossary);
+            if let Some(range) = args.lines.filter(|range| range.start > lines.len()) {
+                return Err(format!(
+                    "--lines starts at {} but the source has {} lines",
+                    range.start,
+                    lines.len()
+                ));
+            }
             let styling = match stdout.current_choice() {
                 ColorChoice::Never => Styling::Plain,
                 _ => Styling::Colored(args.theme),
@@ -125,6 +139,7 @@ fn run(args: &Args) -> Result<(), String> {
                 View {
                     layout,
                     changed_only: args.changed_only,
+                    lines: args.lines,
                     styling,
                 },
             )

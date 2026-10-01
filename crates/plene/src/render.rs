@@ -5,6 +5,7 @@
 
 use std::borrow::Cow;
 use std::fmt::Write;
+use std::str::FromStr;
 
 use anstyle::{Ansi256Color, AnsiColor, Color, Style};
 use clap::ValueEnum;
@@ -58,12 +59,65 @@ pub enum Layout {
     Expanded,
 }
 
+/// An inclusive span of source lines, counted from 1.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LineRange {
+    pub start: usize,
+    pub end: usize,
+}
+
+impl LineRange {
+    fn contains(self, number: usize) -> bool {
+        (self.start..=self.end).contains(&number)
+    }
+}
+
+impl FromStr for LineRange {
+    type Err = String;
+
+    /// `START:END`, where either end may be left out to run to that end of the file.
+    fn from_str(text: &str) -> Result<LineRange, String> {
+        let (start, end) = text
+            .split_once(':')
+            .ok_or("expected START:END, as in 40:80")?;
+        let number = |digits: &str, default: usize| {
+            if digits.is_empty() {
+                Ok(default)
+            } else {
+                digits
+                    .parse::<usize>()
+                    .map_err(|_| format!("`{digits}` is not a line number"))
+            }
+        };
+        let range = LineRange {
+            start: number(start, 1)?,
+            end: number(end, usize::MAX)?,
+        };
+        if range.start == 0 {
+            Err("lines are counted from 1".to_string())
+        } else if range.start > range.end {
+            Err(format!("the range ends at {} before it starts", range.end))
+        } else {
+            Ok(range)
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct View {
     pub layout: Layout,
-    /// Only lines the expansion changes, each numbered with its source line.
+    /// Only lines the expansion changes.
     pub changed_only: bool,
+    /// Only these source lines.
+    pub lines: Option<LineRange>,
     pub styling: Styling,
+}
+
+impl View {
+    /// Rows carry their source line numbers whenever some lines are left out.
+    fn numbered(self) -> bool {
+        self.changed_only || self.lines.is_some()
+    }
 }
 
 /// Draws the transcribed lines. With color, expansions sit on a background band
@@ -72,11 +126,12 @@ pub fn draw(lines: &[Line], view: View) -> String {
     let rows: Vec<(usize, &Line)> = lines
         .iter()
         .enumerate()
-        .filter(|(_, line)| !view.changed_only || is_changed(line))
         .map(|(index, line)| (index + 1, line))
+        .filter(|(number, _)| view.lines.is_none_or(|range| range.contains(*number)))
+        .filter(|(_, line)| !view.changed_only || is_changed(line))
         .collect();
     let number_width = match rows.last() {
-        Some((number, _)) if view.changed_only => number.to_string().len(),
+        Some((number, _)) if view.numbered() => number.to_string().len(),
         _ => 0,
     };
     let band_width = rows
@@ -161,7 +216,7 @@ impl Canvas {
 
     /// A source line number, or blanks of the same width, when lines are numbered.
     fn number(&mut self, number: Option<usize>) {
-        if self.view.changed_only {
+        if self.view.numbered() {
             let text = match number {
                 Some(number) => format!("{number:>width$} ", width = self.number_width),
                 None => " ".repeat(self.number_width + 1),
@@ -268,12 +323,23 @@ mod tests {
     }
 
     fn draw_view(source: &str, layout: Layout, changed_only: bool, styling: Styling) -> String {
-        let lines = transcribe(source, Edition::default(), &Glossary::default());
+        draw_range(source, layout, changed_only, None, styling)
+    }
+
+    fn draw_range(
+        source: &str,
+        layout: Layout,
+        changed_only: bool,
+        lines: Option<LineRange>,
+        styling: Styling,
+    ) -> String {
+        let transcribed = transcribe(source, Edition::default(), &Glossary::default());
         draw(
-            &lines,
+            &transcribed,
             View {
                 layout,
                 changed_only,
+                lines,
                 styling,
             },
         )
@@ -466,5 +532,69 @@ mod tests {
         colors.dedup();
         assert_eq!(colors.len(), colored.len(), "two classes share a color");
         assert_eq!(color(Attribute), color(Comment));
+    }
+
+    const TEN: &str = "a;\nb;\nc;\nd;\ne;\nf;\ng;\nh;\nfn i() {}\nj;\n";
+
+    fn range(text: &str) -> Option<LineRange> {
+        Some(text.parse().unwrap())
+    }
+
+    #[test]
+    fn line_ranges_parse_with_either_end_open() {
+        let parsed = |text: &str| text.parse::<LineRange>();
+        assert_eq!(parsed("40:80"), Ok(LineRange { start: 40, end: 80 }));
+        assert_eq!(parsed("7:7"), Ok(LineRange { start: 7, end: 7 }));
+        assert_eq!(
+            parsed("40:"),
+            Ok(LineRange {
+                start: 40,
+                end: usize::MAX
+            })
+        );
+        assert_eq!(parsed(":80"), Ok(LineRange { start: 1, end: 80 }));
+        assert_eq!(
+            parsed(":"),
+            Ok(LineRange {
+                start: 1,
+                end: usize::MAX
+            })
+        );
+        for (text, message) in [
+            ("40", "expected START:END, as in 40:80"),
+            ("a:9", "`a` is not a line number"),
+            ("1:-2", "`-2` is not a line number"),
+            ("0:5", "lines are counted from 1"),
+            ("9:3", "the range ends at 3 before it starts"),
+        ] {
+            assert_eq!(parsed(text), Err(message.to_string()), "{text}");
+        }
+    }
+
+    #[test]
+    fn a_range_numbers_its_rows_with_source_lines_in_every_layout() {
+        let drawn = |layout| draw_range(TEN, layout, false, range("9:10"), Styling::Plain);
+        assert_eq!(
+            drawn(Layout::Interleaved),
+            " 9   fn i() {}\n   » function i() {}\n10   j;\n"
+        );
+        assert_eq!(
+            drawn(Layout::SideBySide),
+            " 9 fn i() {} │ function i() {}\n10 j;        │ j;\n"
+        );
+        assert_eq!(drawn(Layout::Expanded), " 9 function i() {}\n10 j;\n");
+    }
+
+    #[test]
+    fn a_range_past_the_end_stops_at_the_last_line() {
+        let drawn = draw_range(TEN, Layout::Expanded, false, range("10:99"), Styling::Plain);
+        assert_eq!(drawn, "10 j;\n");
+    }
+
+    #[test]
+    fn a_range_and_changed_only_both_apply() {
+        let source = format!("fn a() {{}}\n{}fn b() {{}}\n", "x;\n".repeat(9));
+        let drawn = draw_range(&source, Layout::Expanded, true, range("2:"), Styling::Plain);
+        assert_eq!(drawn, "11 function b() {}\n");
     }
 }

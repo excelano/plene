@@ -333,8 +333,9 @@ fn layouts_reach_the_output() {
 
 #[test]
 fn layouts_are_exclusive_and_need_a_file() {
-    let rejected: [&[&str]; 4] = [
+    let rejected: [&[&str]; 5] = [
         &["--side-by-side", "--expanded", "-"],
+        &["--dump-glossary", "--lines", "1:2"],
         &["--dump-glossary", "--side-by-side"],
         &["--dump-glossary", "--expanded"],
         &["--dump-glossary", "--changed-only"],
@@ -342,4 +343,29 @@ fn layouts_are_exclusive_and_need_a_file() {
     for args in rejected {
         assert_eq!(plene(args, "").status.code(), Some(2), "{args:?}");
     }
+}
+
+#[test]
+fn lines_selects_a_numbered_range_of_the_source() {
+    let source = "x;\nfn f() {}\ny;\nfn g() {}\n";
+    let both = stdout(&plene(&["--expanded", "--lines", "2:3", "-"], source));
+    assert_eq!(both, "2 function f() {}\n3 y;\n");
+    let open_ended = stdout(&plene(&["--expanded", "--lines", "3:", "-"], source));
+    assert_eq!(open_ended, "3 y;\n4 function g() {}\n");
+    let clamped = stdout(&plene(&["--expanded", "--lines", "4:99", "-"], source));
+    assert_eq!(clamped, "4 function g() {}\n");
+}
+
+#[test]
+fn lines_rejects_a_bad_range_and_a_start_past_the_end() {
+    let bad = plene(&["--lines", "9:3", "-"], "x;\n");
+    assert_eq!(bad.status.code(), Some(2));
+    assert!(stderr(&bad).contains("the range ends at 3 before it starts"));
+    let past = plene(&["--lines", "5:", "-"], "x;\ny;\n");
+    assert_eq!(past.status.code(), Some(1));
+    assert_eq!(
+        stderr(&past),
+        "plene: --lines starts at 5 but the source has 2 lines\n"
+    );
+    assert_eq!(stdout(&past), "");
 }
