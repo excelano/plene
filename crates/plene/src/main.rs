@@ -11,7 +11,7 @@ use std::process::ExitCode;
 
 use anstream::{AutoStream, ColorChoice};
 use clap::{Parser, ValueEnum};
-use plene_core::{Edition, Glossary, transcribe};
+use plene_core::{Category, Edition, Glossary, transcribe};
 use render::{Layout, LineRange, Styling, Theme, View};
 
 /// Shows Rust source alongside an expanded transcription: the same code with
@@ -35,6 +35,11 @@ struct Args {
     /// the config directory.
     #[arg(long, value_name = "PATH")]
     glossary: Option<PathBuf>,
+    /// Leave these categories as written instead of expanding them, comma-separated:
+    /// keywords, visibility, mutability, references, operators, ranges, patterns,
+    /// lifetimes, bounds, flow.
+    #[arg(long, value_delimiter = ',', value_name = "CATEGORY")]
+    keep: Vec<Category>,
     /// Show the source and its expansion in two columns.
     #[arg(long, conflicts_with = "expanded")]
     side_by_side: bool,
@@ -51,7 +56,7 @@ struct Args {
     /// Print the glossary in effect, as a glossary file, and exit.
     #[arg(
         long,
-        conflicts_with_all = ["file", "side_by_side", "expanded", "changed_only", "lines"]
+        conflicts_with_all = ["file", "keep", "side_by_side", "expanded", "changed_only", "lines"]
     )]
     dump_glossary: bool,
 }
@@ -115,7 +120,7 @@ fn run(args: &Args) -> Result<(), String> {
     let output = match &args.file {
         Some(file) => {
             let source = read_source(file)?;
-            let lines = transcribe(&source, args.edition.into(), &glossary);
+            let lines = transcribe(&source, args.edition.into(), &glossary.without(&args.keep));
             if let Some(range) = args.lines.filter(|range| range.start > lines.len()) {
                 return Err(format!(
                     "--lines starts at {} but the source has {} lines",

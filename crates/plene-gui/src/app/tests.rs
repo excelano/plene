@@ -494,3 +494,88 @@ fn closing_the_search_ends_the_marks() {
     harness.run();
     assert!(harness.state().search.marks(0, Side::Source).is_empty());
 }
+
+/// The transcription of the first span of the first line whose source is `original`.
+fn rendered(harness: &Harness<'_, App>, original: &str) -> String {
+    harness.state().document.as_ref().unwrap().lines[0]
+        .spans
+        .iter()
+        .find(|span| span.original == original)
+        .unwrap()
+        .rendered
+        .clone()
+}
+
+/// Opens the Expand menu and clicks the checkbox for `label`.
+fn toggle_expansion(harness: &mut Harness<'_, App>, label: &str) {
+    harness.get_by_label("Expand").click();
+    harness.run();
+    harness.get_by_label(label).click();
+    harness.run();
+}
+
+const LIFETIME: &str = "fn f<'a>(x: &'a u8) {}\n";
+
+#[test]
+fn the_expand_menu_switches_a_category_off_and_on() {
+    let mut harness = opened(LIFETIME, "expand.rs", WIDE);
+    assert_eq!(rendered(&harness, "'a"), "lifetime a");
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    assert_eq!(harness.state().kept, [Category::Lifetimes]);
+    assert_eq!(rendered(&harness, "'a"), "'a");
+    assert_eq!(
+        rendered(&harness, "fn"),
+        "function",
+        "other categories stay on"
+    );
+    assert_eq!(rendered(&harness, "&"), "borrowed");
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    assert!(harness.state().kept.is_empty());
+    assert_eq!(rendered(&harness, "'a"), "lifetime a");
+}
+
+#[test]
+fn a_category_left_as_written_shows_no_card() {
+    let mut harness = opened("fn f() {}\n", "no_card.rs", WIDE);
+    assert!(hover_shows(&mut harness, 450..900, "Declares a function."));
+    toggle_expansion(&mut harness, "Keywords");
+    assert!(!hover_shows(&mut harness, 0..900, "Declares a function."));
+}
+
+#[test]
+fn switching_a_category_keeps_the_selection_and_searches_the_new_text() {
+    let mut harness = opened(LIFETIME, "keeps.rs", WIDE);
+    harness.key_press_modifiers(Modifiers::COMMAND, Key::F);
+    harness.run();
+    harness
+        .get_by_role(NodeRole::TextInput)
+        .type_text("lifetime a");
+    harness.run();
+    harness.get_by_label("1 of 2");
+    assert_eq!(selected(&harness), Some(0));
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    assert_eq!(selected(&harness), Some(0));
+    harness.get_by_label("No matches");
+}
+
+#[test]
+fn the_choice_holds_across_the_files_opened() {
+    let mut harness = opened(LIFETIME, "first_choice.rs", WIDE);
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    let dropped = temp_file("second_choice.rs", LIFETIME);
+    harness.input_mut().dropped_files = vec![Arc::new(Dropped(dropped))];
+    harness.run();
+    harness.get_by_label("second_choice.rs");
+    assert_eq!(rendered(&harness, "'a"), "'a");
+    assert_eq!(rendered(&harness, "fn"), "function");
+}
+
+#[test]
+fn every_category_has_a_checkbox() {
+    let mut harness = opened(LIFETIME, "menu.rs", WIDE);
+    harness.get_by_label("Expand").click();
+    harness.run();
+    for category in Category::ALL {
+        harness.get_by_label(category.label());
+    }
+}

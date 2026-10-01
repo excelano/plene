@@ -43,7 +43,7 @@ The window is a separate package, `plene-gui`, from the same apt repository (`su
     plene src/main.rs
     plene --color always src/main.rs | less -R
 
-`plene -` reads standard input. `--side-by-side` and `--expanded` change the layout, `--changed-only` keeps just the lines that change, `--lines 40:80` keeps just those source lines, and `plene --help` lists the rest.
+`plene -` reads standard input. `--side-by-side` and `--expanded` change the layout, `--changed-only` keeps just the lines that change, `--lines 40:80` keeps just those source lines, `--keep lifetimes,visibility` leaves those kinds of notation as written, and `plene --help` lists the rest.
 
     plene-gui src/main.rs
 

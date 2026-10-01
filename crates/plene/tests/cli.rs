@@ -333,7 +333,8 @@ fn layouts_reach_the_output() {
 
 #[test]
 fn layouts_are_exclusive_and_need_a_file() {
-    let rejected: [&[&str]; 5] = [
+    let rejected: [&[&str]; 6] = [
+        &["--dump-glossary", "--keep", "lifetimes"],
         &["--side-by-side", "--expanded", "-"],
         &["--dump-glossary", "--lines", "1:2"],
         &["--dump-glossary", "--side-by-side"],
@@ -368,4 +369,47 @@ fn lines_rejects_a_bad_range_and_a_start_past_the_end() {
         "plene: --lines starts at 5 but the source has 2 lines\n"
     );
     assert_eq!(stdout(&past), "");
+}
+
+#[test]
+fn keep_leaves_the_named_categories_as_written() {
+    let source = "pub fn f<'a>(x: &'a mut u8) {}\n";
+    let expanded = |keep: &[&str]| {
+        let mut args = vec!["--expanded"];
+        args.extend_from_slice(keep);
+        args.push("-");
+        stdout(&plene(&args, source))
+    };
+    assert_eq!(
+        expanded(&[]),
+        "public function f<lifetime a>(x: borrowed lifetime a mutable u8) {}\n"
+    );
+    assert_eq!(
+        expanded(&["--keep", "lifetimes"]),
+        "public function f<'a>(x: borrowed 'a mutable u8) {}\n"
+    );
+    assert_eq!(
+        expanded(&["--keep", "lifetimes,visibility,references"]),
+        "pub function f<'a>(x: &'a mutable u8) {}\n"
+    );
+    assert_eq!(
+        expanded(&["--keep", "mutability", "--keep", "keywords"]),
+        "public fn f<lifetime a>(x: borrowed lifetime a mut u8) {}\n"
+    );
+}
+
+#[test]
+fn keep_rejects_an_unknown_category_naming_the_known() {
+    let output = plene(&["--keep", "lifetimes,nope", "-"], "fn f() {}\n");
+    assert_eq!(output.status.code(), Some(2));
+    assert!(stderr(&output).contains("unknown category `nope`; one of: keywords, visibility"));
+}
+
+#[test]
+fn help_lists_every_category() {
+    let help = stdout(&plene(&["--help"], ""));
+    let flat = help.split_whitespace().collect::<Vec<_>>().join(" ");
+    for category in plene_core::Category::ALL {
+        assert!(flat.contains(category.as_str()), "{category} not in --help");
+    }
 }

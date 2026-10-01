@@ -98,6 +98,25 @@ Examples and notes:
 - `_x`-style identifiers are identifiers; leave them alone.
 - Syntax alone can't see types, so some expansions are approximate. `&`, `|` and `^` on `bool` operands are non-short-circuit logical operators, not bitwise ones, and `!` on an integer is bitwise not. The glossary uses the common reading.
 
+## Categories
+
+A reader who has grown used to some of the notation can leave it as written. The roles are grouped into categories, each switched on or off as a whole, and every role belongs to exactly one: `Category::of` matches on the role, and on the token for the `keyword` role, which covers several words. Adding a role fails to compile until it is placed.
+
+| Category | Id | Covers |
+|---|---|---|
+| Keywords | `keywords` | `fn`, `mod`, `extern`, `dyn`, `impl` |
+| Visibility | `visibility` | `pub` |
+| Mutability | `mutability` | `mut` |
+| References and pointers | `references` | `&`, `*` as dereference or raw pointer, `ref` |
+| Operators | `operators` | bitwise and shift operators and their compound assignments, prefix `!` |
+| Ranges | `ranges` | `..` and `..=` as ranges |
+| Patterns and wildcards | `patterns` | `\|` between alternatives, `@`, `_`, `..` as a rest or a struct update |
+| Lifetimes and labels | `lifetimes` | lifetimes, labels, `'a: 'b` |
+| Trait bounds | `bounds` | `:` and `+` in bounds, `?Sized`, `impl !Trait` |
+| Match arms, returns, closures and `?` | `flow` | `=>`, `->`, the closure pipes, `?` |
+
+Switching a category off removes its entries from the glossary that transcribes, with `Glossary::without`, so the tokens it covers come out as written and carry no role: no underline and no hover card. The glossary the hover cards read is unchanged. The invariants hold for any set of categories off, and with all of them off the transcription is the source.
+
 ## Glossary file format
 
 The default glossary lives at `crates/plene-core/glossary.toml` and is embedded via `include_str!`. It sits inside the crate so `cargo publish` packages it. Two files may override it, merging by `(token, role)`: the config directory's `plene/glossary.toml`, then the file named with `--glossary`, so the named file wins. The config directory is `$XDG_CONFIG_HOME`, or `~/.config` when that is unset or not an absolute path, on every platform. A missing config file is silent; one that exists and fails to parse is an error, as a bad `--glossary` file is.
@@ -171,6 +190,7 @@ plene [OPTIONS] <FILE|->
   --expanded         the transcription alone
   --changed-only     only lines that differ, numbered with their source lines
   --lines <START:END>  only these source lines, numbered; either end may be left out
+  --keep <CATEGORY,...>  leave these categories as written, not expanded
   --color <auto|always|never>
   --theme <dark|light>              (default dark)
   --edition <2015|2018|2021|2024>   (default 2021)
@@ -179,6 +199,7 @@ plene [OPTIONS] <FILE|->
 ```
 
 - Interleaved output marks lines in a two-column gutter: blank for source lines, `» ` for expansion lines, so the two are distinguishable without color and indentation stays aligned. With color, expansion lines also sit on a subtle background band, padded with spaces to the widest expansion line so the bands form an even block. Padding uses spaces rather than an erase-to-end-of-line escape, which `less -R` would print literally. `--theme <dark|light>` (default dark) picks the band for the terminal's background.
+- `--keep` takes categories, comma-separated or repeated, and leaves them as written. An unknown name is an argument error that lists the known ones.
 - The three layouts are exclusive; `--changed-only` and `--lines` filter any of them, and both number the rows they keep with their source lines. The whole file is parsed whatever the range, so a line's roles do not depend on it. A range's end is clamped to the file; a start past the last line is an error. Side by side, the left column is padded to the widest source line and never truncated, and changed lines carry the band on the right; `less -RS` scrolls a wide result. Blank lines print as empty lines in every layout, leaving no trailing spaces.
 - ANSI color via the highlight classes, from the terminal's 16-color palette so it follows the user's theme. Tokens with a glossary role are underlined on both lines, pairing each token with its expansion.
 - A closed reader (`plene file.rs | head`) ends output quietly. Errors print `plene: …` and exit 1; argument errors exit 2.
@@ -203,6 +224,7 @@ plene-gui [OPTIONS] [FILE]
 - Syntax highlighting on both sides uses matching colors, from a dark and a light palette in the CLI's color families. Tokens with a glossary role are underlined on both sides, as in the CLI.
 - Hovering a token with a glossary role, on either side, shows the token and its expansion, its role, and the glossary `note`. egui merges neighbouring text of one format, so the token under the pointer is found from the spans' own lengths, not from the laid-out sections.
 - Ctrl+F opens a search bar under the toolbar; Escape closes it. The query is a substring, with ASCII letters matching in either case, searched in the text of each line as a pane shows it, so `borrowed mutable` finds what the source spells `&mut` and a match may run across tokens. The bar chooses the source, the transcription or both, and searches only the panes on screen; choosing the transcription shows its pane. Matches are highlighted in the panes, the current one more strongly. Enter and Shift+Enter, or the Next and Previous buttons, step through the matches in row order, source before transcription within a row, wrapping at the ends; a step selects the match's row and scrolls to it. Typing a query goes to the first match from the selected row, or from the first row in view. While the field has the keyboard, the arrow and page keys leave the rows alone.
+- An Expand menu in the toolbar holds a checkbox for each category; unchecking one leaves what it covers as written. The transcription is made again, so the selection stays and the search runs over the new text. All are on at start, and the choice holds across the files opened.
 - A toggle for changed-only lines.
 - Light and dark themes, with a switch; on Linux the system theme comes from the XDG portal, since winit reports none there.
 - Reload when the file changes on disk (nice to have).

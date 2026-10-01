@@ -10,6 +10,7 @@ use plene_core::{Edition, Glossary, Line, transcribe};
 pub struct Document {
     /// The file's name, for the window title and the toolbar.
     pub name: String,
+    source: String,
     pub lines: Vec<Line>,
 }
 
@@ -22,9 +23,16 @@ impl Document {
             .unwrap_or(path.as_os_str())
             .to_string_lossy()
             .into_owned();
+        let lines = transcribe(&source, edition, glossary);
         Ok(Document {
             name,
-            lines: transcribe(&source, edition, glossary),
+            source,
+            lines,
         })
+    }
+
+    /// Transcribes the source again, with a glossary that now expands something else.
+    pub fn transcribe(&mut self, edition: Edition, glossary: &Glossary) {
+        self.lines = transcribe(&self.source, edition, glossary);
     }
 }

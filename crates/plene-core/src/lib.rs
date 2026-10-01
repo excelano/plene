@@ -5,6 +5,7 @@
 
 #![forbid(unsafe_code)]
 
+mod category;
 mod glossary;
 mod highlight;
 mod role;
@@ -15,6 +16,7 @@ use std::ops::Range;
 
 use ra_ap_syntax::SourceFile;
 
+pub use category::{Category, UnknownCategory};
 pub use glossary::{Glossary, GlossaryEntry, GlossaryError};
 pub use highlight::HighlightClass;
 pub use role::{Role, UnknownRole};
@@ -77,6 +79,8 @@ pub fn transcribe(source: &str, edition: Edition, glossary: &Glossary) -> Vec<Li
         let class = highlight::classify(&token, edition);
         let role = role::classify(&token);
         let expansion = role.and_then(|role| glossary.expand(token.text(), role));
+        // A token the glossary has no entry for has no role to show.
+        let role = role.filter(|_| expansion.is_some());
         for piece in token.text().split_inclusive('\n') {
             let (text, ending) = split_line_ending(piece);
             if !text.is_empty() {

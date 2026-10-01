@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+use crate::category::Category;
 use crate::role::Role;
 
 const BUILTIN: &str = include_str!("../glossary.toml");
@@ -135,6 +136,14 @@ impl Glossary {
             }
             self.entries.insert(key, entry);
         }
+    }
+
+    /// This glossary without the entries of `categories`, so that what they cover is
+    /// kept as written.
+    pub fn without(&self, categories: &[Category]) -> Glossary {
+        let mut entries = self.entries.clone();
+        entries.retain(|_, entry| !categories.contains(&Category::of(&entry.token, entry.role)));
+        Glossary { entries }
     }
 
     /// The glossary as a file `parse` reads back to the same entries, ordered by role

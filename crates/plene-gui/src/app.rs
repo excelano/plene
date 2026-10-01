@@ -12,7 +12,7 @@ use eframe::egui::{
     Align2, CentralPanel, FontId, Key, KeyboardShortcut, Modifiers, Panel, Rect, RichText,
     ScrollArea, Sense, TextEdit, Ui, Vec2, ViewportCommand,
 };
-use plene_core::{Edition, Glossary, Role, Span};
+use plene_core::{Category, Edition, Glossary, Role, Span};
 
 use crate::document::Document;
 use crate::rows::Rows;
@@ -43,6 +43,9 @@ pub struct App {
     /// Whether the transcription's pane shows beside the source's. It does at start,
     /// and the choice holds across the files opened.
     show_transcription: bool,
+    /// The categories the reader has switched off: left as written in the
+    /// transcription. All are on at start, and the choice holds across the files opened.
+    kept: Vec<Category>,
     search: Search,
     title: String,
 }
@@ -87,6 +90,7 @@ impl App {
             document: None,
             view: View::default(),
             show_transcription: true,
+            kept: Vec::new(),
             search: Search::default(),
             title: String::new(),
         };
@@ -97,7 +101,7 @@ impl App {
     }
 
     fn open(&mut self, path: &Path) {
-        match Document::open(path, self.edition, &self.glossary) {
+        match Document::open(path, self.edition, &self.glossary.without(&self.kept)) {
             Ok(document) => {
                 self.document = Some(document);
                 self.view = View::default();
@@ -187,8 +191,9 @@ impl App {
                 .toggle_value(&mut self.show_transcription, "Transcription")
                 .changed()
             {
-                self.show_transcription_changed();
+                self.rows_changed();
             }
+            self.expand_menu(ui);
             if let Some(document) = &self.document {
                 ui.label(RichText::new(&document.name).strong());
             }
@@ -202,11 +207,33 @@ impl App {
         }
     }
 
-    /// Rows are as tall as their tallest side, so they are measured again, and what
-    /// the search can see has changed.
-    fn show_transcription_changed(&mut self) {
+    /// What the rows hold or how tall they are has changed: they are measured again,
+    /// and the search has new text to look through.
+    fn rows_changed(&mut self) {
         self.view.rows = Rows::default();
         self.search.mark_stale();
+    }
+
+    /// A checkbox for each category of expansion. The transcription is made again
+    /// when one changes.
+    fn expand_menu(&mut self, ui: &mut Ui) {
+        ui.menu_button("Expand", |ui| {
+            for &category in Category::ALL {
+                let mut expanded = !self.kept.contains(&category);
+                if ui.checkbox(&mut expanded, category.label()).changed() {
+                    if expanded {
+                        self.kept.retain(|kept| *kept != category);
+                    } else {
+                        self.kept.push(category);
+                    }
+                    let glossary = self.glossary.without(&self.kept);
+                    if let Some(document) = &mut self.document {
+                        document.transcribe(self.edition, &glossary);
+                    }
+                    self.rows_changed();
+                }
+            }
+        });
     }
 
     /// The search field, where to search, the way round the matches, and how many there
@@ -239,7 +266,7 @@ impl App {
                     changed = true;
                     if scope == Scope::Transcription && !self.show_transcription {
                         self.show_transcription = true;
-                        self.show_transcription_changed();
+                        self.rows_changed();
                     }
                 }
             }
