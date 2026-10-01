@@ -8,6 +8,7 @@
 mod app;
 mod document;
 mod rows;
+mod search;
 mod text;
 
 use std::path::PathBuf;

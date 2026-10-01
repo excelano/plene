@@ -4,11 +4,27 @@
 //! Author: David M. Anderson
 //! Built with AI assistance (Claude, Anthropic)
 
+use std::ops::Range;
+
 use eframe::egui::text::LayoutJob;
 use eframe::egui::{Color32, FontId, Galley, Stroke, TextFormat, Vec2, Visuals};
 use plene_core::{HighlightClass, Line, Span};
 
 pub const FONT_SIZE: f32 = 14.0;
+
+/// Backgrounds for the text a search matched, translucent so the text stays readable
+/// on a dark or a light theme, and stronger for the match the reader is on.
+const MATCH_BACKGROUND: Color32 = Color32::from_rgba_premultiplied(70, 55, 0, 70);
+const CURRENT_MATCH_BACKGROUND: Color32 = Color32::from_rgba_premultiplied(160, 120, 0, 160);
+
+/// A stretch of one side's text for a line that a search matched.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Mark {
+    /// Byte range in the text of the whole line on that side; the marks of a line do
+    /// not overlap and are in order.
+    pub range: Range<usize>,
+    pub current: bool,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Side {
@@ -46,20 +62,63 @@ pub fn color(class: HighlightClass, visuals: &Visuals) -> Color32 {
     Color32::from_rgb(r, g, b)
 }
 
-/// One side of `line`, wrapped at `width`. Tokens with a glossary role are underlined
-/// on both sides, pairing each token with its expansion.
-pub fn layout_job(line: &Line, side: Side, width: f32, visuals: &Visuals) -> LayoutJob {
+/// One side of `line`, wrapped at `width`, with `marks` highlighted. Tokens with a
+/// glossary role are underlined on both sides, pairing each token with its expansion.
+pub fn layout_job(
+    line: &Line,
+    side: Side,
+    width: f32,
+    visuals: &Visuals,
+    marks: &[Mark],
+) -> LayoutJob {
     let mut job = LayoutJob::default();
+    let mut start = 0;
     for span in &line.spans {
+        let text = side.text(span);
         let color = color(span.class, visuals);
         let mut format = TextFormat::simple(FontId::monospace(FONT_SIZE), color);
         if span.role.is_some() {
             format.underline = Stroke::new(1.0, color);
         }
-        job.append(side.text(span), 0.0, format);
+        for (piece, mark) in pieces(text, start, marks) {
+            let mut piece_format = format.clone();
+            if let Some(mark) = mark {
+                piece_format.background = if mark.current {
+                    CURRENT_MATCH_BACKGROUND
+                } else {
+                    MATCH_BACKGROUND
+                };
+            }
+            job.append(piece, 0.0, piece_format);
+        }
+        start += text.len();
     }
     job.wrap.max_width = width;
     job
+}
+
+/// `text`, which starts `start` bytes into its line, cut where marks begin and end,
+/// each piece with the mark that covers it.
+fn pieces<'a>(text: &'a str, start: usize, marks: &'a [Mark]) -> Vec<(&'a str, Option<&'a Mark>)> {
+    let end = start + text.len();
+    let mut pieces = Vec::new();
+    let mut at = start;
+    for mark in marks
+        .iter()
+        .filter(|mark| mark.range.start < end && mark.range.end > start)
+    {
+        let from = mark.range.start.max(start);
+        let to = mark.range.end.min(end);
+        if from > at {
+            pieces.push((&text[at - start..from - start], None));
+        }
+        pieces.push((&text[from - start..to - start], Some(mark)));
+        at = to;
+    }
+    if at < end || pieces.is_empty() {
+        pieces.push((&text[at - start..], None));
+    }
+    pieces
 }
 
 /// The span of `line` under `pos`, relative to the galley laid out from `line`'s
@@ -78,6 +137,7 @@ pub fn span_at<'a>(galley: &Galley, line: &'a Line, side: Side, pos: Vec2) -> Op
 #[cfg(test)]
 mod tests {
     use eframe::egui;
+    use eframe::egui::text::ByteIndex;
     use plene_core::{Edition, Glossary, Role, transcribe};
 
     use super::*;
@@ -99,7 +159,7 @@ mod tests {
     fn spans_by_cell(line: &Line, side: Side, width: f32) -> Vec<Vec<String>> {
         let mut found = Vec::new();
         in_frame(|ui| {
-            let job = layout_job(line, side, width, ui.visuals());
+            let job = layout_job(line, side, width, ui.visuals(), &[]);
             let galley = ui.fonts_mut(|fonts| fonts.layout_job(job));
             found = galley
                 .rows
@@ -161,7 +221,7 @@ mod tests {
         let line = line("x");
         in_frame(|ui| {
             let empty = transcribe("\n", Edition::default(), &Glossary::default()).remove(0);
-            let job = layout_job(&empty, Side::Source, 100.0, ui.visuals());
+            let job = layout_job(&empty, Side::Source, 100.0, ui.visuals(), &[]);
             let galley = ui.fonts_mut(|fonts| fonts.layout_job(job));
             assert!(span_at(&galley, &line, Side::Source, Vec2::new(50.0, 5.0)).is_none());
         });
@@ -172,7 +232,7 @@ mod tests {
         let line = line("fn f() {}");
         let dark = Visuals::dark();
         let light = Visuals::light();
-        let job = layout_job(&line, Side::Transcription, 100.0, &dark);
+        let job = layout_job(&line, Side::Transcription, 100.0, &dark, &[]);
         assert!(job.sections[0].format.underline.width > 0.0);
         assert_eq!(line.spans[0].role, Some(Role::Keyword));
         assert_eq!(job.sections.last().unwrap().format.underline.width, 0.0);
@@ -204,5 +264,61 @@ mod tests {
                 assert_ne!(color(class, &visuals), visuals.panel_fill, "{class:?}");
             }
         }
+    }
+
+    #[test]
+    fn marks_highlight_the_text_they_cover_even_across_spans() {
+        let line = line("fn f(v: &mut u8) {}");
+        // `borrowed mutable` is two spans with a space between; the mark runs over all
+        // three.
+        let text: String = line.spans.iter().map(|span| &*span.rendered).collect();
+        let start = text.find("rowed mu").unwrap();
+        let range = start..start + "rowed mu".len();
+        for (current, expected) in [(false, MATCH_BACKGROUND), (true, CURRENT_MATCH_BACKGROUND)] {
+            let marks = [Mark {
+                range: range.clone(),
+                current,
+            }];
+            let job = layout_job(&line, Side::Transcription, 1000.0, &Visuals::dark(), &marks);
+            assert_eq!(job.text, text, "marking changes no text");
+            for byte in 0..text.len() {
+                let background = job.format_at_byte(ByteIndex(byte)).background;
+                let wanted = if range.contains(&byte) {
+                    expected
+                } else {
+                    Color32::TRANSPARENT
+                };
+                assert_eq!(background, wanted, "byte {byte} of {text:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn pieces_cover_the_text_once_with_or_without_marks() {
+        let mark = |range: Range<usize>| Mark {
+            range,
+            current: false,
+        };
+        let marks = [mark(1..3), mark(7..9)];
+        // A span at bytes 2..8 of its line: the first mark covers its start, the
+        // second its end.
+        let found: Vec<(&str, bool)> = pieces("abcdef", 2, &marks)
+            .into_iter()
+            .map(|(piece, covered)| (piece, covered.is_some()))
+            .collect();
+        assert_eq!(found, [("a", true), ("bcde", false), ("f", true)]);
+        assert_eq!(pieces("", 4, &marks).len(), 1);
+        let none: Vec<&str> = pieces("xyz", 0, &[]).into_iter().map(|(p, _)| p).collect();
+        assert_eq!(none, ["xyz"]);
+        let earlier = [mark(0..4)];
+        let before: Vec<&str> = pieces("xyz", 5, &earlier)
+            .into_iter()
+            .map(|(piece, _)| piece)
+            .collect();
+        assert_eq!(
+            before,
+            ["xyz"],
+            "a mark that ends before the text leaves it whole"
+        );
     }
 }

@@ -4,7 +4,8 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use eframe::egui::{DroppedFile, Key, Pos2, Vec2};
+use eframe::egui::accesskit::Role as NodeRole;
+use eframe::egui::{DroppedFile, Key, Modifiers, Pos2, Vec2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 
@@ -359,4 +360,137 @@ fn the_selected_row_is_painted_with_a_band() {
     assert_eq!(bands(&harness), 0);
     press(&mut harness, Key::ArrowDown, 1);
     assert_eq!(bands(&harness), 1);
+}
+
+/// Opens the search bar with Ctrl+F and types `query` into its field.
+fn searching(source: &str, name: &str, query: &str) -> Harness<'static, App> {
+    let mut harness = opened(source, name, WIDE);
+    harness.key_press_modifiers(Modifiers::COMMAND, Key::F);
+    harness.run();
+    harness.get_by_role(NodeRole::TextInput).type_text(query);
+    harness.run();
+    harness
+}
+
+fn search_position(harness: &Harness<'_, App>) -> Option<usize> {
+    harness.state().search.position()
+}
+
+/// Two `&mut` rows and two plain ones.
+const MUTS: &str = "fn a(x: &mut u8) {}\nfn b() {}\nfn c(y: &mut u8) {}\nfn d() {}\n";
+
+#[test]
+fn ctrl_f_opens_the_search_and_escape_closes_it() {
+    let mut harness = opened(MUTS, "find.rs", WIDE);
+    assert!(harness.query_by_role(NodeRole::TextInput).is_none());
+    harness.key_press_modifiers(Modifiers::COMMAND, Key::F);
+    harness.run();
+    assert!(harness.state().search.open);
+    harness.get_by_role(NodeRole::TextInput);
+    harness.key_press(Key::Escape);
+    harness.run();
+    assert!(!harness.state().search.open);
+    assert!(harness.query_by_role(NodeRole::TextInput).is_none());
+}
+
+#[test]
+fn typing_goes_to_the_first_match_and_enter_steps_round() {
+    let mut harness = searching(MUTS, "steps.rs", "borrowed mutable");
+    harness.get_by_label("1 of 2");
+    assert_eq!(selected(&harness), Some(0));
+    press(&mut harness, Key::Enter, 1);
+    harness.get_by_label("2 of 2");
+    assert_eq!(selected(&harness), Some(2));
+    press(&mut harness, Key::Enter, 1);
+    harness.get_by_label("1 of 2");
+    harness.key_press_modifiers(Modifiers::SHIFT, Key::Enter);
+    harness.run();
+    harness.get_by_label("2 of 2");
+    assert_eq!(selected(&harness), Some(2));
+}
+
+#[test]
+fn the_buttons_step_too() {
+    let mut harness = searching(MUTS, "buttons.rs", "&mut");
+    harness.get_by_label("Next").click();
+    harness.run();
+    assert_eq!(selected(&harness), Some(2));
+    harness.get_by_label("Previous").click();
+    harness.run();
+    assert_eq!(selected(&harness), Some(0));
+}
+
+#[test]
+fn a_query_without_matches_says_so_and_selects_nothing() {
+    let harness = searching(MUTS, "none.rs", "no such text");
+    harness.get_by_label("No matches");
+    assert_eq!(selected(&harness), None);
+    assert_eq!(search_position(&harness), None);
+}
+
+#[test]
+fn the_scope_picks_the_pane_searched() {
+    let mut harness = searching(MUTS, "scope.rs", "&mut");
+    harness.get_by_label("1 of 2");
+    harness.get_by_label("Transcription only").click();
+    harness.run();
+    harness.get_by_label("No matches");
+    harness.get_by_label("Source only").click();
+    harness.run();
+    harness.get_by_label("1 of 2");
+    harness.get_by_label("Both").click();
+    harness.run();
+    harness.get_by_label("1 of 2");
+}
+
+#[test]
+fn searching_the_transcription_shows_a_hidden_pane() {
+    let mut harness = searching(MUTS, "hidden.rs", "borrowed");
+    harness.get_by_label("Transcription").click();
+    harness.run();
+    assert!(!harness.state().show_transcription);
+    harness.get_by_label("No matches");
+    harness.get_by_label("Transcription only").click();
+    harness.run();
+    assert!(harness.state().show_transcription);
+    harness.get_by_label("1 of 2");
+}
+
+#[test]
+fn a_match_far_down_is_scrolled_to() {
+    let mut source: String = (0..200).map(|n| format!("fn f{n}() {{}}\n")).collect();
+    source.push_str("fn last(x: &mut u8) {}\n");
+    let harness = searching(&source, "far.rs", "borrowed mutable");
+    assert_eq!(selected(&harness), Some(200));
+    assert!(harness.state().view.in_view.contains(&200));
+}
+
+#[test]
+fn arrow_keys_edit_the_field_and_leave_the_selection_alone() {
+    let mut harness = searching(MUTS, "typing.rs", "&mut");
+    assert_eq!(selected(&harness), Some(0));
+    press(&mut harness, Key::ArrowDown, 2);
+    assert_eq!(selected(&harness), Some(0));
+}
+
+#[test]
+fn a_new_file_is_searched_for_the_same_query() {
+    let mut harness = searching(MUTS, "before_find.rs", "&mut");
+    harness.get_by_label("1 of 2");
+    let dropped = temp_file(
+        "after_find.rs",
+        "fn a(x: &mut u8, y: &mut u8, z: &mut u8) {}\n",
+    );
+    harness.input_mut().dropped_files = vec![Arc::new(Dropped(dropped))];
+    harness.run();
+    harness.get_by_label("1 of 3");
+}
+
+#[test]
+fn closing_the_search_ends_the_marks() {
+    let mut harness = searching(MUTS, "closed.rs", "&mut");
+    assert!(!harness.state().search.marks(0, Side::Source).is_empty());
+    harness.key_press(Key::Escape);
+    harness.run();
+    assert!(harness.state().search.marks(0, Side::Source).is_empty());
 }

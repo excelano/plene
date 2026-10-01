@@ -4,20 +4,23 @@
 //! Author: David M. Anderson
 //! Built with AI assistance (Claude, Anthropic)
 
+use std::mem;
 use std::ops::Range;
 use std::path::Path;
 
 use eframe::egui::{
     Align2, CentralPanel, FontId, Key, KeyboardShortcut, Modifiers, Panel, Rect, RichText,
-    ScrollArea, Sense, Ui, Vec2, ViewportCommand,
+    ScrollArea, Sense, TextEdit, Ui, Vec2, ViewportCommand,
 };
 use plene_core::{Edition, Glossary, Role, Span};
 
 use crate::document::Document;
 use crate::rows::Rows;
+use crate::search::{Scope, Search};
 use crate::text::{FONT_SIZE, Side, layout_job, span_at};
 
 const OPEN: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::O);
+const FIND: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::F);
 /// Space between a pane's line numbers and its text, and between the two panes.
 const GAP: f32 = 16.0;
 /// Space below each row, so that wrapped rows stay apart.
@@ -40,6 +43,7 @@ pub struct App {
     /// Whether the transcription's pane shows beside the source's. It does at start,
     /// and the choice holds across the files opened.
     show_transcription: bool,
+    search: Search,
     title: String,
 }
 
@@ -50,6 +54,8 @@ struct View {
     rows: Rows,
     selected: Option<usize>,
     in_view: Range<usize>,
+    /// The selected row is to be scrolled into view on the next frame.
+    reveal: bool,
 }
 
 impl App {
@@ -81,6 +87,7 @@ impl App {
             document: None,
             view: View::default(),
             show_transcription: true,
+            search: Search::default(),
             title: String::new(),
         };
         if let Some(file) = file {
@@ -94,6 +101,7 @@ impl App {
             Ok(document) => {
                 self.document = Some(document);
                 self.view = View::default();
+                self.search.mark_stale();
                 self.open_error = None;
             }
             Err(error) => self.open_error = Some(error),
@@ -124,8 +132,17 @@ impl App {
         if ui.input_mut(|input| input.consume_shortcut(&OPEN)) {
             self.pick_file();
         }
+        if ui.input_mut(|input| input.consume_shortcut(&FIND)) {
+            self.search.open = true;
+            self.search.focus = true;
+        }
+        if self.search.open && ui.input_mut(|input| input.consume_key(Modifiers::NONE, Key::Escape))
+        {
+            self.search.open = false;
+        }
         self.set_title(ui);
         Panel::top("toolbar").show(ui, |ui| self.toolbar(ui));
+        self.find_matches(false);
         CentralPanel::default().show(ui, |ui| {
             if let Some(document) = &self.document {
                 let sides: &[Side] = if self.show_transcription {
@@ -133,7 +150,14 @@ impl App {
                 } else {
                     &[Side::Source]
                 };
-                Self::show_rows(ui, document, &mut self.view, &self.glossary, sides);
+                Self::show_rows(
+                    ui,
+                    document,
+                    &mut self.view,
+                    &self.glossary,
+                    &self.search,
+                    sides,
+                );
             } else {
                 ui.centered_and_justified(|ui| {
                     ui.label("Open a Rust file with the button above or Ctrl+O, or drop one here.");
@@ -159,20 +183,111 @@ impl App {
             if ui.button("Open…").clicked() {
                 self.pick_file();
             }
-            // Rows are as tall as their tallest side, so they are measured again.
             if ui
                 .toggle_value(&mut self.show_transcription, "Transcription")
                 .changed()
             {
-                self.view.rows = Rows::default();
+                self.show_transcription_changed();
             }
             if let Some(document) = &self.document {
                 ui.label(RichText::new(&document.name).strong());
             }
         });
+        if self.search.open {
+            self.search_bar(ui);
+        }
         let error_color = ui.visuals().error_fg_color;
         for problem in self.glossary_problems.iter().chain(&self.open_error) {
             ui.label(RichText::new(problem).color(error_color));
+        }
+    }
+
+    /// Rows are as tall as their tallest side, so they are measured again, and what
+    /// the search can see has changed.
+    fn show_transcription_changed(&mut self) {
+        self.view.rows = Rows::default();
+        self.search.mark_stale();
+    }
+
+    /// The search field, where to search, the way round the matches, and how many there
+    /// are.
+    fn search_bar(&mut self, ui: &mut Ui) {
+        ui.horizontal(|ui| {
+            let field = ui.add(
+                TextEdit::singleline(&mut self.search.query)
+                    .hint_text("Search")
+                    .desired_width(240.0),
+            );
+            if mem::take(&mut self.search.focus) {
+                field.request_focus();
+            }
+            let mut changed = field.changed();
+            if field.lost_focus() && ui.input(|input| input.key_pressed(Key::Enter)) {
+                let backward = ui.input(|input| input.modifiers.shift);
+                self.step_search(!backward);
+                field.request_focus();
+            }
+            for (scope, label) in [
+                (Scope::Both, "Both"),
+                (Scope::Source, "Source only"),
+                (Scope::Transcription, "Transcription only"),
+            ] {
+                if ui
+                    .selectable_value(&mut self.search.scope, scope, label)
+                    .changed()
+                {
+                    changed = true;
+                    if scope == Scope::Transcription && !self.show_transcription {
+                        self.show_transcription = true;
+                        self.show_transcription_changed();
+                    }
+                }
+            }
+            if ui.button("Previous").clicked() {
+                self.step_search(false);
+            }
+            if ui.button("Next").clicked() {
+                self.step_search(true);
+            }
+            if changed {
+                self.search.mark_stale();
+                self.find_matches(true);
+            }
+            let count = self.search.count();
+            if let Some(position) = self.search.position() {
+                ui.label(format!("{position} of {count}"));
+            } else if !self.search.query.is_empty() {
+                ui.label("No matches");
+            }
+        });
+    }
+
+    /// Finds the matches again if something they depend on changed. With `jump`, the
+    /// reader is taken to the first match from where they are.
+    fn find_matches(&mut self, jump: bool) {
+        let Some(document) = &self.document else {
+            return;
+        };
+        if !self.search.open {
+            return;
+        }
+        let from = self.view.selected.unwrap_or(self.view.in_view.start);
+        self.search
+            .refresh(&document.lines, self.show_transcription, from);
+        if jump {
+            self.go_to(self.search.current_row());
+        }
+    }
+
+    fn step_search(&mut self, forward: bool) {
+        let row = self.search.step(forward);
+        self.go_to(row);
+    }
+
+    fn go_to(&mut self, row: Option<usize>) {
+        if let Some(row) = row {
+            self.view.selected = Some(row);
+            self.view.reveal = true;
         }
     }
 
@@ -184,6 +299,7 @@ impl App {
         document: &Document,
         view: &mut View,
         glossary: &Glossary,
+        search: &Search,
         sides: &[Side],
     ) {
         let lines = &document.lines;
@@ -193,10 +309,13 @@ impl App {
         let columns = Columns::new(ui.available_width(), char_width, lines.len(), sides.len());
         let column = columns.text_width;
         let visuals = ui.visuals().clone();
+        let typing = ui.ctx().egui_wants_keyboard_input();
         let [up, down, page_up, page_down] =
-            [Key::ArrowUp, Key::ArrowDown, Key::PageUp, Key::PageDown]
-                .map(|key| ui.input_mut(|input| input.consume_key(Modifiers::NONE, key)));
+            [Key::ArrowUp, Key::ArrowDown, Key::PageUp, Key::PageDown].map(|key| {
+                !typing && ui.input_mut(|input| input.consume_key(Modifiers::NONE, key))
+            });
         let moved = (up || down) && !lines.is_empty();
+        let reveal = mem::take(&mut view.reveal) || moved;
         if moved {
             let last = lines.len() - 1;
             view.selected = Some(match view.selected {
@@ -209,7 +328,7 @@ impl App {
             sides
                 .iter()
                 .map(|&side| {
-                    let job = layout_job(&lines[row], side, column, &visuals);
+                    let job = layout_job(&lines[row], side, column, &visuals, &[]);
                     ui.fonts_mut(|fonts| fonts.layout_job(job)).size().y
                 })
                 .fold(row_height, f32::max)
@@ -232,7 +351,7 @@ impl App {
                         area.min + Vec2::new(columns.width(), rows.bottom(row)),
                     )
                 };
-                if moved && let Some(row) = view.selected {
+                if reveal && let Some(row) = view.selected {
                     ui.scroll_to_rect(row_rect(row), None);
                 }
                 for (pressed, direction) in [(page_up, 1.0), (page_down, -1.0)] {
@@ -255,7 +374,8 @@ impl App {
                             font.clone(),
                             visuals.weak_text_color(),
                         );
-                        let job = layout_job(&lines[row], side, column, &visuals);
+                        let marks = search.marks(row, side);
+                        let job = layout_job(&lines[row], side, column, &visuals, &marks);
                         let galley = ui.fonts_mut(|fonts| fonts.layout_job(job));
                         let rect = Rect::from_min_size(
                             top + Vec2::new(columns.text_start(side), 0.0),
