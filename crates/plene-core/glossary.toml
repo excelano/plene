@@ -313,3 +313,39 @@ token = "'label"
 role = "label"
 text = "label {name}"
 note = "Names a loop or block so that break and continue can target it."
+
+[[expand]]
+token = "}"
+role = "fn_end"
+text = "} end function {name}"
+note = "Closes a long function, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+
+[[expand]]
+token = "}"
+role = "impl_end"
+text = "} end implement {name}"
+note = "Closes a long impl block, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+
+[[expand]]
+token = "}"
+role = "mod_end"
+text = "} end module {name}"
+note = "Closes a long module, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+
+[[expand]]
+token = "}"
+role = "trait_end"
+text = "} end trait {name}"
+note = "Closes a long trait, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+
+[[expand]]
+token = "}"
+role = "struct_end"
+text = "} end struct {name}"
+note = "Closes a long struct, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+
+[[expand]]
+token = "}"
+role = "enum_end"
+text = "} end enum {name}"
+note = "Closes a long enum, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."

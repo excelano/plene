@@ -413,3 +413,20 @@ fn help_lists_every_category() {
         assert!(flat.contains(category.as_str()), "{category} not in --help");
     }
 }
+
+#[test]
+fn a_long_functions_closing_brace_is_labelled_unless_ends_are_kept() {
+    let source = format!("fn long() {{\n{}}}\n", "x;\n".repeat(20));
+    let last = |keep: &[&str]| {
+        let mut args = vec!["--expanded"];
+        args.extend_from_slice(keep);
+        args.push("-");
+        stdout(&plene(&args, &source))
+            .lines()
+            .last()
+            .unwrap()
+            .to_string()
+    };
+    assert_eq!(last(&[]), "} end function long");
+    assert_eq!(last(&["--keep", "ends"]), "}");
+}

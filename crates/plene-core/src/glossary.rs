@@ -173,14 +173,13 @@ impl Glossary {
         self.entries.get(&key(token, role))
     }
 
-    /// The expansion of `token` in `role`, with `{name}` filled in.
-    pub fn expand(&self, token: &str, role: Role) -> Option<String> {
+    /// The expansion of `token` in `role`, with `{name}` replaced by `name` when the
+    /// role takes one.
+    pub fn expand(&self, token: &str, role: Role, name: Option<&str>) -> Option<String> {
         let entry = self.entry(token, role)?;
-        if role.takes_name() {
-            let name = token.strip_prefix('\'').unwrap_or(token);
-            Some(entry.text.replace("{name}", name))
-        } else {
-            Some(entry.text.clone())
+        match name {
+            Some(name) if role.takes_name() => Some(entry.text.replace("{name}", name)),
+            _ => Some(entry.text.clone()),
         }
     }
 }

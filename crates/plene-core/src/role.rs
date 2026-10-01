@@ -8,7 +8,8 @@ use std::fmt;
 use std::str::FromStr;
 
 use ra_ap_syntax::SyntaxKind::*;
-use ra_ap_syntax::{Direction, SyntaxNode, SyntaxToken};
+use ra_ap_syntax::ast;
+use ra_ap_syntax::{AstNode, Direction, SyntaxNode, SyntaxToken};
 
 /// Declares `Role` with each variant's stable string identifier, used in glossary files.
 macro_rules! roles {
@@ -80,13 +81,30 @@ roles! {
     Lifetime => "lifetime",
     LifetimeAnonymous => "lifetime_anonymous",
     Label => "label",
+    FnEnd => "fn_end",
+    ImplEnd => "impl_end",
+    ModEnd => "mod_end",
+    TraitEnd => "trait_end",
+    StructEnd => "struct_end",
+    EnumEnd => "enum_end",
 }
 
 impl Role {
-    /// Whether the role's expansion carries the token's own name through `{name}`,
-    /// so that one glossary entry covers every lifetime or label.
+    /// Whether the role's expansion carries a name through `{name}`: the lifetime or
+    /// label itself, or the item a closing brace closes. One glossary entry then
+    /// covers every name, so the entry is keyed by the role alone.
     pub fn takes_name(self) -> bool {
-        matches!(self, Role::Lifetime | Role::Label)
+        matches!(
+            self,
+            Role::Lifetime
+                | Role::Label
+                | Role::FnEnd
+                | Role::ImplEnd
+                | Role::ModEnd
+                | Role::TraitEnd
+                | Role::StructEnd
+                | Role::EnumEnd
+        )
     }
 }
 
@@ -107,7 +125,16 @@ impl fmt::Display for UnknownRole {
 
 impl std::error::Error for UnknownRole {}
 
-pub(crate) fn classify(token: &SyntaxToken) -> Option<Role> {
+/// The most lines of an item's block that go without a label on its closing brace.
+const SHORT_BLOCK_LINES: usize = 19;
+
+/// A token's role, and for a role that takes a name, the name to fill in.
+pub(crate) struct Classified {
+    pub role: Role,
+    pub name: Option<String>,
+}
+
+pub(crate) fn classify(token: &SyntaxToken) -> Option<Classified> {
     let parent = token.parent()?;
     // Attribute arguments sit in token trees too, like macro arguments.
     if parent
@@ -116,6 +143,21 @@ pub(crate) fn classify(token: &SyntaxToken) -> Option<Role> {
     {
         return None;
     }
+    if token.kind() == R_CURLY {
+        return closing_brace(&parent);
+    }
+    let role = role(token, &parent)?;
+    let name = matches!(role, Role::Lifetime | Role::Label).then(|| {
+        token
+            .text()
+            .strip_prefix('\'')
+            .unwrap_or(token.text())
+            .to_string()
+    });
+    Some(Classified { role, name })
+}
+
+fn role(token: &SyntaxToken, parent: &SyntaxNode) -> Option<Role> {
     match (token.kind(), parent.kind()) {
         (FN_KW | PUB_KW | MUT_KW | MOD_KW | DYN_KW | REF_KW | EXTERN_KW, _) => Some(Role::Keyword),
         (IMPL_KW, IMPL) => Some(Role::ImplBlock),
@@ -134,32 +176,86 @@ pub(crate) fn classify(token: &SyntaxToken) -> Option<Role> {
         (FAT_ARROW, MATCH_ARM) => Some(Role::MatchArm),
         (PIPE, OR_PAT) => Some(Role::PatternOr),
         (AT, IDENT_PAT) => Some(Role::PatternBinding),
-        (UNDERSCORE, WILDCARD_PAT) if is_let_pattern(&parent) => Some(Role::Discard),
-        (UNDERSCORE, UNDERSCORE_EXPR) if is_assignment_target(&parent) => Some(Role::Discard),
+        (UNDERSCORE, WILDCARD_PAT) if is_let_pattern(parent) => Some(Role::Discard),
+        (UNDERSCORE, UNDERSCORE_EXPR) if is_assignment_target(parent) => Some(Role::Discard),
         (UNDERSCORE, UNDERSCORE_EXPR) => Some(Role::Wildcard),
         (UNDERSCORE, WILDCARD_PAT) => Some(Role::Wildcard),
         (UNDERSCORE, INFER_TYPE) => Some(Role::InferredType),
-        (DOT2, REST_PAT) if is_bound(&parent) => Some(Role::RestBinding),
+        (DOT2, REST_PAT) if is_bound(parent) => Some(Role::RestBinding),
         (DOT2, REST_PAT) => Some(Role::RestPattern),
         (DOT2, RECORD_EXPR_FIELD_LIST) if has_base(token) => Some(Role::StructUpdate),
         (DOT2, RECORD_EXPR_FIELD_LIST) => Some(Role::RestPattern),
-        (DOT2, RANGE_EXPR) if is_destructuring_rest(&parent) => Some(Role::RestPattern),
-        (DOT2 | DOT2EQ, RANGE_EXPR | RANGE_PAT) => Some(range_role(token, &parent)),
+        (DOT2, RANGE_EXPR) if is_destructuring_rest(parent) => Some(Role::RestPattern),
+        (DOT2 | DOT2EQ, RANGE_EXPR | RANGE_PAT) => Some(range_role(token, parent)),
         (COLON, _) => bound_colon_role(token),
         (PLUS, TYPE_BOUND_LIST) => Some(Role::BoundSeparator),
         (QUESTION, TYPE_BOUND) => Some(Role::MaybeBound),
         (THIN_ARROW, RET_TYPE) => Some(Role::RetType),
-        (QUESTION, TRY_EXPR) if is_receiver(&parent) => Some(Role::TryChained),
+        (QUESTION, TRY_EXPR) if is_receiver(parent) => Some(Role::TryChained),
         (QUESTION, TRY_EXPR) => Some(Role::Try),
-        (PIPE, PARAM_LIST) if is_closure_params(&parent) => {
+        (PIPE, PARAM_LIST) if is_closure_params(parent) => {
             if parent.first_token().as_ref() == Some(token) {
                 Some(Role::ClosureOpen)
             } else {
                 Some(Role::ClosureClose)
             }
         }
-        (LIFETIME_IDENT, _) => Some(classify_lifetime(token, &parent)),
+        (LIFETIME_IDENT, _) => Some(classify_lifetime(token, parent)),
         _ => None,
+    }
+}
+
+/// The role and name of the closing brace of `block`, when `block` is the body of an
+/// item long enough that its opening is out of sight: the item's name, or for an `impl`
+/// the type it is for, with its trait.
+fn closing_brace(block: &SyntaxNode) -> Option<Classified> {
+    let item = if block.kind() == STMT_LIST {
+        block
+            .parent()
+            .filter(|body| body.kind() == BLOCK_EXPR)?
+            .parent()?
+    } else {
+        block.parent()?
+    };
+    let role = match (item.kind(), block.kind()) {
+        (FN, STMT_LIST) => Role::FnEnd,
+        (IMPL, ASSOC_ITEM_LIST) => Role::ImplEnd,
+        (MODULE, ITEM_LIST) => Role::ModEnd,
+        (TRAIT, ASSOC_ITEM_LIST) => Role::TraitEnd,
+        (STRUCT, RECORD_FIELD_LIST) => Role::StructEnd,
+        (ENUM, VARIANT_LIST) => Role::EnumEnd,
+        _ => return None,
+    };
+    if block.text().to_string().lines().count() <= SHORT_BLOCK_LINES {
+        return None;
+    }
+    let name = if role == Role::ImplEnd {
+        impl_name(&item)?
+    } else {
+        item.children()
+            .find(|child| child.kind() == NAME)?
+            .text()
+            .to_string()
+    };
+    Some(Classified {
+        role,
+        name: Some(name),
+    })
+}
+
+/// What an `impl` is for, read as `Type` or `Trait for Type` with the last segment of
+/// each path and no generic arguments. An `impl` for anything but a named type has no
+/// name.
+fn impl_name(item: &SyntaxNode) -> Option<String> {
+    let item = ast::Impl::cast(item.clone())?;
+    let segment = |ty: ast::Type| match ty {
+        ast::Type::PathType(path) => Some(path.path()?.segment()?.name_ref()?.text().to_string()),
+        _ => None,
+    };
+    let target = segment(item.self_ty()?)?;
+    match item.trait_() {
+        Some(trait_) => Some(format!("{} for {target}", segment(trait_)?)),
+        None => Some(target),
     }
 }
 

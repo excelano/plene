@@ -87,6 +87,21 @@ Identifiers; std types (`Vec`, `Box`, `str`, `i32`…); keywords not listed belo
 | `:` | `lifetime_bound` | `'a: 'b`, `T: 'a`, when the first bound is a lifetime | `outliving` |
 | `+` | `bound_separator` | between bounds | `and` |
 
+### Closing braces
+
+The closing brace of an item's body is expanded to carry what it closes, once the block runs to 20 lines or more, since its opening is out of sight by then. The expansion replaces the one `}` token, and keeps it.
+
+| Role | Closes | Expansion |
+|---|---|---|
+| `fn_end` | the body of a function or method | `} end function {name}` |
+| `impl_end` | an `impl` block | `} end implement {name}` |
+| `mod_end` | an inline module | `} end module {name}` |
+| `trait_end` | a trait | `} end trait {name}` |
+| `struct_end` | a struct with named fields | `} end struct {name}` |
+| `enum_end` | an enum | `} end enum {name}` |
+
+The name is the item's own. An `impl` is named for what it is for, as `Type` or `Trait for Type`, each the last segment of its path with no generic arguments; an `impl` for a reference, slice, tuple or `dyn` type has no name and no label. The braces of an `if`, a loop, a closure, an enum variant, or a block inside a macro are not an item's body and take no label. A shorter block keeps its plain `}`.
+
 Examples and notes:
 - `&'a T` → `borrowed lifetime a T`; `&'a mut T` → `borrowed lifetime a mutable T`; `&mut self` → `borrowed mutable self`.
 - `move |x| …` → `move closure(x) …`.
@@ -114,6 +129,7 @@ A reader who has grown used to some of the notation can leave it as written. The
 | Lifetimes and labels | `lifetimes` | lifetimes, labels, `'a: 'b` |
 | Trait bounds | `bounds` | `:` and `+` in bounds, `?Sized`, `impl !Trait` |
 | Match arms, returns, closures and `?` | `flow` | `=>`, `->`, the closure pipes, `?` |
+| Labels on the closing braces of long items | `ends` | the closing-brace labels above |
 
 Switching a category off removes its entries from the glossary that transcribes, with `Glossary::without`, so the tokens it covers come out as written and carry no role: no underline and no hover card. The glossary the hover cards read is unchanged. The invariants hold for any set of categories off, and with all of them off the transcription is the source.
 
@@ -136,7 +152,7 @@ note = "A named lifetime: how long a reference is valid."
 ```
 
 - Role names are the stable string identifiers in the tables above, defined in `plene-core` and mapped from `ra_ap_syntax` node/token kinds.
-- `{name}` in `text` is replaced with the lifetime or label name without its leading `'`. The `token` field for these roles is a representative form (`'a`, `'label`).
+- `{name}` in `text` is replaced with a name the role supplies: the lifetime or label without its leading `'`, or the item a closing brace closes. These entries are keyed by role alone, and the `token` field is a representative form (`'a`, `'label`, `}`).
 - `note` is shown as hover text in the GUI (a built-in dictionary).
 - `plene --dump-glossary` prints the effective glossary, all layers merged, as a glossary file that reads back to the same entries; it is the starting point for writing overrides.
 - Unknown roles in a user file produce a warning, not an error.

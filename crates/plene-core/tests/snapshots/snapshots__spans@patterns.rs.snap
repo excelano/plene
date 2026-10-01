@@ -25,7 +25,7 @@ input_file: crates/plene-core/tests/fixtures/patterns.rs
  20 | for:Keyword _:Keyword/wildcard in:Keyword items:Identifier {:Punctuation }:Punctuation
  21 | items:Identifier .:Punctuation iter:Function (:Punctuation ):Punctuation .:Punctuation map:Function (:Punctuation |:Operator/closure_open _:Keyword/wildcard |:Operator/closure_close 1:Number ):Punctuation .:Punctuation count:Function (:Punctuation ):Punctuation ;:Punctuation
  22 | x:Identifier
- 23 | }:Punctuation
+ 23 | }:Punctuation/fn_end
  24 |
  25 | fn:Keyword/keyword ignored:Function (:Punctuation _:Keyword/wildcard ::Punctuation u8:Type ,:Punctuation _unused:Identifier ::Punctuation u8:Type ):Punctuation {:Punctuation }:Punctuation
  26 | use:Keyword std:Identifier :::Punctuation fmt:Identifier :::Punctuation Write:Identifier as:Keyword _:Keyword ;:Punctuation

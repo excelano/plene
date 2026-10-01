@@ -37,7 +37,7 @@ struct Args {
     glossary: Option<PathBuf>,
     /// Leave these categories as written instead of expanding them, comma-separated:
     /// keywords, visibility, mutability, references, operators, ranges, patterns,
-    /// lifetimes, bounds, flow.
+    /// lifetimes, bounds, flow, ends.
     #[arg(long, value_delimiter = ',', value_name = "CATEGORY")]
     keep: Vec<Category>,
     /// Show the source and its expansion in two columns.

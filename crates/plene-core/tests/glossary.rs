@@ -36,39 +36,48 @@ fn builtin_covers_every_role_with_a_note() {
 fn expands_by_token_and_role() {
     let glossary = Glossary::default();
     assert_eq!(
-        glossary.expand("fn", Role::Keyword).as_deref(),
+        glossary.expand("fn", Role::Keyword, None).as_deref(),
         Some("function")
     );
     assert_eq!(
-        glossary.expand("&", Role::RefExpr).as_deref(),
+        glossary.expand("&", Role::RefExpr, None).as_deref(),
         Some("borrow")
     );
     assert_eq!(
-        glossary.expand("&", Role::RefType).as_deref(),
+        glossary.expand("&", Role::RefType, None).as_deref(),
         Some("borrowed")
     );
-    assert_eq!(glossary.expand("?", Role::TryChained).as_deref(), Some("?"));
-    assert_eq!(glossary.expand("pub", Role::RefExpr), None);
-    assert_eq!(glossary.expand("let", Role::Keyword), None);
+    assert_eq!(
+        glossary.expand("?", Role::TryChained, None).as_deref(),
+        Some("?")
+    );
+    assert_eq!(glossary.expand("pub", Role::RefExpr, None), None);
+    assert_eq!(glossary.expand("let", Role::Keyword, None), None);
 }
 
 #[test]
 fn named_roles_fill_in_the_name() {
     let glossary = Glossary::default();
     assert_eq!(
-        glossary.expand("'a", Role::Lifetime).as_deref(),
+        glossary.expand("'a", Role::Lifetime, Some("a")).as_deref(),
         Some("lifetime a")
     );
     assert_eq!(
-        glossary.expand("'static", Role::Lifetime).as_deref(),
+        glossary
+            .expand("'static", Role::Lifetime, Some("static"))
+            .as_deref(),
         Some("lifetime static")
     );
     assert_eq!(
-        glossary.expand("'outer", Role::Label).as_deref(),
+        glossary
+            .expand("'outer", Role::Label, Some("outer"))
+            .as_deref(),
         Some("label outer")
     );
     assert_eq!(
-        glossary.expand("'_", Role::LifetimeAnonymous).as_deref(),
+        glossary
+            .expand("'_", Role::LifetimeAnonymous, None)
+            .as_deref(),
         Some("lifetime inferred")
     );
 }
@@ -106,7 +115,7 @@ fn duplicate_warns_and_later_wins() {
         "#,
     );
     assert_eq!(
-        glossary.expand("fn", Role::Keyword).as_deref(),
+        glossary.expand("fn", Role::Keyword, None).as_deref(),
         Some("second")
     );
     assert_eq!(
@@ -183,11 +192,11 @@ fn merge_replaces_text_and_keeps_notes_unless_given() {
         Some("Custom note.")
     );
     assert_eq!(
-        glossary.expand("'a", Role::Lifetime).as_deref(),
+        glossary.expand("'a", Role::Lifetime, Some("a")).as_deref(),
         Some("for a")
     );
     assert_eq!(
-        glossary.expand("pub", Role::Keyword).as_deref(),
+        glossary.expand("pub", Role::Keyword, None).as_deref(),
         Some("public")
     );
     assert_eq!(
@@ -211,7 +220,7 @@ fn to_toml_reads_back_to_the_same_entries() {
     let round_tripped: Vec<_> = read_back.entries().collect();
     assert_eq!(original, round_tripped);
     assert_eq!(
-        read_back.expand("fn", Role::Keyword).as_deref(),
+        read_back.expand("fn", Role::Keyword, None).as_deref(),
         Some("func \"quoted\"")
     );
 }

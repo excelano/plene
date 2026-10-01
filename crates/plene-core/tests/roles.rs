@@ -297,3 +297,133 @@ fn double_dot_reads_by_what_surrounds_it() {
         assert_eq!(dots.1, expected, "in {source:?}");
     }
 }
+
+/// The text of the last line of `source`'s transcription.
+fn last_line(source: &str) -> String {
+    let lines = transcribe(source, Edition::default(), &Glossary::default());
+    lines
+        .last()
+        .unwrap()
+        .spans
+        .iter()
+        .map(|span| span.rendered.as_str())
+        .collect()
+}
+
+/// `header`, then `count` filler lines inside, then the closing brace: a block of
+/// `count + 2` lines.
+fn item(header: &str, count: usize) -> String {
+    format!("{header} {{\n{}}}\n", "    x;\n".repeat(count))
+}
+
+#[test]
+fn a_long_items_closing_brace_names_what_it_closes() {
+    for (header, expected) in [
+        ("fn parse()", "} end function parse"),
+        ("pub async fn parse<T>(x: T) -> u8", "} end function parse"),
+        ("mod parser", "} end module parser"),
+        ("trait Reader", "} end trait Reader"),
+        ("struct Wide", "} end struct Wide"),
+        ("enum Kind", "} end enum Kind"),
+        ("impl Wide", "} end implement Wide"),
+        ("impl<T: Clone> Wide<T>", "} end implement Wide"),
+        ("impl Reader for Wide", "} end implement Reader for Wide"),
+        (
+            "impl<T> fmt::Display for io::Wide<T>",
+            "} end implement Display for Wide",
+        ),
+    ] {
+        assert_eq!(last_line(&item(header, 30)), expected, "{header}");
+    }
+}
+
+#[test]
+fn a_block_is_labelled_from_twenty_lines() {
+    assert_eq!(last_line(&item("fn f()", 17)), "}", "19 lines");
+    assert_eq!(
+        last_line(&item("fn f()", 18)),
+        "} end function f",
+        "20 lines"
+    );
+    assert_eq!(last_line(&item("fn f()", 0)), "}");
+}
+
+#[test]
+fn an_impl_for_anything_but_a_named_type_has_no_label() {
+    for header in [
+        "impl Reader for &Wide",
+        "impl Reader for [u8]",
+        "impl Reader for (u8, u8)",
+        "impl Reader for dyn Other",
+    ] {
+        assert_eq!(last_line(&item(header, 30)), "}", "{header}");
+    }
+}
+
+#[test]
+fn only_an_items_own_braces_take_a_label() {
+    let inner = "    x;\n".repeat(30);
+    // Each source's outer item is long enough to be labelled; the long block inside it
+    // is not an item's body, so its brace is not.
+    for (source, labelled) in [
+        (format!("fn f() {{\n    if a {{\n{inner}    }}\n}}\n"), true),
+        (
+            format!("fn f() {{\n    let g = || {{\n{inner}    }};\n}}\n"),
+            true,
+        ),
+        (format!("fn f() {{\n    loop {{\n{inner}    }}\n}}\n"), true),
+        (format!("enum E {{\n    V {{\n{inner}    }},\n}}\n"), true),
+        (format!("const C: u8 = {{\n{inner}}};\n"), false),
+    ] {
+        let lines = transcribe(&source, Edition::default(), &Glossary::default());
+        let ends: Vec<usize> = lines
+            .iter()
+            .enumerate()
+            .filter(|(_, line)| {
+                line.spans.iter().any(|span| {
+                    span.role
+                        .is_some_and(|role| role.as_str().ends_with("_end"))
+                })
+            })
+            .map(|(number, _)| number)
+            .collect();
+        let expected = if labelled {
+            vec![lines.len() - 1]
+        } else {
+            vec![]
+        };
+        assert_eq!(ends, expected, "in {source:?}");
+    }
+}
+
+#[test]
+fn a_long_item_inside_a_macro_has_no_label() {
+    let source = format!(
+        "macro_rules! m {{\n    () => {{\n{}}};\n}}\n",
+        item("fn f()", 30)
+    );
+    let roles = roles_in(&source);
+    assert!(
+        roles
+            .iter()
+            .all(|(_, role)| !role.as_str().ends_with("_end"))
+    );
+}
+
+#[test]
+fn nested_items_each_take_their_own_label() {
+    let inner = item("    fn f()", 30);
+    let source = format!("mod outer {{\n{inner}}}\n");
+    let lines = transcribe(&source, Edition::default(), &Glossary::default());
+    let labelled: Vec<String> = lines
+        .iter()
+        .map(|line| {
+            line.spans
+                .iter()
+                .map(|span| span.rendered.as_str())
+                .collect()
+        })
+        .filter(|text: &String| text.contains(" end "))
+        .collect();
+    assert_eq!(labelled, ["} end function f", "} end module outer"]);
+}

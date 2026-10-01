@@ -57,7 +57,7 @@ fn ids_round_trip_and_an_unknown_one_lists_the_known() {
     let unknown: UnknownCategory = "nope".parse::<Category>().unwrap_err();
     let message = unknown.to_string();
     assert!(message.starts_with("unknown category `nope`; one of: keywords, visibility, "));
-    assert!(message.ends_with(", flow"));
+    assert!(message.ends_with(", flow, ends"));
 }
 
 #[test]
@@ -84,9 +84,9 @@ fn without_drops_exactly_the_entries_of_its_categories() {
         })
         .count();
     assert_eq!(kept.entries().count(), total - dropped);
-    assert_eq!(kept.expand("'a", Role::Lifetime), None);
+    assert_eq!(kept.expand("'a", Role::Lifetime, Some("a")), None);
     assert_eq!(
-        kept.expand("fn", Role::Keyword).as_deref(),
+        kept.expand("fn", Role::Keyword, None).as_deref(),
         Some("function")
     );
 }

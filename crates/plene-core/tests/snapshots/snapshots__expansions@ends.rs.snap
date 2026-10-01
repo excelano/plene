@@ -1,0 +1,608 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/ends.rs
+---
+  1 | fn long_function() {
+    | function long_function() {
+  2 |     let v0 = 0;
+  3 |     let v1 = 1;
+  4 |     let v2 = 2;
+  5 |     let v3 = 3;
+  6 |     let v4 = 4;
+  7 |     let v5 = 5;
+  8 |     let v6 = 6;
+  9 |     let v7 = 7;
+ 10 |     let v8 = 8;
+ 11 |     let v9 = 9;
+ 12 |     let v10 = 10;
+ 13 |     let v11 = 11;
+ 14 |     let v12 = 12;
+ 15 |     let v13 = 13;
+ 16 |     let v14 = 14;
+ 17 |     let v15 = 15;
+ 18 |     let v16 = 16;
+ 19 |     let v17 = 17;
+ 20 |     let v18 = 18;
+ 21 |     let v19 = 19;
+ 22 | }
+    | } end function long_function
+ 23 | 
+ 24 | fn short_function() {
+    | function short_function() {
+ 25 |     let v0 = 0;
+ 26 |     let v1 = 1;
+ 27 | }
+ 28 | 
+ 29 | fn just_under() {
+    | function just_under() {
+ 30 |     let v0 = 0;
+ 31 |     let v1 = 1;
+ 32 |     let v2 = 2;
+ 33 |     let v3 = 3;
+ 34 |     let v4 = 4;
+ 35 |     let v5 = 5;
+ 36 |     let v6 = 6;
+ 37 |     let v7 = 7;
+ 38 |     let v8 = 8;
+ 39 |     let v9 = 9;
+ 40 |     let v10 = 10;
+ 41 |     let v11 = 11;
+ 42 |     let v12 = 12;
+ 43 |     let v13 = 13;
+ 44 |     let v14 = 14;
+ 45 |     let v15 = 15;
+ 46 |     let v16 = 16;
+ 47 | }
+ 48 | 
+ 49 | fn just_over() {
+    | function just_over() {
+ 50 |     let v0 = 0;
+ 51 |     let v1 = 1;
+ 52 |     let v2 = 2;
+ 53 |     let v3 = 3;
+ 54 |     let v4 = 4;
+ 55 |     let v5 = 5;
+ 56 |     let v6 = 6;
+ 57 |     let v7 = 7;
+ 58 |     let v8 = 8;
+ 59 |     let v9 = 9;
+ 60 |     let v10 = 10;
+ 61 |     let v11 = 11;
+ 62 |     let v12 = 12;
+ 63 |     let v13 = 13;
+ 64 |     let v14 = 14;
+ 65 |     let v15 = 15;
+ 66 |     let v16 = 16;
+ 67 |     let v17 = 17;
+ 68 | }
+    | } end function just_over
+ 69 | 
+ 70 | struct Wide {
+ 71 |     pub f0: u8,
+    |     public f0: u8,
+ 72 |     pub f1: u8,
+    |     public f1: u8,
+ 73 |     pub f2: u8,
+    |     public f2: u8,
+ 74 |     pub f3: u8,
+    |     public f3: u8,
+ 75 |     pub f4: u8,
+    |     public f4: u8,
+ 76 |     pub f5: u8,
+    |     public f5: u8,
+ 77 |     pub f6: u8,
+    |     public f6: u8,
+ 78 |     pub f7: u8,
+    |     public f7: u8,
+ 79 |     pub f8: u8,
+    |     public f8: u8,
+ 80 |     pub f9: u8,
+    |     public f9: u8,
+ 81 |     pub f10: u8,
+    |     public f10: u8,
+ 82 |     pub f11: u8,
+    |     public f11: u8,
+ 83 |     pub f12: u8,
+    |     public f12: u8,
+ 84 |     pub f13: u8,
+    |     public f13: u8,
+ 85 |     pub f14: u8,
+    |     public f14: u8,
+ 86 |     pub f15: u8,
+    |     public f15: u8,
+ 87 |     pub f16: u8,
+    |     public f16: u8,
+ 88 |     pub f17: u8,
+    |     public f17: u8,
+ 89 |     pub f18: u8,
+    |     public f18: u8,
+ 90 |     pub f19: u8,
+    |     public f19: u8,
+ 91 | }
+    | } end struct Wide
+ 92 | 
+ 93 | enum Big {
+ 94 |     V0,
+ 95 |     V1,
+ 96 |     V2,
+ 97 |     V3,
+ 98 |     V4,
+ 99 |     V5,
+100 |     V6,
+101 |     V7,
+102 |     V8,
+103 |     V9,
+104 |     V10,
+105 |     V11,
+106 |     V12,
+107 |     V13,
+108 |     V14,
+109 |     V15,
+110 |     V16,
+111 |     V17,
+112 |     V18,
+113 |     V19,
+114 | }
+    | } end enum Big
+115 | 
+116 | trait Wordy {
+117 |     fn m0(&self);
+    |     function m0(borrowed self);
+118 |     fn m1(&self);
+    |     function m1(borrowed self);
+119 |     fn m2(&self);
+    |     function m2(borrowed self);
+120 |     fn m3(&self);
+    |     function m3(borrowed self);
+121 |     fn m4(&self);
+    |     function m4(borrowed self);
+122 |     fn m5(&self);
+    |     function m5(borrowed self);
+123 |     fn m6(&self);
+    |     function m6(borrowed self);
+124 |     fn m7(&self);
+    |     function m7(borrowed self);
+125 |     fn m8(&self);
+    |     function m8(borrowed self);
+126 |     fn m9(&self);
+    |     function m9(borrowed self);
+127 |     fn m10(&self);
+    |     function m10(borrowed self);
+128 |     fn m11(&self);
+    |     function m11(borrowed self);
+129 |     fn m12(&self);
+    |     function m12(borrowed self);
+130 |     fn m13(&self);
+    |     function m13(borrowed self);
+131 |     fn m14(&self);
+    |     function m14(borrowed self);
+132 |     fn m15(&self);
+    |     function m15(borrowed self);
+133 |     fn m16(&self);
+    |     function m16(borrowed self);
+134 |     fn m17(&self);
+    |     function m17(borrowed self);
+135 |     fn m18(&self);
+    |     function m18(borrowed self);
+136 |     fn m19(&self);
+    |     function m19(borrowed self);
+137 | }
+    | } end trait Wordy
+138 | 
+139 | mod outer {
+    | module outer {
+140 |     let v0 = 0;
+141 |     mod inner {
+    |     module inner {
+142 |         fn f0() {}
+    |         function f0() {}
+143 |         fn f1() {}
+    |         function f1() {}
+144 |         fn f2() {}
+    |         function f2() {}
+145 |         fn f3() {}
+    |         function f3() {}
+146 |         fn f4() {}
+    |         function f4() {}
+147 |         fn f5() {}
+    |         function f5() {}
+148 |         fn f6() {}
+    |         function f6() {}
+149 |         fn f7() {}
+    |         function f7() {}
+150 |         fn f8() {}
+    |         function f8() {}
+151 |         fn f9() {}
+    |         function f9() {}
+152 |         fn f10() {}
+    |         function f10() {}
+153 |         fn f11() {}
+    |         function f11() {}
+154 |         fn f12() {}
+    |         function f12() {}
+155 |         fn f13() {}
+    |         function f13() {}
+156 |         fn f14() {}
+    |         function f14() {}
+157 |         fn f15() {}
+    |         function f15() {}
+158 |         fn f16() {}
+    |         function f16() {}
+159 |         fn f17() {}
+    |         function f17() {}
+160 |         fn f18() {}
+    |         function f18() {}
+161 |         fn f19() {}
+    |         function f19() {}
+162 |     }
+    |     } end module inner
+163 | }
+    | } end module outer
+164 | 
+165 | impl Wide {
+    | implement Wide {
+166 |     fn a0(&self) {}
+    |     function a0(borrowed self) {}
+167 |     fn a1(&self) {}
+    |     function a1(borrowed self) {}
+168 |     fn a2(&self) {}
+    |     function a2(borrowed self) {}
+169 |     fn a3(&self) {}
+    |     function a3(borrowed self) {}
+170 |     fn a4(&self) {}
+    |     function a4(borrowed self) {}
+171 |     fn a5(&self) {}
+    |     function a5(borrowed self) {}
+172 |     fn a6(&self) {}
+    |     function a6(borrowed self) {}
+173 |     fn a7(&self) {}
+    |     function a7(borrowed self) {}
+174 |     fn a8(&self) {}
+    |     function a8(borrowed self) {}
+175 |     fn a9(&self) {}
+    |     function a9(borrowed self) {}
+176 |     fn a10(&self) {}
+    |     function a10(borrowed self) {}
+177 |     fn a11(&self) {}
+    |     function a11(borrowed self) {}
+178 |     fn a12(&self) {}
+    |     function a12(borrowed self) {}
+179 |     fn a13(&self) {}
+    |     function a13(borrowed self) {}
+180 |     fn a14(&self) {}
+    |     function a14(borrowed self) {}
+181 |     fn a15(&self) {}
+    |     function a15(borrowed self) {}
+182 |     fn a16(&self) {}
+    |     function a16(borrowed self) {}
+183 |     fn a17(&self) {}
+    |     function a17(borrowed self) {}
+184 |     fn a18(&self) {}
+    |     function a18(borrowed self) {}
+185 |     fn a19(&self) {}
+    |     function a19(borrowed self) {}
+186 | }
+    | } end implement Wide
+187 | 
+188 | impl<T: Clone> Wordy for Vec<T> {
+    | implement<T implementing Clone> Wordy for Vec<T> {
+189 |     fn m0(&self) {}
+    |     function m0(borrowed self) {}
+190 |     fn m1(&self) {}
+    |     function m1(borrowed self) {}
+191 |     fn m2(&self) {}
+    |     function m2(borrowed self) {}
+192 |     fn m3(&self) {}
+    |     function m3(borrowed self) {}
+193 |     fn m4(&self) {}
+    |     function m4(borrowed self) {}
+194 |     fn m5(&self) {}
+    |     function m5(borrowed self) {}
+195 |     fn m6(&self) {}
+    |     function m6(borrowed self) {}
+196 |     fn m7(&self) {}
+    |     function m7(borrowed self) {}
+197 |     fn m8(&self) {}
+    |     function m8(borrowed self) {}
+198 |     fn m9(&self) {}
+    |     function m9(borrowed self) {}
+199 |     fn m10(&self) {}
+    |     function m10(borrowed self) {}
+200 |     fn m11(&self) {}
+    |     function m11(borrowed self) {}
+201 |     fn m12(&self) {}
+    |     function m12(borrowed self) {}
+202 |     fn m13(&self) {}
+    |     function m13(borrowed self) {}
+203 |     fn m14(&self) {}
+    |     function m14(borrowed self) {}
+204 |     fn m15(&self) {}
+    |     function m15(borrowed self) {}
+205 |     fn m16(&self) {}
+    |     function m16(borrowed self) {}
+206 |     fn m17(&self) {}
+    |     function m17(borrowed self) {}
+207 |     fn m18(&self) {}
+    |     function m18(borrowed self) {}
+208 |     fn m19(&self) {}
+    |     function m19(borrowed self) {}
+209 | }
+    | } end implement Wordy for Vec
+210 | 
+211 | impl fmt::Display for module::Wide {
+    | implement fmt::Display for module::Wide {
+212 |     fn d0(&self) {}
+    |     function d0(borrowed self) {}
+213 |     fn d1(&self) {}
+    |     function d1(borrowed self) {}
+214 |     fn d2(&self) {}
+    |     function d2(borrowed self) {}
+215 |     fn d3(&self) {}
+    |     function d3(borrowed self) {}
+216 |     fn d4(&self) {}
+    |     function d4(borrowed self) {}
+217 |     fn d5(&self) {}
+    |     function d5(borrowed self) {}
+218 |     fn d6(&self) {}
+    |     function d6(borrowed self) {}
+219 |     fn d7(&self) {}
+    |     function d7(borrowed self) {}
+220 |     fn d8(&self) {}
+    |     function d8(borrowed self) {}
+221 |     fn d9(&self) {}
+    |     function d9(borrowed self) {}
+222 |     fn d10(&self) {}
+    |     function d10(borrowed self) {}
+223 |     fn d11(&self) {}
+    |     function d11(borrowed self) {}
+224 |     fn d12(&self) {}
+    |     function d12(borrowed self) {}
+225 |     fn d13(&self) {}
+    |     function d13(borrowed self) {}
+226 |     fn d14(&self) {}
+    |     function d14(borrowed self) {}
+227 |     fn d15(&self) {}
+    |     function d15(borrowed self) {}
+228 |     fn d16(&self) {}
+    |     function d16(borrowed self) {}
+229 |     fn d17(&self) {}
+    |     function d17(borrowed self) {}
+230 |     fn d18(&self) {}
+    |     function d18(borrowed self) {}
+231 |     fn d19(&self) {}
+    |     function d19(borrowed self) {}
+232 | }
+    | } end implement Display for Wide
+233 | 
+234 | impl Wordy for &Wide {
+    | implement Wordy for borrowed Wide {
+235 |     fn r0(&self) {}
+    |     function r0(borrowed self) {}
+236 |     fn r1(&self) {}
+    |     function r1(borrowed self) {}
+237 |     fn r2(&self) {}
+    |     function r2(borrowed self) {}
+238 |     fn r3(&self) {}
+    |     function r3(borrowed self) {}
+239 |     fn r4(&self) {}
+    |     function r4(borrowed self) {}
+240 |     fn r5(&self) {}
+    |     function r5(borrowed self) {}
+241 |     fn r6(&self) {}
+    |     function r6(borrowed self) {}
+242 |     fn r7(&self) {}
+    |     function r7(borrowed self) {}
+243 |     fn r8(&self) {}
+    |     function r8(borrowed self) {}
+244 |     fn r9(&self) {}
+    |     function r9(borrowed self) {}
+245 |     fn r10(&self) {}
+    |     function r10(borrowed self) {}
+246 |     fn r11(&self) {}
+    |     function r11(borrowed self) {}
+247 |     fn r12(&self) {}
+    |     function r12(borrowed self) {}
+248 |     fn r13(&self) {}
+    |     function r13(borrowed self) {}
+249 |     fn r14(&self) {}
+    |     function r14(borrowed self) {}
+250 |     fn r15(&self) {}
+    |     function r15(borrowed self) {}
+251 |     fn r16(&self) {}
+    |     function r16(borrowed self) {}
+252 |     fn r17(&self) {}
+    |     function r17(borrowed self) {}
+253 |     fn r18(&self) {}
+    |     function r18(borrowed self) {}
+254 |     fn r19(&self) {}
+    |     function r19(borrowed self) {}
+255 | }
+256 | 
+257 | impl Wordy for [u8] {
+    | implement Wordy for [u8] {
+258 |     fn s0(&self) {}
+    |     function s0(borrowed self) {}
+259 |     fn s1(&self) {}
+    |     function s1(borrowed self) {}
+260 |     fn s2(&self) {}
+    |     function s2(borrowed self) {}
+261 |     fn s3(&self) {}
+    |     function s3(borrowed self) {}
+262 |     fn s4(&self) {}
+    |     function s4(borrowed self) {}
+263 |     fn s5(&self) {}
+    |     function s5(borrowed self) {}
+264 |     fn s6(&self) {}
+    |     function s6(borrowed self) {}
+265 |     fn s7(&self) {}
+    |     function s7(borrowed self) {}
+266 |     fn s8(&self) {}
+    |     function s8(borrowed self) {}
+267 |     fn s9(&self) {}
+    |     function s9(borrowed self) {}
+268 |     fn s10(&self) {}
+    |     function s10(borrowed self) {}
+269 |     fn s11(&self) {}
+    |     function s11(borrowed self) {}
+270 |     fn s12(&self) {}
+    |     function s12(borrowed self) {}
+271 |     fn s13(&self) {}
+    |     function s13(borrowed self) {}
+272 |     fn s14(&self) {}
+    |     function s14(borrowed self) {}
+273 |     fn s15(&self) {}
+    |     function s15(borrowed self) {}
+274 |     fn s16(&self) {}
+    |     function s16(borrowed self) {}
+275 |     fn s17(&self) {}
+    |     function s17(borrowed self) {}
+276 |     fn s18(&self) {}
+    |     function s18(borrowed self) {}
+277 |     fn s19(&self) {}
+    |     function s19(borrowed self) {}
+278 | }
+279 | 
+280 | fn nested_blocks() {
+    | function nested_blocks() {
+281 |     if true {
+282 |         let v0 = 0;
+283 |         let v1 = 1;
+284 |         let v2 = 2;
+285 |         let v3 = 3;
+286 |         let v4 = 4;
+287 |         let v5 = 5;
+288 |         let v6 = 6;
+289 |         let v7 = 7;
+290 |         let v8 = 8;
+291 |         let v9 = 9;
+292 |         let v10 = 10;
+293 |         let v11 = 11;
+294 |         let v12 = 12;
+295 |         let v13 = 13;
+296 |         let v14 = 14;
+297 |         let v15 = 15;
+298 |         let v16 = 16;
+299 |         let v17 = 17;
+300 |         let v18 = 18;
+301 |         let v19 = 19;
+302 |     }
+303 |     let f = || {
+    |     let f = closure() {
+304 |         let v0 = 0;
+305 |         let v1 = 1;
+306 |         let v2 = 2;
+307 |         let v3 = 3;
+308 |         let v4 = 4;
+309 |         let v5 = 5;
+310 |         let v6 = 6;
+311 |         let v7 = 7;
+312 |         let v8 = 8;
+313 |         let v9 = 9;
+314 |         let v10 = 10;
+315 |         let v11 = 11;
+316 |         let v12 = 12;
+317 |         let v13 = 13;
+318 |         let v14 = 14;
+319 |         let v15 = 15;
+320 |         let v16 = 16;
+321 |         let v17 = 17;
+322 |         let v18 = 18;
+323 |         let v19 = 19;
+324 |     };
+325 |     loop {
+326 |         let v0 = 0;
+327 |         let v1 = 1;
+328 |         let v2 = 2;
+329 |         let v3 = 3;
+330 |         let v4 = 4;
+331 |         let v5 = 5;
+332 |         let v6 = 6;
+333 |         let v7 = 7;
+334 |         let v8 = 8;
+335 |         let v9 = 9;
+336 |         let v10 = 10;
+337 |         let v11 = 11;
+338 |         let v12 = 12;
+339 |         let v13 = 13;
+340 |         let v14 = 14;
+341 |         let v15 = 15;
+342 |         let v16 = 16;
+343 |         let v17 = 17;
+344 |         let v18 = 18;
+345 |         let v19 = 19;
+346 |     }
+347 | }
+    | } end function nested_blocks
+348 | 
+349 | enum Variants {
+350 |     Named {
+351 |         pub f0: u8,
+    |         public f0: u8,
+352 |         pub f1: u8,
+    |         public f1: u8,
+353 |         pub f2: u8,
+    |         public f2: u8,
+354 |         pub f3: u8,
+    |         public f3: u8,
+355 |         pub f4: u8,
+    |         public f4: u8,
+356 |         pub f5: u8,
+    |         public f5: u8,
+357 |         pub f6: u8,
+    |         public f6: u8,
+358 |         pub f7: u8,
+    |         public f7: u8,
+359 |         pub f8: u8,
+    |         public f8: u8,
+360 |         pub f9: u8,
+    |         public f9: u8,
+361 |         pub f10: u8,
+    |         public f10: u8,
+362 |         pub f11: u8,
+    |         public f11: u8,
+363 |         pub f12: u8,
+    |         public f12: u8,
+364 |         pub f13: u8,
+    |         public f13: u8,
+365 |         pub f14: u8,
+    |         public f14: u8,
+366 |         pub f15: u8,
+    |         public f15: u8,
+367 |         pub f16: u8,
+    |         public f16: u8,
+368 |         pub f17: u8,
+    |         public f17: u8,
+369 |         pub f18: u8,
+    |         public f18: u8,
+370 |         pub f19: u8,
+    |         public f19: u8,
+371 |     },
+372 |     Other,
+373 | }
+    | } end enum Variants
+374 | 
+375 | fn trailing() {
+    | function trailing() {
+376 |     let v0 = 0;
+377 |     let v1 = 1;
+378 |     let v2 = 2;
+379 |     let v3 = 3;
+380 |     let v4 = 4;
+381 |     let v5 = 5;
+382 |     let v6 = 6;
+383 |     let v7 = 7;
+384 |     let v8 = 8;
+385 |     let v9 = 9;
+386 |     let v10 = 10;
+387 |     let v11 = 11;
+388 |     let v12 = 12;
+389 |     let v13 = 13;
+390 |     let v14 = 14;
+391 |     let v15 = 15;
+392 |     let v16 = 16;
+393 |     let v17 = 17;
+394 |     let v18 = 18;
+395 |     let v19 = 19;
+396 | } // after
+    | } end function trailing // after

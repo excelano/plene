@@ -45,6 +45,7 @@ input_file: crates/plene-core/tests/fixtures/patterns.rs
     |     items.iter().map(closure(anything) 1).count();
  22 |     x
  23 | }
+    | } end function classify
  24 | 
  25 | fn ignored(_: u8, _unused: u8) {}
     | function ignored(anything: u8, _unused: u8) {}

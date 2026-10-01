@@ -1,0 +1,401 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_spans(&source)
+input_file: crates/plene-core/tests/fixtures/ends.rs
+---
+  1 | fn:Keyword/keyword long_function:Function (:Punctuation ):Punctuation {:Punctuation
+  2 | let:Keyword v0:Identifier =:Operator 0:Number ;:Punctuation
+  3 | let:Keyword v1:Identifier =:Operator 1:Number ;:Punctuation
+  4 | let:Keyword v2:Identifier =:Operator 2:Number ;:Punctuation
+  5 | let:Keyword v3:Identifier =:Operator 3:Number ;:Punctuation
+  6 | let:Keyword v4:Identifier =:Operator 4:Number ;:Punctuation
+  7 | let:Keyword v5:Identifier =:Operator 5:Number ;:Punctuation
+  8 | let:Keyword v6:Identifier =:Operator 6:Number ;:Punctuation
+  9 | let:Keyword v7:Identifier =:Operator 7:Number ;:Punctuation
+ 10 | let:Keyword v8:Identifier =:Operator 8:Number ;:Punctuation
+ 11 | let:Keyword v9:Identifier =:Operator 9:Number ;:Punctuation
+ 12 | let:Keyword v10:Identifier =:Operator 10:Number ;:Punctuation
+ 13 | let:Keyword v11:Identifier =:Operator 11:Number ;:Punctuation
+ 14 | let:Keyword v12:Identifier =:Operator 12:Number ;:Punctuation
+ 15 | let:Keyword v13:Identifier =:Operator 13:Number ;:Punctuation
+ 16 | let:Keyword v14:Identifier =:Operator 14:Number ;:Punctuation
+ 17 | let:Keyword v15:Identifier =:Operator 15:Number ;:Punctuation
+ 18 | let:Keyword v16:Identifier =:Operator 16:Number ;:Punctuation
+ 19 | let:Keyword v17:Identifier =:Operator 17:Number ;:Punctuation
+ 20 | let:Keyword v18:Identifier =:Operator 18:Number ;:Punctuation
+ 21 | let:Keyword v19:Identifier =:Operator 19:Number ;:Punctuation
+ 22 | }:Punctuation/fn_end
+ 23 |
+ 24 | fn:Keyword/keyword short_function:Function (:Punctuation ):Punctuation {:Punctuation
+ 25 | let:Keyword v0:Identifier =:Operator 0:Number ;:Punctuation
+ 26 | let:Keyword v1:Identifier =:Operator 1:Number ;:Punctuation
+ 27 | }:Punctuation
+ 28 |
+ 29 | fn:Keyword/keyword just_under:Function (:Punctuation ):Punctuation {:Punctuation
+ 30 | let:Keyword v0:Identifier =:Operator 0:Number ;:Punctuation
+ 31 | let:Keyword v1:Identifier =:Operator 1:Number ;:Punctuation
+ 32 | let:Keyword v2:Identifier =:Operator 2:Number ;:Punctuation
+ 33 | let:Keyword v3:Identifier =:Operator 3:Number ;:Punctuation
+ 34 | let:Keyword v4:Identifier =:Operator 4:Number ;:Punctuation
+ 35 | let:Keyword v5:Identifier =:Operator 5:Number ;:Punctuation
+ 36 | let:Keyword v6:Identifier =:Operator 6:Number ;:Punctuation
+ 37 | let:Keyword v7:Identifier =:Operator 7:Number ;:Punctuation
+ 38 | let:Keyword v8:Identifier =:Operator 8:Number ;:Punctuation
+ 39 | let:Keyword v9:Identifier =:Operator 9:Number ;:Punctuation
+ 40 | let:Keyword v10:Identifier =:Operator 10:Number ;:Punctuation
+ 41 | let:Keyword v11:Identifier =:Operator 11:Number ;:Punctuation
+ 42 | let:Keyword v12:Identifier =:Operator 12:Number ;:Punctuation
+ 43 | let:Keyword v13:Identifier =:Operator 13:Number ;:Punctuation
+ 44 | let:Keyword v14:Identifier =:Operator 14:Number ;:Punctuation
+ 45 | let:Keyword v15:Identifier =:Operator 15:Number ;:Punctuation
+ 46 | let:Keyword v16:Identifier =:Operator 16:Number ;:Punctuation
+ 47 | }:Punctuation
+ 48 |
+ 49 | fn:Keyword/keyword just_over:Function (:Punctuation ):Punctuation {:Punctuation
+ 50 | let:Keyword v0:Identifier =:Operator 0:Number ;:Punctuation
+ 51 | let:Keyword v1:Identifier =:Operator 1:Number ;:Punctuation
+ 52 | let:Keyword v2:Identifier =:Operator 2:Number ;:Punctuation
+ 53 | let:Keyword v3:Identifier =:Operator 3:Number ;:Punctuation
+ 54 | let:Keyword v4:Identifier =:Operator 4:Number ;:Punctuation
+ 55 | let:Keyword v5:Identifier =:Operator 5:Number ;:Punctuation
+ 56 | let:Keyword v6:Identifier =:Operator 6:Number ;:Punctuation
+ 57 | let:Keyword v7:Identifier =:Operator 7:Number ;:Punctuation
+ 58 | let:Keyword v8:Identifier =:Operator 8:Number ;:Punctuation
+ 59 | let:Keyword v9:Identifier =:Operator 9:Number ;:Punctuation
+ 60 | let:Keyword v10:Identifier =:Operator 10:Number ;:Punctuation
+ 61 | let:Keyword v11:Identifier =:Operator 11:Number ;:Punctuation
+ 62 | let:Keyword v12:Identifier =:Operator 12:Number ;:Punctuation
+ 63 | let:Keyword v13:Identifier =:Operator 13:Number ;:Punctuation
+ 64 | let:Keyword v14:Identifier =:Operator 14:Number ;:Punctuation
+ 65 | let:Keyword v15:Identifier =:Operator 15:Number ;:Punctuation
+ 66 | let:Keyword v16:Identifier =:Operator 16:Number ;:Punctuation
+ 67 | let:Keyword v17:Identifier =:Operator 17:Number ;:Punctuation
+ 68 | }:Punctuation/fn_end
+ 69 |
+ 70 | struct:Keyword Wide:Type {:Punctuation
+ 71 | pub:Keyword/keyword f0:Identifier ::Punctuation u8:Type ,:Punctuation
+ 72 | pub:Keyword/keyword f1:Identifier ::Punctuation u8:Type ,:Punctuation
+ 73 | pub:Keyword/keyword f2:Identifier ::Punctuation u8:Type ,:Punctuation
+ 74 | pub:Keyword/keyword f3:Identifier ::Punctuation u8:Type ,:Punctuation
+ 75 | pub:Keyword/keyword f4:Identifier ::Punctuation u8:Type ,:Punctuation
+ 76 | pub:Keyword/keyword f5:Identifier ::Punctuation u8:Type ,:Punctuation
+ 77 | pub:Keyword/keyword f6:Identifier ::Punctuation u8:Type ,:Punctuation
+ 78 | pub:Keyword/keyword f7:Identifier ::Punctuation u8:Type ,:Punctuation
+ 79 | pub:Keyword/keyword f8:Identifier ::Punctuation u8:Type ,:Punctuation
+ 80 | pub:Keyword/keyword f9:Identifier ::Punctuation u8:Type ,:Punctuation
+ 81 | pub:Keyword/keyword f10:Identifier ::Punctuation u8:Type ,:Punctuation
+ 82 | pub:Keyword/keyword f11:Identifier ::Punctuation u8:Type ,:Punctuation
+ 83 | pub:Keyword/keyword f12:Identifier ::Punctuation u8:Type ,:Punctuation
+ 84 | pub:Keyword/keyword f13:Identifier ::Punctuation u8:Type ,:Punctuation
+ 85 | pub:Keyword/keyword f14:Identifier ::Punctuation u8:Type ,:Punctuation
+ 86 | pub:Keyword/keyword f15:Identifier ::Punctuation u8:Type ,:Punctuation
+ 87 | pub:Keyword/keyword f16:Identifier ::Punctuation u8:Type ,:Punctuation
+ 88 | pub:Keyword/keyword f17:Identifier ::Punctuation u8:Type ,:Punctuation
+ 89 | pub:Keyword/keyword f18:Identifier ::Punctuation u8:Type ,:Punctuation
+ 90 | pub:Keyword/keyword f19:Identifier ::Punctuation u8:Type ,:Punctuation
+ 91 | }:Punctuation/struct_end
+ 92 |
+ 93 | enum:Keyword Big:Type {:Punctuation
+ 94 | V0:Identifier ,:Punctuation
+ 95 | V1:Identifier ,:Punctuation
+ 96 | V2:Identifier ,:Punctuation
+ 97 | V3:Identifier ,:Punctuation
+ 98 | V4:Identifier ,:Punctuation
+ 99 | V5:Identifier ,:Punctuation
+100 | V6:Identifier ,:Punctuation
+101 | V7:Identifier ,:Punctuation
+102 | V8:Identifier ,:Punctuation
+103 | V9:Identifier ,:Punctuation
+104 | V10:Identifier ,:Punctuation
+105 | V11:Identifier ,:Punctuation
+106 | V12:Identifier ,:Punctuation
+107 | V13:Identifier ,:Punctuation
+108 | V14:Identifier ,:Punctuation
+109 | V15:Identifier ,:Punctuation
+110 | V16:Identifier ,:Punctuation
+111 | V17:Identifier ,:Punctuation
+112 | V18:Identifier ,:Punctuation
+113 | V19:Identifier ,:Punctuation
+114 | }:Punctuation/enum_end
+115 |
+116 | trait:Keyword Wordy:Type {:Punctuation
+117 | fn:Keyword/keyword m0:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+118 | fn:Keyword/keyword m1:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+119 | fn:Keyword/keyword m2:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+120 | fn:Keyword/keyword m3:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+121 | fn:Keyword/keyword m4:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+122 | fn:Keyword/keyword m5:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+123 | fn:Keyword/keyword m6:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+124 | fn:Keyword/keyword m7:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+125 | fn:Keyword/keyword m8:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+126 | fn:Keyword/keyword m9:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+127 | fn:Keyword/keyword m10:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+128 | fn:Keyword/keyword m11:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+129 | fn:Keyword/keyword m12:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+130 | fn:Keyword/keyword m13:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+131 | fn:Keyword/keyword m14:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+132 | fn:Keyword/keyword m15:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+133 | fn:Keyword/keyword m16:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+134 | fn:Keyword/keyword m17:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+135 | fn:Keyword/keyword m18:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+136 | fn:Keyword/keyword m19:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ;:Punctuation
+137 | }:Punctuation/trait_end
+138 |
+139 | mod:Keyword/keyword outer:Identifier {:Punctuation
+140 | let:Keyword v0:Identifier =:Operator 0:Number ;:Punctuation
+141 | mod:Keyword/keyword inner:Identifier {:Punctuation
+142 | fn:Keyword/keyword f0:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+143 | fn:Keyword/keyword f1:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+144 | fn:Keyword/keyword f2:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+145 | fn:Keyword/keyword f3:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+146 | fn:Keyword/keyword f4:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+147 | fn:Keyword/keyword f5:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+148 | fn:Keyword/keyword f6:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+149 | fn:Keyword/keyword f7:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+150 | fn:Keyword/keyword f8:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+151 | fn:Keyword/keyword f9:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+152 | fn:Keyword/keyword f10:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+153 | fn:Keyword/keyword f11:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+154 | fn:Keyword/keyword f12:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+155 | fn:Keyword/keyword f13:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+156 | fn:Keyword/keyword f14:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+157 | fn:Keyword/keyword f15:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+158 | fn:Keyword/keyword f16:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+159 | fn:Keyword/keyword f17:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+160 | fn:Keyword/keyword f18:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+161 | fn:Keyword/keyword f19:Function (:Punctuation ):Punctuation {:Punctuation }:Punctuation
+162 | }:Punctuation/mod_end
+163 | }:Punctuation/mod_end
+164 |
+165 | impl:Keyword/impl_block Wide:Type {:Punctuation
+166 | fn:Keyword/keyword a0:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+167 | fn:Keyword/keyword a1:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+168 | fn:Keyword/keyword a2:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+169 | fn:Keyword/keyword a3:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+170 | fn:Keyword/keyword a4:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+171 | fn:Keyword/keyword a5:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+172 | fn:Keyword/keyword a6:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+173 | fn:Keyword/keyword a7:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+174 | fn:Keyword/keyword a8:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+175 | fn:Keyword/keyword a9:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+176 | fn:Keyword/keyword a10:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+177 | fn:Keyword/keyword a11:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+178 | fn:Keyword/keyword a12:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+179 | fn:Keyword/keyword a13:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+180 | fn:Keyword/keyword a14:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+181 | fn:Keyword/keyword a15:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+182 | fn:Keyword/keyword a16:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+183 | fn:Keyword/keyword a17:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+184 | fn:Keyword/keyword a18:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+185 | fn:Keyword/keyword a19:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+186 | }:Punctuation/impl_end
+187 |
+188 | impl:Keyword/impl_block <:Punctuation T:Type ::Punctuation/trait_bound Clone:Type >:Punctuation Wordy:Type for:Keyword Vec:Type <:Punctuation T:Type >:Punctuation {:Punctuation
+189 | fn:Keyword/keyword m0:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+190 | fn:Keyword/keyword m1:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+191 | fn:Keyword/keyword m2:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+192 | fn:Keyword/keyword m3:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+193 | fn:Keyword/keyword m4:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+194 | fn:Keyword/keyword m5:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+195 | fn:Keyword/keyword m6:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+196 | fn:Keyword/keyword m7:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+197 | fn:Keyword/keyword m8:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+198 | fn:Keyword/keyword m9:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+199 | fn:Keyword/keyword m10:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+200 | fn:Keyword/keyword m11:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+201 | fn:Keyword/keyword m12:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+202 | fn:Keyword/keyword m13:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+203 | fn:Keyword/keyword m14:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+204 | fn:Keyword/keyword m15:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+205 | fn:Keyword/keyword m16:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+206 | fn:Keyword/keyword m17:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+207 | fn:Keyword/keyword m18:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+208 | fn:Keyword/keyword m19:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+209 | }:Punctuation/impl_end
+210 |
+211 | impl:Keyword/impl_block fmt:Identifier :::Punctuation Display:Type for:Keyword module:Identifier :::Punctuation Wide:Type {:Punctuation
+212 | fn:Keyword/keyword d0:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+213 | fn:Keyword/keyword d1:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+214 | fn:Keyword/keyword d2:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+215 | fn:Keyword/keyword d3:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+216 | fn:Keyword/keyword d4:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+217 | fn:Keyword/keyword d5:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+218 | fn:Keyword/keyword d6:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+219 | fn:Keyword/keyword d7:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+220 | fn:Keyword/keyword d8:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+221 | fn:Keyword/keyword d9:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+222 | fn:Keyword/keyword d10:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+223 | fn:Keyword/keyword d11:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+224 | fn:Keyword/keyword d12:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+225 | fn:Keyword/keyword d13:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+226 | fn:Keyword/keyword d14:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+227 | fn:Keyword/keyword d15:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+228 | fn:Keyword/keyword d16:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+229 | fn:Keyword/keyword d17:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+230 | fn:Keyword/keyword d18:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+231 | fn:Keyword/keyword d19:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+232 | }:Punctuation/impl_end
+233 |
+234 | impl:Keyword/impl_block Wordy:Type for:Keyword &:Operator/ref_type Wide:Type {:Punctuation
+235 | fn:Keyword/keyword r0:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+236 | fn:Keyword/keyword r1:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+237 | fn:Keyword/keyword r2:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+238 | fn:Keyword/keyword r3:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+239 | fn:Keyword/keyword r4:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+240 | fn:Keyword/keyword r5:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+241 | fn:Keyword/keyword r6:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+242 | fn:Keyword/keyword r7:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+243 | fn:Keyword/keyword r8:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+244 | fn:Keyword/keyword r9:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+245 | fn:Keyword/keyword r10:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+246 | fn:Keyword/keyword r11:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+247 | fn:Keyword/keyword r12:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+248 | fn:Keyword/keyword r13:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+249 | fn:Keyword/keyword r14:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+250 | fn:Keyword/keyword r15:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+251 | fn:Keyword/keyword r16:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+252 | fn:Keyword/keyword r17:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+253 | fn:Keyword/keyword r18:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+254 | fn:Keyword/keyword r19:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+255 | }:Punctuation
+256 |
+257 | impl:Keyword/impl_block Wordy:Type for:Keyword [:Punctuation u8:Type ]:Punctuation {:Punctuation
+258 | fn:Keyword/keyword s0:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+259 | fn:Keyword/keyword s1:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+260 | fn:Keyword/keyword s2:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+261 | fn:Keyword/keyword s3:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+262 | fn:Keyword/keyword s4:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+263 | fn:Keyword/keyword s5:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+264 | fn:Keyword/keyword s6:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+265 | fn:Keyword/keyword s7:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+266 | fn:Keyword/keyword s8:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+267 | fn:Keyword/keyword s9:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+268 | fn:Keyword/keyword s10:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+269 | fn:Keyword/keyword s11:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+270 | fn:Keyword/keyword s12:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+271 | fn:Keyword/keyword s13:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+272 | fn:Keyword/keyword s14:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+273 | fn:Keyword/keyword s15:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+274 | fn:Keyword/keyword s16:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+275 | fn:Keyword/keyword s17:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+276 | fn:Keyword/keyword s18:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+277 | fn:Keyword/keyword s19:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation {:Punctuation }:Punctuation
+278 | }:Punctuation
+279 |
+280 | fn:Keyword/keyword nested_blocks:Function (:Punctuation ):Punctuation {:Punctuation
+281 | if:Keyword true:Keyword {:Punctuation
+282 | let:Keyword v0:Identifier =:Operator 0:Number ;:Punctuation
+283 | let:Keyword v1:Identifier =:Operator 1:Number ;:Punctuation
+284 | let:Keyword v2:Identifier =:Operator 2:Number ;:Punctuation
+285 | let:Keyword v3:Identifier =:Operator 3:Number ;:Punctuation
+286 | let:Keyword v4:Identifier =:Operator 4:Number ;:Punctuation
+287 | let:Keyword v5:Identifier =:Operator 5:Number ;:Punctuation
+288 | let:Keyword v6:Identifier =:Operator 6:Number ;:Punctuation
+289 | let:Keyword v7:Identifier =:Operator 7:Number ;:Punctuation
+290 | let:Keyword v8:Identifier =:Operator 8:Number ;:Punctuation
+291 | let:Keyword v9:Identifier =:Operator 9:Number ;:Punctuation
+292 | let:Keyword v10:Identifier =:Operator 10:Number ;:Punctuation
+293 | let:Keyword v11:Identifier =:Operator 11:Number ;:Punctuation
+294 | let:Keyword v12:Identifier =:Operator 12:Number ;:Punctuation
+295 | let:Keyword v13:Identifier =:Operator 13:Number ;:Punctuation
+296 | let:Keyword v14:Identifier =:Operator 14:Number ;:Punctuation
+297 | let:Keyword v15:Identifier =:Operator 15:Number ;:Punctuation
+298 | let:Keyword v16:Identifier =:Operator 16:Number ;:Punctuation
+299 | let:Keyword v17:Identifier =:Operator 17:Number ;:Punctuation
+300 | let:Keyword v18:Identifier =:Operator 18:Number ;:Punctuation
+301 | let:Keyword v19:Identifier =:Operator 19:Number ;:Punctuation
+302 | }:Punctuation
+303 | let:Keyword f:Identifier =:Operator |:Operator/closure_open |:Operator/closure_close {:Punctuation
+304 | let:Keyword v0:Identifier =:Operator 0:Number ;:Punctuation
+305 | let:Keyword v1:Identifier =:Operator 1:Number ;:Punctuation
+306 | let:Keyword v2:Identifier =:Operator 2:Number ;:Punctuation
+307 | let:Keyword v3:Identifier =:Operator 3:Number ;:Punctuation
+308 | let:Keyword v4:Identifier =:Operator 4:Number ;:Punctuation
+309 | let:Keyword v5:Identifier =:Operator 5:Number ;:Punctuation
+310 | let:Keyword v6:Identifier =:Operator 6:Number ;:Punctuation
+311 | let:Keyword v7:Identifier =:Operator 7:Number ;:Punctuation
+312 | let:Keyword v8:Identifier =:Operator 8:Number ;:Punctuation
+313 | let:Keyword v9:Identifier =:Operator 9:Number ;:Punctuation
+314 | let:Keyword v10:Identifier =:Operator 10:Number ;:Punctuation
+315 | let:Keyword v11:Identifier =:Operator 11:Number ;:Punctuation
+316 | let:Keyword v12:Identifier =:Operator 12:Number ;:Punctuation
+317 | let:Keyword v13:Identifier =:Operator 13:Number ;:Punctuation
+318 | let:Keyword v14:Identifier =:Operator 14:Number ;:Punctuation
+319 | let:Keyword v15:Identifier =:Operator 15:Number ;:Punctuation
+320 | let:Keyword v16:Identifier =:Operator 16:Number ;:Punctuation
+321 | let:Keyword v17:Identifier =:Operator 17:Number ;:Punctuation
+322 | let:Keyword v18:Identifier =:Operator 18:Number ;:Punctuation
+323 | let:Keyword v19:Identifier =:Operator 19:Number ;:Punctuation
+324 | }:Punctuation ;:Punctuation
+325 | loop:Keyword {:Punctuation
+326 | let:Keyword v0:Identifier =:Operator 0:Number ;:Punctuation
+327 | let:Keyword v1:Identifier =:Operator 1:Number ;:Punctuation
+328 | let:Keyword v2:Identifier =:Operator 2:Number ;:Punctuation
+329 | let:Keyword v3:Identifier =:Operator 3:Number ;:Punctuation
+330 | let:Keyword v4:Identifier =:Operator 4:Number ;:Punctuation
+331 | let:Keyword v5:Identifier =:Operator 5:Number ;:Punctuation
+332 | let:Keyword v6:Identifier =:Operator 6:Number ;:Punctuation
+333 | let:Keyword v7:Identifier =:Operator 7:Number ;:Punctuation
+334 | let:Keyword v8:Identifier =:Operator 8:Number ;:Punctuation
+335 | let:Keyword v9:Identifier =:Operator 9:Number ;:Punctuation
+336 | let:Keyword v10:Identifier =:Operator 10:Number ;:Punctuation
+337 | let:Keyword v11:Identifier =:Operator 11:Number ;:Punctuation
+338 | let:Keyword v12:Identifier =:Operator 12:Number ;:Punctuation
+339 | let:Keyword v13:Identifier =:Operator 13:Number ;:Punctuation
+340 | let:Keyword v14:Identifier =:Operator 14:Number ;:Punctuation
+341 | let:Keyword v15:Identifier =:Operator 15:Number ;:Punctuation
+342 | let:Keyword v16:Identifier =:Operator 16:Number ;:Punctuation
+343 | let:Keyword v17:Identifier =:Operator 17:Number ;:Punctuation
+344 | let:Keyword v18:Identifier =:Operator 18:Number ;:Punctuation
+345 | let:Keyword v19:Identifier =:Operator 19:Number ;:Punctuation
+346 | }:Punctuation
+347 | }:Punctuation/fn_end
+348 |
+349 | enum:Keyword Variants:Type {:Punctuation
+350 | Named:Identifier {:Punctuation
+351 | pub:Keyword/keyword f0:Identifier ::Punctuation u8:Type ,:Punctuation
+352 | pub:Keyword/keyword f1:Identifier ::Punctuation u8:Type ,:Punctuation
+353 | pub:Keyword/keyword f2:Identifier ::Punctuation u8:Type ,:Punctuation
+354 | pub:Keyword/keyword f3:Identifier ::Punctuation u8:Type ,:Punctuation
+355 | pub:Keyword/keyword f4:Identifier ::Punctuation u8:Type ,:Punctuation
+356 | pub:Keyword/keyword f5:Identifier ::Punctuation u8:Type ,:Punctuation
+357 | pub:Keyword/keyword f6:Identifier ::Punctuation u8:Type ,:Punctuation
+358 | pub:Keyword/keyword f7:Identifier ::Punctuation u8:Type ,:Punctuation
+359 | pub:Keyword/keyword f8:Identifier ::Punctuation u8:Type ,:Punctuation
+360 | pub:Keyword/keyword f9:Identifier ::Punctuation u8:Type ,:Punctuation
+361 | pub:Keyword/keyword f10:Identifier ::Punctuation u8:Type ,:Punctuation
+362 | pub:Keyword/keyword f11:Identifier ::Punctuation u8:Type ,:Punctuation
+363 | pub:Keyword/keyword f12:Identifier ::Punctuation u8:Type ,:Punctuation
+364 | pub:Keyword/keyword f13:Identifier ::Punctuation u8:Type ,:Punctuation
+365 | pub:Keyword/keyword f14:Identifier ::Punctuation u8:Type ,:Punctuation
+366 | pub:Keyword/keyword f15:Identifier ::Punctuation u8:Type ,:Punctuation
+367 | pub:Keyword/keyword f16:Identifier ::Punctuation u8:Type ,:Punctuation
+368 | pub:Keyword/keyword f17:Identifier ::Punctuation u8:Type ,:Punctuation
+369 | pub:Keyword/keyword f18:Identifier ::Punctuation u8:Type ,:Punctuation
+370 | pub:Keyword/keyword f19:Identifier ::Punctuation u8:Type ,:Punctuation
+371 | }:Punctuation ,:Punctuation
+372 | Other:Identifier ,:Punctuation
+373 | }:Punctuation/enum_end
+374 |
+375 | fn:Keyword/keyword trailing:Function (:Punctuation ):Punctuation {:Punctuation
+376 | let:Keyword v0:Identifier =:Operator 0:Number ;:Punctuation
+377 | let:Keyword v1:Identifier =:Operator 1:Number ;:Punctuation
+378 | let:Keyword v2:Identifier =:Operator 2:Number ;:Punctuation
+379 | let:Keyword v3:Identifier =:Operator 3:Number ;:Punctuation
+380 | let:Keyword v4:Identifier =:Operator 4:Number ;:Punctuation
+381 | let:Keyword v5:Identifier =:Operator 5:Number ;:Punctuation
+382 | let:Keyword v6:Identifier =:Operator 6:Number ;:Punctuation
+383 | let:Keyword v7:Identifier =:Operator 7:Number ;:Punctuation
+384 | let:Keyword v8:Identifier =:Operator 8:Number ;:Punctuation
+385 | let:Keyword v9:Identifier =:Operator 9:Number ;:Punctuation
+386 | let:Keyword v10:Identifier =:Operator 10:Number ;:Punctuation
+387 | let:Keyword v11:Identifier =:Operator 11:Number ;:Punctuation
+388 | let:Keyword v12:Identifier =:Operator 12:Number ;:Punctuation
+389 | let:Keyword v13:Identifier =:Operator 13:Number ;:Punctuation
+390 | let:Keyword v14:Identifier =:Operator 14:Number ;:Punctuation
+391 | let:Keyword v15:Identifier =:Operator 15:Number ;:Punctuation
+392 | let:Keyword v16:Identifier =:Operator 16:Number ;:Punctuation
+393 | let:Keyword v17:Identifier =:Operator 17:Number ;:Punctuation
+394 | let:Keyword v18:Identifier =:Operator 18:Number ;:Punctuation
+395 | let:Keyword v19:Identifier =:Operator 19:Number ;:Punctuation
+396 | }:Punctuation/fn_end // after:Comment

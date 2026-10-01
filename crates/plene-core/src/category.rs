@@ -57,6 +57,7 @@ categories! {
     Lifetimes => ("lifetimes", "Lifetimes and labels"),
     Bounds => ("bounds", "Trait bounds"),
     Flow => ("flow", "Match arms, returns, closures and ?"),
+    Ends => ("ends", "Labels on the closing braces of long items"),
 }
 
 impl Category {
@@ -101,6 +102,12 @@ impl Category {
             | Role::RetType
             | Role::ClosureOpen
             | Role::ClosureClose => Category::Flow,
+            Role::FnEnd
+            | Role::ImplEnd
+            | Role::ModEnd
+            | Role::TraitEnd
+            | Role::StructEnd
+            | Role::EnumEnd => Category::Ends,
         }
     }
 }
