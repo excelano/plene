@@ -276,3 +276,24 @@ fn colons_are_bounds_only_before_a_bound_list() {
         assert_eq!(role, expected, "in {source:?}");
     }
 }
+
+#[test]
+fn double_dot_reads_by_what_surrounds_it() {
+    for (source, expected) in [
+        ("fn f() { (a, ..) = t; }", Role::RestPattern),
+        ("fn f() { [a, .., b] = t; }", Role::RestPattern),
+        ("fn f() { S(a, ..) = t; }", Role::RestPattern),
+        ("fn f() { S { a, .. } = t; }", Role::RestPattern),
+        ("fn f() { ((a, ..), b) = t; }", Role::RestPattern),
+        ("fn f() { let (a, ..) = t; }", Role::RestPattern),
+        ("fn f() { x = (a, ..); }", Role::RangeFull),
+        ("fn f() { g(a, ..); }", Role::RangeFull),
+        ("fn f() { x = S { a, ..b }; }", Role::StructUpdate),
+        ("fn f() { let [a, r @ ..] = t; }", Role::RestBinding),
+        ("fn f() { let [a, ..] = t; }", Role::RestPattern),
+    ] {
+        let roles = roles_in(source);
+        let dots = roles.iter().find(|(text, _)| text == "..").unwrap();
+        assert_eq!(dots.1, expected, "in {source:?}");
+    }
+}

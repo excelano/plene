@@ -75,7 +75,8 @@ Identifiers; std types (`Vec`, `Box`, `str`, `i32`…); keywords not listed belo
 | `..` | `range_full` | `..` alone, as in `&v[..]` | `all` |
 | `..=` | `range_inclusive` | `a..=b`, `..=b` | `through` |
 | `..` | `struct_update` | `..base` | `rest from` |
-| `..` | `rest_pattern` | `[a, ..]`, `Foo { a, .. }` | `and the rest` |
+| `..` | `rest_pattern` | `[a, ..]`, `Foo { a, .. }`, and the same in a destructuring assignment | `and the rest` |
+| `..` | `rest_binding` | `rest @ ..` | `the rest` |
 | `=>` | `match_arm` | | `gives` |
 | `\|` | `pattern_or` | pattern alternative | `or` |
 | `@` | `pattern_binding` | | `bound as` |

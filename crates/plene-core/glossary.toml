@@ -208,6 +208,12 @@ note = "Matches the remaining fields or elements without naming them."
 
 [[expand]]
 token = ".."
+role = "rest_binding"
+text = "the rest"
+note = "Binds the remaining elements to the name before the @."
+
+[[expand]]
+token = ".."
 role = "struct_update"
 text = "rest from"
 note = "Takes every field not already listed from another value of the same struct type."

@@ -13,6 +13,10 @@ fn classify(value: Option<u8>, point: Point, items: &[u8]) -> u8 {
     let (head, ..) = triple();
     let [start, rest @ ..] = items else { return 0 };
     let moved = Point { x: 1, ..point };
+    (first, ..) = pair();
+    [first, .., last] = items;
+    Point { x: first, .. } = point;
+    let tail = (first, ..);
     for _ in items {}
     items.iter().map(|_| 1).count();
     x

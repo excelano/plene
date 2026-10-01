@@ -62,6 +62,7 @@ roles! {
     Discard => "discard",
     InferredType => "inferred_type",
     RestPattern => "rest_pattern",
+    RestBinding => "rest_binding",
     StructUpdate => "struct_update",
     Range => "range",
     RangeFrom => "range_from",
@@ -138,8 +139,11 @@ pub(crate) fn classify(token: &SyntaxToken) -> Option<Role> {
         (UNDERSCORE, UNDERSCORE_EXPR) => Some(Role::Wildcard),
         (UNDERSCORE, WILDCARD_PAT) => Some(Role::Wildcard),
         (UNDERSCORE, INFER_TYPE) => Some(Role::InferredType),
+        (DOT2, REST_PAT) if is_bound(&parent) => Some(Role::RestBinding),
         (DOT2, REST_PAT) => Some(Role::RestPattern),
-        (DOT2, RECORD_EXPR_FIELD_LIST) => Some(Role::StructUpdate),
+        (DOT2, RECORD_EXPR_FIELD_LIST) if has_base(token) => Some(Role::StructUpdate),
+        (DOT2, RECORD_EXPR_FIELD_LIST) => Some(Role::RestPattern),
+        (DOT2, RANGE_EXPR) if is_destructuring_rest(&parent) => Some(Role::RestPattern),
         (DOT2 | DOT2EQ, RANGE_EXPR | RANGE_PAT) => Some(range_role(token, &parent)),
         (COLON, _) => bound_colon_role(token),
         (PLUS, TYPE_BOUND_LIST) => Some(Role::BoundSeparator),
@@ -168,6 +172,43 @@ fn is_receiver(expr: &SyntaxNode) -> bool {
             METHOD_CALL_EXPR | FIELD_EXPR | INDEX_EXPR | AWAIT_EXPR
         ) && outer.first_child().as_ref() == Some(expr)
     })
+}
+
+/// Whether the rest pattern is bound to a name, as in `rest @ ..`.
+fn is_bound(rest: &SyntaxNode) -> bool {
+    rest.parent()
+        .is_some_and(|binding| binding.kind() == IDENT_PAT)
+}
+
+/// Whether a `..` in a record expression is followed by a base value, as in
+/// `Point { x: 1, ..base }`; without one it is the rest of a destructuring assignment.
+fn has_base(dots: &SyntaxToken) -> bool {
+    dots.siblings_with_tokens(Direction::Next)
+        .skip(1)
+        .any(|element| element.into_node().is_some())
+}
+
+/// Whether a bare `..` is the rest of a destructuring assignment, as in
+/// `(a, ..) = t;`. On the right of an `=` the same text is the full range, so the
+/// tuple, array, call or record holding it has to be the whole left side.
+fn is_destructuring_rest(range: &SyntaxNode) -> bool {
+    let target = range
+        .ancestors()
+        .skip(1)
+        .take_while(|node| {
+            matches!(
+                node.kind(),
+                TUPLE_EXPR
+                    | ARRAY_EXPR
+                    | CALL_EXPR
+                    | ARG_LIST
+                    | RECORD_EXPR
+                    | RECORD_EXPR_FIELD_LIST
+                    | RECORD_EXPR_FIELD
+            )
+        })
+        .last();
+    range.children().next().is_none() && target.is_some_and(|node| is_assignment_target(&node))
 }
 
 /// Whether `pattern` is the whole pattern of a `let`, as in `let _ = f();`.

@@ -28,16 +28,24 @@ input_file: crates/plene-core/tests/fixtures/patterns.rs
  13 |     let (head, ..) = triple();
     |     let (head, and the rest) = triple();
  14 |     let [start, rest @ ..] = items else { return 0 };
-    |     let [start, rest bound as and the rest] = items else { return 0 };
+    |     let [start, rest bound as the rest] = items else { return 0 };
  15 |     let moved = Point { x: 1, ..point };
     |     let moved = Point { x: 1, rest from point };
- 16 |     for _ in items {}
+ 16 |     (first, ..) = pair();
+    |     (first, and the rest) = pair();
+ 17 |     [first, .., last] = items;
+    |     [first, and the rest, last] = items;
+ 18 |     Point { x: first, .. } = point;
+    |     Point { x: first, and the rest } = point;
+ 19 |     let tail = (first, ..);
+    |     let tail = (first, all);
+ 20 |     for _ in items {}
     |     for anything in items {}
- 17 |     items.iter().map(|_| 1).count();
+ 21 |     items.iter().map(|_| 1).count();
     |     items.iter().map(closure(anything) 1).count();
- 18 |     x
- 19 | }
- 20 | 
- 21 | fn ignored(_: u8, _unused: u8) {}
+ 22 |     x
+ 23 | }
+ 24 | 
+ 25 | fn ignored(_: u8, _unused: u8) {}
     | function ignored(anything: u8, _unused: u8) {}
- 22 | use std::fmt::Write as _;
+ 26 | use std::fmt::Write as _;

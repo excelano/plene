@@ -16,12 +16,16 @@ input_file: crates/plene-core/tests/fixtures/patterns.rs
  11 | }:Punctuation
  12 | let:Keyword Point:Identifier {:Punctuation x:Identifier ,:Punctuation ..:Operator/rest_pattern }:Punctuation =:Operator point:Identifier ;:Punctuation
  13 | let:Keyword (:Punctuation head:Identifier ,:Punctuation ..:Operator/rest_pattern ):Punctuation =:Operator triple:Function (:Punctuation ):Punctuation ;:Punctuation
- 14 | let:Keyword [:Punctuation start:Identifier ,:Punctuation rest:Identifier @:Operator/pattern_binding ..:Operator/rest_pattern ]:Punctuation =:Operator items:Identifier else:Keyword {:Punctuation return:Keyword 0:Number }:Punctuation ;:Punctuation
+ 14 | let:Keyword [:Punctuation start:Identifier ,:Punctuation rest:Identifier @:Operator/pattern_binding ..:Operator/rest_binding ]:Punctuation =:Operator items:Identifier else:Keyword {:Punctuation return:Keyword 0:Number }:Punctuation ;:Punctuation
  15 | let:Keyword moved:Identifier =:Operator Point:Identifier {:Punctuation x:Identifier ::Punctuation 1:Number ,:Punctuation ..:Operator/struct_update point:Identifier }:Punctuation ;:Punctuation
- 16 | for:Keyword _:Keyword/wildcard in:Keyword items:Identifier {:Punctuation }:Punctuation
- 17 | items:Identifier .:Punctuation iter:Function (:Punctuation ):Punctuation .:Punctuation map:Function (:Punctuation |:Operator/closure_open _:Keyword/wildcard |:Operator/closure_close 1:Number ):Punctuation .:Punctuation count:Function (:Punctuation ):Punctuation ;:Punctuation
- 18 | x:Identifier
- 19 | }:Punctuation
- 20 |
- 21 | fn:Keyword/keyword ignored:Function (:Punctuation _:Keyword/wildcard ::Punctuation u8:Type ,:Punctuation _unused:Identifier ::Punctuation u8:Type ):Punctuation {:Punctuation }:Punctuation
- 22 | use:Keyword std:Identifier :::Punctuation fmt:Identifier :::Punctuation Write:Identifier as:Keyword _:Keyword ;:Punctuation
+ 16 | (:Punctuation first:Identifier ,:Punctuation ..:Operator/rest_pattern ):Punctuation =:Operator pair:Function (:Punctuation ):Punctuation ;:Punctuation
+ 17 | [:Punctuation first:Identifier ,:Punctuation ..:Operator/rest_pattern ,:Punctuation last:Identifier ]:Punctuation =:Operator items:Identifier ;:Punctuation
+ 18 | Point:Identifier {:Punctuation x:Identifier ::Punctuation first:Identifier ,:Punctuation ..:Operator/rest_pattern }:Punctuation =:Operator point:Identifier ;:Punctuation
+ 19 | let:Keyword tail:Identifier =:Operator (:Punctuation first:Identifier ,:Punctuation ..:Operator/range_full ):Punctuation ;:Punctuation
+ 20 | for:Keyword _:Keyword/wildcard in:Keyword items:Identifier {:Punctuation }:Punctuation
+ 21 | items:Identifier .:Punctuation iter:Function (:Punctuation ):Punctuation .:Punctuation map:Function (:Punctuation |:Operator/closure_open _:Keyword/wildcard |:Operator/closure_close 1:Number ):Punctuation .:Punctuation count:Function (:Punctuation ):Punctuation ;:Punctuation
+ 22 | x:Identifier
+ 23 | }:Punctuation
+ 24 |
+ 25 | fn:Keyword/keyword ignored:Function (:Punctuation _:Keyword/wildcard ::Punctuation u8:Type ,:Punctuation _unused:Identifier ::Punctuation u8:Type ):Punctuation {:Punctuation }:Punctuation
+ 26 | use:Keyword std:Identifier :::Punctuation fmt:Identifier :::Punctuation Write:Identifier as:Keyword _:Keyword ;:Punctuation
