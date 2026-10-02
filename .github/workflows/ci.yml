@@ -1,5 +1,5 @@
 # The suite, the clippy rule, formatting, the toolchain floor, and the rule
-# against compiling C, on every push and pull request.
+# against compiling C, when asked (`gh workflow run ci.yml`).
 #
 # Author: David M. Anderson
 # Built with AI assistance (Claude, Anthropic)
@@ -7,10 +7,7 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
