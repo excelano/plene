@@ -7,411 +7,480 @@ token = "fn"
 role = "keyword"
 text = "function"
 note = "Declares a function."
+url = "https://doc.rust-lang.org/reference/items/functions.html"
 
 [[expand]]
 token = "pub"
 role = "keyword"
 text = "public"
 note = "Makes an item visible outside its module. pub(crate) limits that to the current crate."
+url = "https://doc.rust-lang.org/reference/visibility-and-privacy.html"
 
 [[expand]]
 token = "mut"
 role = "keyword"
 text = "mutable"
 note = "Allows a value, or what a reference points to, to be changed."
+url = "https://doc.rust-lang.org/reference/patterns.html#identifier-patterns"
 
 [[expand]]
 token = "impl"
 role = "impl_block"
 text = "implement"
 note = "Implements methods for a type, or a trait for a type: impl Trait for Type."
+url = "https://doc.rust-lang.org/reference/items/implementations.html"
 
 [[expand]]
 token = "impl"
 role = "impl_trait_type"
 text = "some"
 note = "Some type that implements the trait, chosen by the caller in argument position and by the function in return position."
+url = "https://doc.rust-lang.org/reference/types/impl-trait.html"
 
 [[expand]]
 token = "mod"
 role = "keyword"
 text = "module"
 note = "Declares a module: a named scope for items, inline or in its own file."
+url = "https://doc.rust-lang.org/reference/items/modules.html"
 
 [[expand]]
 token = "dyn"
 role = "keyword"
 text = "dynamic"
 note = "A trait object: the concrete type is known only at run time, and calls go through a vtable."
+url = "https://doc.rust-lang.org/reference/types/trait-object.html"
 
 [[expand]]
 token = "ref"
 role = "keyword"
 text = "by reference"
 note = "Binds by reference instead of moving the matched value into the binding."
+url = "https://doc.rust-lang.org/reference/patterns.html#identifier-patterns"
 
 [[expand]]
 token = "extern"
 role = "keyword"
 text = "external"
 note = "Links to code outside Rust's own conventions: an extern crate, a foreign function block, or an ABI such as extern \"C\"."
+url = "https://doc.rust-lang.org/reference/items/external-blocks.html"
 
 [[expand]]
 token = "&"
 role = "ref_expr"
 text = "borrow"
 note = "Takes a shared reference to a value without moving it. &mut takes an exclusive reference that allows changes."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#borrow-operators"
 
 [[expand]]
 token = "&"
 role = "ref_type"
 text = "borrowed"
 note = "A reference to a value owned elsewhere. &mut T allows changes through it."
+url = "https://doc.rust-lang.org/reference/types/pointer.html#shared-references-"
 
 [[expand]]
 token = "&"
 role = "ref_pattern"
 text = "borrowed"
 note = "Matches a reference and binds the value it points to."
+url = "https://doc.rust-lang.org/reference/patterns.html#reference-patterns"
 
 [[expand]]
 token = "&"
 role = "self_param"
 text = "borrowed"
 note = "The method borrows the value it is called on instead of taking ownership of it."
+url = "https://doc.rust-lang.org/reference/items/associated-items.html#methods"
 
 [[expand]]
 token = "&"
 role = "binary"
 text = "bitwise and"
 note = "Bitwise AND of two integers. On bool it is a logical AND that evaluates both sides."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators"
 
 [[expand]]
 token = "|"
 role = "binary"
 text = "bitwise or"
 note = "Bitwise OR of two integers. On bool it is a logical OR that evaluates both sides."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators"
 
 [[expand]]
 token = "^"
 role = "binary"
 text = "bitwise xor"
 note = "Bitwise exclusive OR of two integers, or of two bools."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators"
 
 [[expand]]
 token = "<<"
 role = "binary"
 text = "shift left"
 note = "Shifts the bits of an integer left by the given number of places."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators"
 
 [[expand]]
 token = ">>"
 role = "binary"
 text = "shift right"
 note = "Shifts the bits of an integer right by the given number of places."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators"
 
 [[expand]]
 token = "&="
 role = "compound_assign"
 text = "bitwise and="
 note = "Bitwise AND with the right-hand side, assigned back to the left."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#compound-assignment-expressions"
 
 [[expand]]
 token = "|="
 role = "compound_assign"
 text = "bitwise or="
 note = "Bitwise OR with the right-hand side, assigned back to the left."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#compound-assignment-expressions"
 
 [[expand]]
 token = "^="
 role = "compound_assign"
 text = "bitwise xor="
 note = "Bitwise exclusive OR with the right-hand side, assigned back to the left."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#compound-assignment-expressions"
 
 [[expand]]
 token = "<<="
 role = "compound_assign"
 text = "shift left="
 note = "Shifts left by the right-hand side, assigned back to the left."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#compound-assignment-expressions"
 
 [[expand]]
 token = ">>="
 role = "compound_assign"
 text = "shift right="
 note = "Shifts right by the right-hand side, assigned back to the left."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#compound-assignment-expressions"
 
 [[expand]]
 token = "*"
 role = "deref"
 text = "dereference"
 note = "Reaches through a reference, raw pointer or smart pointer to the value it points to."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-dereference-operator"
 
 [[expand]]
 token = "*"
 role = "ptr_type"
 text = "raw pointer"
 note = "A raw pointer: no borrow checking, and reading through it requires unsafe. *mut T allows changes through it."
+url = "https://doc.rust-lang.org/reference/types/pointer.html#raw-pointers-const-and-mut"
 
 [[expand]]
 token = "!"
 role = "not"
 text = "not"
 note = "Logical NOT of a bool, or bitwise NOT of an integer."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#negation-operators"
 
 [[expand]]
 token = "!"
 role = "negative_impl"
 text = "not"
 note = "Declares that a type does not implement an auto trait such as Send or Sync."
+url = "https://doc.rust-lang.org/reference/items/implementations.html#trait-implementations"
 
 [[expand]]
 token = "=>"
 role = "match_arm"
 text = "gives"
 note = "Separates a match arm's pattern from the value the arm produces."
+url = "https://doc.rust-lang.org/reference/expressions/match-expr.html"
 
 [[expand]]
 token = "|"
 role = "pattern_or"
 text = "or"
 note = "Matches if either pattern matches."
+url = "https://doc.rust-lang.org/reference/patterns.html#or-patterns"
 
 [[expand]]
 token = "@"
 role = "pattern_binding"
 text = "bound as"
 note = "Binds the matched value to a name while also testing it against the pattern that follows."
+url = "https://doc.rust-lang.org/reference/patterns.html#identifier-patterns"
 
 [[expand]]
 token = "_"
 role = "wildcard"
 text = "anything"
 note = "Matches any value and binds nothing."
+url = "https://doc.rust-lang.org/reference/patterns.html#wildcard-pattern"
 
 [[expand]]
 token = "_"
 role = "discard"
 text = "discard"
 note = "Evaluates the right-hand side and drops the result immediately instead of binding it."
+url = "https://doc.rust-lang.org/reference/patterns.html#wildcard-pattern"
 
 [[expand]]
 token = "_"
 role = "inferred_type"
 text = "inferred"
 note = "A type left for the compiler to infer."
+url = "https://doc.rust-lang.org/reference/types/inferred.html"
 
 [[expand]]
 token = ".."
 role = "rest_pattern"
 text = "and the rest"
 note = "Matches the remaining fields or elements without naming them."
+url = "https://doc.rust-lang.org/reference/patterns.html#rest-pattern"
 
 [[expand]]
 token = ".."
 role = "rest_binding"
 text = "the rest"
 note = "Binds the remaining elements to the name before the @."
+url = "https://doc.rust-lang.org/reference/patterns.html#rest-pattern"
 
 [[expand]]
 token = ".."
 role = "struct_update"
 text = "rest from"
 note = "Takes every field not already listed from another value of the same struct type."
+url = "https://doc.rust-lang.org/reference/expressions/struct-expr.html#functional-update-syntax"
 
 [[expand]]
 token = ".."
 role = "range"
 text = "up to"
 note = "A range that stops before its end: 0..n counts 0 through n - 1."
+url = "https://doc.rust-lang.org/reference/expressions/range-expr.html"
 
 [[expand]]
 token = ".."
 role = "range_from"
 text = "onward"
 note = "A range with a start and no end: everything from the start on."
+url = "https://doc.rust-lang.org/reference/expressions/range-expr.html"
 
 [[expand]]
 token = ".."
 role = "range_full"
 text = "all"
 note = "The full range, with neither start nor end: every element."
+url = "https://doc.rust-lang.org/reference/expressions/range-expr.html"
 
 [[expand]]
 token = "..="
 role = "range_inclusive"
 text = "through"
 note = "A range that includes its end: 1..=n counts 1 through n."
+url = "https://doc.rust-lang.org/reference/expressions/range-expr.html"
 
 [[expand]]
 token = ":"
 role = "trait_bound"
 text = "implementing"
 note = "Requires the type to implement the traits that follow."
+url = "https://doc.rust-lang.org/reference/trait-bounds.html"
 
 [[expand]]
 token = ":"
 role = "lifetime_bound"
 text = "outliving"
 note = "Requires the type or lifetime to outlive the lifetime that follows."
+url = "https://doc.rust-lang.org/reference/trait-bounds.html#lifetime-bounds"
 
 [[expand]]
 token = "+"
 role = "bound_separator"
 text = "and"
 note = "Joins bounds: every one of them must hold."
+url = "https://doc.rust-lang.org/reference/trait-bounds.html"
 
 [[expand]]
 token = "?"
 role = "maybe_bound"
 text = "maybe"
 note = "Relaxes a bound that applies by default: ?Sized lets the type be unsized."
+url = "https://doc.rust-lang.org/reference/special-types-and-traits.html#sized"
 
 [[expand]]
 token = "->"
 role = "ret_type"
 text = "returns"
 note = "Introduces the type a function or closure returns."
+url = "https://doc.rust-lang.org/reference/items/functions.html"
 
 [[expand]]
 token = "?"
 role = "try"
 text = "or return early"
 note = "Unwraps an Ok or Some value. On Err or None, returns from the enclosing function, converting the error with From."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-try-propagation-expression"
 
 [[expand]]
 token = "?"
 role = "try_chained"
 text = "?"
 note = "Unwraps an Ok or Some value. On Err or None, returns from the enclosing function, converting the error with From."
+url = "https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-try-propagation-expression"
 
 [[expand]]
 token = "|"
 role = "closure_open"
 text = "closure("
 note = "Starts a closure's parameter list."
+url = "https://doc.rust-lang.org/reference/expressions/closure-expr.html"
 
 [[expand]]
 token = "|"
 role = "closure_close"
 text = ")"
 note = "Ends a closure's parameter list."
+url = "https://doc.rust-lang.org/reference/expressions/closure-expr.html"
 
 [[expand]]
 token = "'a"
 role = "lifetime"
 text = "lifetime {name}"
 note = "A named lifetime: the region of code over which a reference is valid. 'static lasts for the whole program."
+url = "https://doc.rust-lang.org/reference/items/generics.html"
 
 [[expand]]
 token = "'_"
 role = "lifetime_anonymous"
 text = "lifetime inferred"
 note = "An anonymous lifetime, left for the compiler to infer."
+url = "https://doc.rust-lang.org/reference/lifetime-elision.html"
 
 [[expand]]
 token = "'label"
 role = "label"
 text = "label {name}"
 note = "Names a loop or block so that break and continue can target it."
+url = "https://doc.rust-lang.org/reference/expressions/loop-expr.html#loop-labels"
 
 [[expand]]
 token = "}"
 role = "fn_end"
 text = "} end function {name}"
 note = "Closes a long function, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+url = "https://doc.rust-lang.org/reference/items/functions.html"
 
 [[expand]]
 token = "}"
 role = "impl_end"
 text = "} end implement {name}"
 note = "Closes a long impl block, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+url = "https://doc.rust-lang.org/reference/items/implementations.html"
 
 [[expand]]
 token = "}"
 role = "mod_end"
 text = "} end module {name}"
 note = "Closes a long module, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+url = "https://doc.rust-lang.org/reference/items/modules.html"
 
 [[expand]]
 token = "}"
 role = "trait_end"
 text = "} end trait {name}"
 note = "Closes a long trait, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+url = "https://doc.rust-lang.org/reference/items/traits.html"
 
 [[expand]]
 token = "}"
 role = "struct_end"
 text = "} end struct {name}"
 note = "Closes a long struct, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+url = "https://doc.rust-lang.org/reference/items/structs.html"
 
 [[expand]]
 token = "}"
 role = "enum_end"
 text = "} end enum {name}"
 note = "Closes a long enum, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+url = "https://doc.rust-lang.org/reference/items/enumerations.html"
 
 [[expand]]
 token = "expr"
 role = "fragment_specifier"
 text = "expression"
 note = "Matches any expression. The kind of source a macro_rules! variable stands for."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#metavariables"
 
 [[expand]]
 token = "ty"
 role = "fragment_specifier"
 text = "type"
 note = "Matches a type. The kind of source a macro_rules! variable stands for."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#metavariables"
 
 [[expand]]
 token = "ident"
 role = "fragment_specifier"
 text = "identifier"
 note = "Matches a single identifier or keyword. The kind of source a macro_rules! variable stands for."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#metavariables"
 
 [[expand]]
 token = "tt"
 role = "fragment_specifier"
 text = "token tree"
 note = "Matches one token, or a group of tokens inside matching brackets. The kind of source a macro_rules! variable stands for."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#metavariables"
 
 [[expand]]
 token = "stmt"
 role = "fragment_specifier"
 text = "statement"
 note = "Matches a statement without its trailing semicolon. The kind of source a macro_rules! variable stands for."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#metavariables"
 
 [[expand]]
 token = "pat"
 role = "fragment_specifier"
 text = "pattern"
 note = "Matches a pattern. The kind of source a macro_rules! variable stands for."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#metavariables"
 
 [[expand]]
 token = "pat_param"
 role = "fragment_specifier"
 text = "pattern without or"
 note = "Matches a pattern that is not a top-level choice with |. The kind of source a macro_rules! variable stands for."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#metavariables"
 
 [[expand]]
 token = "vis"
 role = "fragment_specifier"
 text = "visibility"
 note = "Matches a visibility, which may be empty: pub, pub(crate) or nothing. The kind of source a macro_rules! variable stands for."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#metavariables"
 
 [[expand]]
 token = "*"
 role = "zero_or_more"
 text = "zero or more"
 note = "Ends a repetition: the group before it may repeat any number of times, or not appear."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#repetitions"
 
 [[expand]]
 token = "+"
 role = "one_or_more"
 text = "one or more"
 note = "Ends a repetition: the group before it must appear, and may repeat."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#repetitions"
 
 [[expand]]
 token = "?"
 role = "zero_or_one"
 text = "zero or one"
 note = "Ends a repetition: the group before it may appear once, or not at all."
+url = "https://doc.rust-lang.org/reference/macros-by-example.html#repetitions"

@@ -753,3 +753,92 @@ fn marks_stay_on_their_tokens_when_a_switch_removes_a_space_before_them() {
     assert_eq!(marked_text(&harness, Side::Source), ["x", "x", "x"]);
     assert_eq!(marked_text(&harness, Side::Transcription), ["x", "x", "x"]);
 }
+
+/// The URLs the window asked to open over the frames that follow a click at `pos`, made
+/// with the command key down when `command` is set. The key stays down through the
+/// click, as it does under a real hand, and the pointer events carry it too, since
+/// egui takes the modifiers from the latest event.
+fn click_and_collect_urls(harness: &mut Harness<'_, App>, pos: Pos2, command: bool) -> Vec<String> {
+    let held = if command {
+        Modifiers::COMMAND
+    } else {
+        Modifiers::NONE
+    };
+    let button = |pressed| eframe::egui::Event::PointerButton {
+        pos,
+        button: eframe::egui::PointerButton::Primary,
+        pressed,
+        modifiers: held,
+    };
+    let key = |held| eframe::egui::Event::ModifiersChanged(held);
+    harness.hover_at(pos);
+    harness.run();
+    harness.input_mut().events.extend([key(held), button(true)]);
+    harness.run();
+    harness.input_mut().events.push(button(false));
+    let mut urls = Vec::new();
+    for _ in 0..3 {
+        harness.step();
+        urls.extend(
+            harness
+                .output()
+                .platform_output
+                .commands
+                .iter()
+                .filter_map(|command| match command {
+                    eframe::egui::OutputCommand::OpenUrl(open) => Some(open.url.clone()),
+                    _ => None,
+                }),
+        );
+    }
+    harness.input_mut().events.push(key(Modifiers::NONE));
+    harness.run();
+    urls
+}
+
+#[test]
+fn the_hover_card_names_the_reference_page() {
+    let mut harness = opened("fn f(x: &u8) {}\n", "reference_card.rs", WIDE);
+    let key = harness.ctx.format_modifiers(Modifiers::COMMAND);
+    assert!(hover_shows(
+        &mut harness,
+        450..900,
+        &format!("{key}+click: Rust reference, items/functions")
+    ));
+    let mut harness = opened("fn f(x: &u8) {}\n", "reference_card_anchor.rs", WIDE);
+    assert!(hover_shows(
+        &mut harness,
+        450..900,
+        "Rust reference, types/pointer#shared-references-"
+    ));
+}
+
+#[test]
+fn command_click_opens_the_reference_page_of_a_token() {
+    let mut harness = opened("fn f() {}\n", "reference_click.rs", WIDE);
+    let pos = hover_at_card(&mut harness, 450..900, "fn  →  function").unwrap();
+    let urls = click_and_collect_urls(&mut harness, pos, true);
+    assert_eq!(
+        urls,
+        ["https://doc.rust-lang.org/reference/items/functions.html"]
+    );
+    assert!(selected(&harness).is_some(), "it still selects the row");
+}
+
+#[test]
+fn a_plain_click_and_a_token_without_a_role_open_nothing() {
+    let mut harness = opened("fn f() {}\n", "reference_plain.rs", WIDE);
+    let pos = hover_at_card(&mut harness, 450..900, "fn  →  function").unwrap();
+    assert!(click_and_collect_urls(&mut harness, pos, false).is_empty());
+
+    let y = top_of_row(&mut harness, 0);
+    let on_name = (24..200)
+        .step_by(4)
+        .map(|x| Pos2::new(x as f32, y))
+        .find(|pos| {
+            click(&mut harness, *pos);
+            harness.state().related.count() == 1
+        })
+        .expect("a click lands on the name f");
+    assert!(click_and_collect_urls(&mut harness, on_name, true).is_empty());
+}

@@ -22,6 +22,8 @@ pub struct GlossaryEntry {
     /// The expansion. Equal to `token` when the token is kept as written.
     pub text: String,
     pub note: Option<String>,
+    /// Where the Rust reference covers the token.
+    pub url: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -55,6 +57,8 @@ struct EntryFile {
     text: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     note: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    url: Option<String>,
 }
 
 /// The built-in glossary.
@@ -121,18 +125,23 @@ impl Glossary {
                 role,
                 text: entry.text,
                 note: entry.note,
+                url: entry.url,
             };
             entries.insert(key, entry);
         }
         Ok((Glossary { entries }, warnings))
     }
 
-    /// Applies `overrides` on top of this glossary. An override without a note keeps
-    /// the note it replaces.
+    /// Applies `overrides` on top of this glossary. An override without a note or a
+    /// link keeps the note or link it replaces.
     pub fn merge(&mut self, overrides: Glossary) {
         for (key, mut entry) in overrides.entries {
+            let base = self.entries.get(&key);
             if entry.note.is_none() {
-                entry.note = self.entries.get(&key).and_then(|base| base.note.clone());
+                entry.note = base.and_then(|base| base.note.clone());
+            }
+            if entry.url.is_none() {
+                entry.url = base.and_then(|base| base.url.clone());
             }
             self.entries.insert(key, entry);
         }
@@ -159,6 +168,7 @@ impl Glossary {
                     role: entry.role.to_string(),
                     text: entry.text.clone(),
                     note: entry.note.clone(),
+                    url: entry.url.clone(),
                 })
                 .collect(),
         };

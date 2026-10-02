@@ -33,6 +33,20 @@ fn builtin_covers_every_role_with_a_note() {
 }
 
 #[test]
+fn builtin_links_every_entry_to_the_rust_reference() {
+    let glossary = Glossary::default();
+    for entry in glossary.entries() {
+        let url = entry.url.as_deref().unwrap_or("");
+        assert!(
+            url.starts_with("https://doc.rust-lang.org/reference/")
+                && (url.ends_with(".html") || url.contains(".html#")),
+            "no reference link for {entry:?}"
+        );
+        assert!(!url.contains(' '), "{url}");
+    }
+}
+
+#[test]
 fn expands_by_token_and_role() {
     let glossary = Glossary::default();
     assert_eq!(
@@ -206,6 +220,63 @@ fn merge_replaces_text_and_keeps_notes_unless_given() {
             .count(),
         1
     );
+}
+
+#[test]
+fn merge_keeps_the_link_unless_given_another() {
+    let mut glossary = Glossary::default();
+    let base = glossary.entry("fn", Role::Keyword).unwrap().url.clone();
+    assert!(base.is_some());
+    let (overrides, _) = parse(
+        r#"
+        [[expand]]
+        token = "fn"
+        role = "keyword"
+        text = "func"
+
+        [[expand]]
+        token = "mut"
+        role = "keyword"
+        text = "changeable"
+        url = "https://example.com/mutable"
+
+        [[expand]]
+        token = "'b"
+        role = "lifetime"
+        text = "for {name}"
+        "#,
+    );
+    glossary.merge(overrides);
+    assert_eq!(glossary.entry("fn", Role::Keyword).unwrap().url, base);
+    assert_eq!(
+        glossary.entry("mut", Role::Keyword).unwrap().url.as_deref(),
+        Some("https://example.com/mutable")
+    );
+    assert!(
+        glossary
+            .entry("'a", Role::Lifetime)
+            .unwrap()
+            .url
+            .as_deref()
+            .is_some_and(|url| url.ends_with("items/generics.html")),
+        "a lifetime override with no link keeps the lifetime link"
+    );
+}
+
+#[test]
+fn a_link_is_written_and_read_back_and_an_absent_one_is_not_written() {
+    let (glossary, _) = parse(
+        "[[expand]]\ntoken = \"fn\"\nrole = \"keyword\"\ntext = \"function\"\nurl = \"https://example.com/fn\"\n\n\
+         [[expand]]\ntoken = \"mut\"\nrole = \"keyword\"\ntext = \"mutable\"\n",
+    );
+    let written = glossary.to_toml();
+    assert_eq!(written.matches("url = ").count(), 1, "{written}");
+    let (read_back, _) = parse(&written);
+    assert_eq!(
+        read_back.entry("fn", Role::Keyword).unwrap().url.as_deref(),
+        Some("https://example.com/fn")
+    );
+    assert_eq!(read_back.entry("mut", Role::Keyword).unwrap().url, None);
 }
 
 #[test]

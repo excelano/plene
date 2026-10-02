@@ -9,7 +9,7 @@ use std::ops::Range;
 use std::path::{Path, PathBuf};
 
 use eframe::egui::{
-    Align2, CentralPanel, FontId, Key, KeyboardShortcut, Modifiers, Panel, Rect, RichText,
+    Align2, CentralPanel, FontId, Key, KeyboardShortcut, Modifiers, OpenUrl, Panel, Rect, RichText,
     ScrollArea, Sense, TextEdit, Ui, Vec2, ViewportCommand,
 };
 use plene_core::{Category, Edition, Glossary, Role, Span};
@@ -21,6 +21,8 @@ use crate::search::{Scope, Search};
 use crate::text::{FONT_SIZE, Side, combine, layout_job, span_at, span_index_at};
 
 const OPEN: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::O);
+/// What every reference link in the built-in glossary starts with, left off the hover card.
+const REFERENCE: &str = "https://doc.rust-lang.org/reference/";
 const FIND: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::F);
 /// Space between a pane's line numbers and its text, and between the two panes.
 const GAP: f32 = 16.0;
@@ -447,6 +449,12 @@ impl App {
                         Some((row, span)) => related.select(lines, row, span),
                         None => related.clear(),
                     }
+                    if ui.input(|input| input.modifiers.command)
+                        && let Some((row, span)) = clicked_span
+                        && let Some(url) = reference_url(&lines[row].spans[span], glossary)
+                    {
+                        ui.ctx().open_url(OpenUrl::new_tab(url));
+                    }
                 }
             });
     }
@@ -505,8 +513,15 @@ impl Columns {
     }
 }
 
+/// Where the Rust reference covers `span`'s token, from its glossary entry.
+fn reference_url<'a>(span: &Span, glossary: &'a Glossary) -> Option<&'a str> {
+    glossary
+        .entry(&span.original, span.role?)
+        .and_then(|entry| entry.url.as_deref())
+}
+
 /// The hover card for a token with a glossary role: the token and its expansion, the
-/// role, and the glossary's note.
+/// role, the glossary's note, and the page of the Rust reference that Ctrl+click opens.
 fn hover(ui: &mut Ui, span: &Span, role: Role, glossary: &Glossary) {
     ui.label(RichText::new(format!("{}  →  {}", span.original, span.rendered)).monospace());
     ui.label(RichText::new(role.as_str()).weak());
@@ -515,6 +530,14 @@ fn hover(ui: &mut Ui, span: &Span, role: Role, glossary: &Glossary) {
         .and_then(|entry| entry.note.as_deref())
     {
         ui.label(note);
+    }
+    if let Some(url) = reference_url(span, glossary) {
+        let key = ui.ctx().format_modifiers(Modifiers::COMMAND);
+        let page = url
+            .strip_prefix(REFERENCE)
+            .unwrap_or(url)
+            .replacen(".html", "", 1);
+        ui.label(RichText::new(format!("{key}+click: Rust reference, {page}")).weak());
     }
 }
 
