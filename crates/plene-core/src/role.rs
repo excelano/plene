@@ -91,6 +91,9 @@ roles! {
     ZeroOrMore => "zero_or_more",
     OneOrMore => "one_or_more",
     ZeroOrOne => "zero_or_one",
+    ElidedFromSelf => "elided_from_self",
+    ElidedFromParam => "elided_from_param",
+    ElidedNamed => "elided_named",
 }
 
 impl Role {
@@ -108,6 +111,8 @@ impl Role {
                 | Role::TraitEnd
                 | Role::StructEnd
                 | Role::EnumEnd
+                | Role::ElidedFromParam
+                | Role::ElidedNamed
         )
     }
 }
@@ -132,10 +137,13 @@ impl std::error::Error for UnknownRole {}
 /// The most lines of an item's block that go without a label on its closing brace.
 const SHORT_BLOCK_LINES: usize = 19;
 
-/// A token's role, and for a role that takes a name, the name to fill in.
+/// A token's role, and for a role that takes a name, the name to fill in. A role that
+/// adds to another one names it as its `fallback`, for the token to read as when the
+/// glossary has no entry for the added one.
 pub(crate) struct Classified {
     pub role: Role,
     pub name: Option<String>,
+    pub fallback: Option<Role>,
 }
 
 pub(crate) fn classify(token: &SyntaxToken) -> Option<Classified> {
@@ -147,10 +155,20 @@ pub(crate) fn classify(token: &SyntaxToken) -> Option<Classified> {
     // can't read as Rust. A `macro_rules!` definition is the one place their
     // notation is fixed.
     if parent.ancestors().any(|node| node.kind() == TOKEN_TREE) {
-        return macro_rules_role(token, &parent).map(|role| Classified { role, name: None });
+        return macro_rules_role(token, &parent).map(|role| Classified {
+            role,
+            name: None,
+            fallback: None,
+        });
     }
     if token.kind() == R_CURLY {
         return closing_brace(&parent);
+    }
+    if token.kind() == AMP
+        && parent.kind() == REF_TYPE
+        && let Some(elided) = elided_output(&parent)
+    {
+        return Some(elided);
     }
     let role = role(token, &parent)?;
     let name = matches!(role, Role::Lifetime | Role::Label).then(|| {
@@ -160,7 +178,11 @@ pub(crate) fn classify(token: &SyntaxToken) -> Option<Classified> {
             .unwrap_or(token.text())
             .to_string()
     });
-    Some(Classified { role, name })
+    Some(Classified {
+        role,
+        name,
+        fallback: None,
+    })
 }
 
 fn role(token: &SyntaxToken, parent: &SyntaxNode) -> Option<Role> {
@@ -208,6 +230,141 @@ fn role(token: &SyntaxToken, parent: &SyntaxNode) -> Option<Role> {
         }
         (LIFETIME_IDENT, _) => Some(classify_lifetime(token, parent)),
         _ => None,
+    }
+}
+
+/// The role and name of the `&` of a reference with no lifetime written, in a
+/// function's return type, when syntax alone says where the compiler takes its lifetime
+/// from: `&self`, or the one lifetime in the parameters. With none, or several and no
+/// `&self`, the code would not compile, or syntax cannot see which, and the `&` keeps
+/// its ordinary reading. A reference inside a function pointer or an `Fn(..)` bound has
+/// a scope of its own and is left alone.
+fn elided_output(ref_type: &SyntaxNode) -> Option<Classified> {
+    if ref_type.children().any(|child| child.kind() == LIFETIME) {
+        return None;
+    }
+    let mut ancestors = ref_type.ancestors().skip(1);
+    let ret_type = loop {
+        let node = ancestors.next()?;
+        match node.kind() {
+            FN_PTR_TYPE | PARENTHESIZED_ARG_LIST => return None,
+            RET_TYPE => break node,
+            _ => {}
+        }
+    };
+    let function = ret_type.parent().filter(|node| node.kind() == FN)?;
+    let params = function
+        .children()
+        .find(|child| child.kind() == PARAM_LIST)?;
+    let self_param = params.children().find(|child| child.kind() == SELF_PARAM);
+    let source = match self_param.as_ref().and_then(borrowed_self) {
+        Some(lifetime) => match lifetime {
+            Some(name) => Source::Named(name),
+            None => Source::Param("self".to_string()),
+        },
+        None => {
+            let mut positions = Vec::new();
+            for param in params.children() {
+                let owner = param_name(&param);
+                collect_lifetimes(&param, owner.as_deref(), &mut positions);
+            }
+            let [only] = <[Source; 1]>::try_from(positions).ok()?;
+            only
+        }
+    };
+    let (role, name) = match source {
+        Source::Named(name) => (Role::ElidedNamed, Some(name)),
+        Source::Param(name) if name == "self" => (Role::ElidedFromSelf, None),
+        Source::Param(name) => (Role::ElidedFromParam, Some(name)),
+        Source::Unnamed => return None,
+    };
+    Some(Classified {
+        role,
+        name,
+        fallback: Some(Role::RefType),
+    })
+}
+
+/// Where an elided lifetime in a return type comes from.
+enum Source {
+    /// A lifetime written out, as `'a` or `'static`, by its name.
+    Named(String),
+    /// A lifetime left out of the parameter with this name.
+    Param(String),
+    /// A lifetime left out of a parameter that has no plain name to point to.
+    Unnamed,
+}
+
+/// Whether `self_param` borrows `self`, as `&self`, `&mut self`, `&'a self` or
+/// `self: &Self`. It answers with the lifetime's name when one is written, and `None`
+/// inside when it is not. Any other `self` is not a borrow of it.
+fn borrowed_self(self_param: &SyntaxNode) -> Option<Option<String>> {
+    let reference = self_param
+        .children_with_tokens()
+        .any(|element| element.kind() == AMP);
+    let typed = self_param.children().find(|child| child.kind() == REF_TYPE);
+    let holder = match (reference, typed) {
+        (true, _) => self_param.clone(),
+        (false, Some(typed)) => typed,
+        (false, None) => return None,
+    };
+    Some(written_lifetime(&holder))
+}
+
+/// The name of the lifetime written directly in `node`, without its quote. `'_` is not a
+/// name: it is a lifetime left to be inferred.
+fn written_lifetime(node: &SyntaxNode) -> Option<String> {
+    let name = node
+        .children()
+        .find(|child| child.kind() == LIFETIME)?
+        .text()
+        .to_string();
+    let name = name.strip_prefix('\'')?.to_string();
+    (name != "_").then_some(name)
+}
+
+/// The plain name a parameter binds, as `x` in `mut x: &u8`.
+fn param_name(param: &SyntaxNode) -> Option<String> {
+    let pattern = param.children().find(|child| child.kind() == IDENT_PAT)?;
+    Some(
+        pattern
+            .children()
+            .find(|child| child.kind() == NAME)?
+            .text()
+            .to_string(),
+    )
+}
+
+/// Pushes the lifetime positions in `node`, a parameter: each reference, and each
+/// lifetime written elsewhere, as in `Foo<'a>` or `+ 'a`. A function pointer, an `Fn(..)`
+/// bound and its return type have a scope of their own, so they are not looked into.
+fn collect_lifetimes(node: &SyntaxNode, owner: Option<&str>, positions: &mut Vec<Source>) {
+    for child in node.children() {
+        match child.kind() {
+            FN_PTR_TYPE | PARENTHESIZED_ARG_LIST | RET_TYPE => continue,
+            REF_TYPE => positions.push(position(&child, owner)),
+            LIFETIME if node.kind() != REF_TYPE => positions.push(position(&child, owner)),
+            _ => {}
+        }
+        collect_lifetimes(&child, owner, positions);
+    }
+}
+
+/// The position a reference or a lifetime argument holds: the lifetime if it is named,
+/// else the parameter it is in.
+fn position(holder: &SyntaxNode, owner: Option<&str>) -> Source {
+    let written = if holder.kind() == LIFETIME {
+        let name = holder.text().to_string();
+        name.strip_prefix('\'')
+            .filter(|name| *name != "_")
+            .map(str::to_string)
+    } else {
+        written_lifetime(holder)
+    };
+    match (written, owner) {
+        (Some(name), _) => Source::Named(name),
+        (None, Some(owner)) => Source::Param(owner.to_string()),
+        (None, None) => Source::Unnamed,
     }
 }
 
@@ -339,6 +496,7 @@ fn closing_brace(block: &SyntaxNode) -> Option<Classified> {
     Some(Classified {
         role,
         name: Some(name),
+        fallback: None,
     })
 }
 

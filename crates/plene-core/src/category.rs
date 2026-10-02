@@ -59,9 +59,52 @@ categories! {
     Flow => ("flow", "Match arms, returns, closures and ?"),
     Ends => ("ends", "Labels on the closing braces of long items"),
     Macros => ("macros", "macro_rules! fragments and repetitions"),
+    Elision => ("elision", "Elided lifetimes in return types"),
 }
 
 impl Category {
+    /// Whether the category starts off: its expansions add what the source leaves out,
+    /// so a reader asks for them. The others expand until the reader keeps them as
+    /// written.
+    pub fn opt_in(self) -> bool {
+        matches!(self, Category::Elision)
+    }
+
+    /// `id` as a category that starts off, for the lists of those a reader turns on.
+    pub fn from_opt_in_str(id: &str) -> Result<Category, String> {
+        let category = id.parse::<Category>().map_err(|error| error.to_string())?;
+        if category.opt_in() {
+            Ok(category)
+        } else {
+            let starting_off: Vec<&str> = Category::ALL
+                .iter()
+                .filter(|category| category.opt_in())
+                .map(|category| category.as_str())
+                .collect();
+            Err(format!(
+                "`{id}` already expands by default; the categories that start off are: {}",
+                starting_off.join(", ")
+            ))
+        }
+    }
+
+    /// The categories to leave as written: those of `keep`, and the ones that start off
+    /// unless `expand` names them. A category that starts off is not in `keep`'s hands:
+    /// keeping others does not turn it on.
+    pub fn kept(keep: &[Category], expand: &[Category]) -> Vec<Category> {
+        Category::ALL
+            .iter()
+            .copied()
+            .filter(|category| {
+                if category.opt_in() {
+                    !expand.contains(category)
+                } else {
+                    keep.contains(category)
+                }
+            })
+            .collect()
+    }
+
     /// The category of the glossary entry for `token` in `role`. Every role belongs to
     /// one, so a new role is not accepted until it is placed here.
     pub fn of(token: &str, role: Role) -> Category {
@@ -112,6 +155,7 @@ impl Category {
             Role::FragmentSpecifier | Role::ZeroOrMore | Role::OneOrMore | Role::ZeroOrOne => {
                 Category::Macros
             }
+            Role::ElidedFromSelf | Role::ElidedFromParam | Role::ElidedNamed => Category::Elision,
         }
     }
 }

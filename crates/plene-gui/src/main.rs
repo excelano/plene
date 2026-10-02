@@ -37,12 +37,17 @@ struct Args {
     glossary: Option<PathBuf>,
     /// Leave these categories as written instead of expanding them, comma-separated:
     /// keywords, visibility, mutability, references, operators, ranges, patterns,
-    /// lifetimes, bounds, flow, ends, macros. Replaces the list in the config file for
-    /// this run, and the Expand menu's changes are not saved.
+    /// lifetimes, bounds, flow, ends, macros. Replaces the config file's lists for this
+    /// run, and the Expand menu's changes are not saved.
     #[arg(long, value_delimiter = ',', value_name = "CATEGORY")]
     keep: Vec<Category>,
-    /// Expand every category, ignoring the list in the config file, for this run.
-    #[arg(long, conflicts_with = "keep")]
+    /// Expand the categories that start off, comma-separated: elision. Replaces the
+    /// config file's lists for this run, like --keep.
+    #[arg(long, value_delimiter = ',', value_name = "CATEGORY", value_parser = Category::from_opt_in_str)]
+    expand: Vec<Category>,
+    /// Expand every category, those that start off included, ignoring the config file
+    /// for this run.
+    #[arg(long, conflicts_with_all = ["keep", "expand"])]
     expand_all: bool,
 }
 
@@ -78,17 +83,20 @@ fn settings(
     config_path: Option<PathBuf>,
 ) -> Settings {
     if args.expand_all {
-        return Settings::default();
-    }
-    if !args.keep.is_empty() {
         return Settings {
-            kept: args.keep.clone(),
+            kept: Vec::new(),
+            ..Settings::default()
+        };
+    }
+    if !args.keep.is_empty() || !args.expand.is_empty() {
+        return Settings {
+            kept: Category::kept(&args.keep, &args.expand),
             ..Settings::default()
         };
     }
     match config() {
         Ok((config, warnings)) => Settings {
-            kept: config.keep,
+            kept: config.kept(),
             save_to: config_path,
             problems: warnings
                 .into_iter()
@@ -145,6 +153,7 @@ mod tests {
         Ok((
             Config {
                 keep: vec![Category::Lifetimes],
+                ..Config::default()
             },
             vec!["c.toml: skipping unknown category `x`".to_string()],
         ))
@@ -157,7 +166,7 @@ mod tests {
     #[test]
     fn the_config_files_settings_are_the_start_and_where_changes_are_saved() {
         let settings = settings(&parsed(&[]), saved_config, path());
-        assert_eq!(settings.kept, [Category::Lifetimes]);
+        assert_eq!(settings.kept, [Category::Lifetimes, Category::Elision]);
         assert_eq!(settings.save_to, path());
         assert_eq!(
             settings.problems,
@@ -169,7 +178,10 @@ mod tests {
     fn the_command_line_decides_for_the_run_and_nothing_is_saved() {
         let unread = || -> Result<(Config, Vec<String>), String> { panic!("the config was read") };
         let kept = settings(&parsed(&["--keep", "visibility,ends"]), unread, path());
-        assert_eq!(kept.kept, [Category::Visibility, Category::Ends]);
+        assert_eq!(
+            kept.kept,
+            [Category::Visibility, Category::Ends, Category::Elision]
+        );
         assert_eq!(kept.save_to, None);
         assert!(kept.problems.is_empty());
 
@@ -182,7 +194,7 @@ mod tests {
     fn a_config_that_cannot_be_read_is_reported_and_not_saved_over() {
         let failed = || Err("c.toml: invalid config: bad".to_string());
         let settings = settings(&parsed(&[]), failed, path());
-        assert!(settings.kept.is_empty());
+        assert_eq!(settings.kept, [Category::Elision], "the defaults");
         assert_eq!(settings.save_to, None);
         assert_eq!(
             settings.problems,
@@ -198,5 +210,49 @@ mod tests {
             .unwrap()
             .to_string();
         assert!(error.contains("unknown category `nope`"), "{error}");
+    }
+
+    #[test]
+    fn expand_turns_on_what_starts_off_for_the_run_and_nothing_is_saved() {
+        let unread = || -> Result<(Config, Vec<String>), String> { panic!("the config was read") };
+        let expanded = settings(&parsed(&["--expand", "elision"]), unread, path());
+        assert!(expanded.kept.is_empty());
+        assert_eq!(expanded.save_to, None);
+        let both = settings(
+            &parsed(&["--keep", "ends", "--expand", "elision"]),
+            unread,
+            path(),
+        );
+        assert_eq!(both.kept, [Category::Ends]);
+        let all = settings(&parsed(&["--expand-all"]), unread, path());
+        assert!(all.kept.is_empty(), "elision included");
+    }
+
+    #[test]
+    fn expand_takes_only_a_category_that_starts_off_and_not_with_expand_all() {
+        let error = Args::try_parse_from(["plene-gui", "--expand", "lifetimes"])
+            .err()
+            .unwrap()
+            .to_string();
+        assert!(error.contains("already expands by default"), "{error}");
+        assert!(
+            Args::try_parse_from(["plene-gui", "--expand", "elision", "--expand-all"]).is_err()
+        );
+    }
+
+    #[test]
+    fn the_config_files_expand_list_is_the_start() {
+        let config = || {
+            Ok((
+                Config {
+                    expand: vec![Category::Elision],
+                    ..Config::default()
+                },
+                Vec::new(),
+            ))
+        };
+        let settings = settings(&parsed(&[]), config, path());
+        assert!(settings.kept.is_empty());
+        assert_eq!(settings.save_to, path());
     }
 }

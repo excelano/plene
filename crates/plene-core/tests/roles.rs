@@ -537,3 +537,157 @@ fn a_repetition_operator_reads_on_either_side_of_the_arrow() {
         .count();
     assert_eq!(fragments, 1, "only the matcher has a specifier");
 }
+
+/// What each `&` after a function's own return arrow reads as, with the spacing an
+/// expansion's trailing space gives trimmed away.
+fn returned_references(source: &str) -> Vec<String> {
+    let lines = transcribe(source, Edition::default(), &Glossary::default());
+    let spans = &lines[0].spans;
+    let mut depth = 0;
+    let arrow = spans
+        .iter()
+        .position(|span| {
+            match span.original.as_str() {
+                "(" => depth += 1,
+                ")" => depth -= 1,
+                _ => {}
+            }
+            span.original == "->" && depth == 0
+        })
+        .expect("a return arrow");
+    spans[arrow..]
+        .iter()
+        .filter(|span| span.original == "&")
+        .map(|span| span.rendered.trim_end().to_string())
+        .collect()
+}
+
+#[test]
+fn an_elided_return_lifetime_comes_from_self_when_it_is_borrowed() {
+    for source in [
+        "fn f(&self) -> &u8 {}",
+        "fn f(&mut self) -> &u8 {}",
+        "fn f(&'_ self) -> &u8 {}",
+        "fn f(self: &Self) -> &u8 {}",
+        "fn f(self: &mut Self) -> &u8 {}",
+        "fn f(&self, x: &u8) -> &u8 {}",
+        "fn f(&self, x: &u8, y: &u8) -> &u8 {}",
+        "async fn f(&self) -> &u8 {}",
+        "pub(crate) fn f(&self) -> &u8 {}",
+    ] {
+        assert_eq!(
+            returned_references(source),
+            ["borrowed (from self)"],
+            "{source}"
+        );
+    }
+}
+
+#[test]
+fn a_named_lifetime_on_self_or_a_parameter_is_the_one_returned() {
+    for (source, name) in [
+        ("fn f<'a>(&'a self) -> &u8 {}", "a"),
+        ("fn f<'a>(&'a mut self, x: &u8) -> &u8 {}", "a"),
+        ("fn f<'a>(self: &'a Self) -> &u8 {}", "a"),
+        ("fn f<'a>(x: &'a u8) -> &u8 {}", "a"),
+        ("fn f(x: &'static u8) -> &u8 {}", "static"),
+        ("fn f<'a>(x: Foo<'a>) -> &u8 {}", "a"),
+        ("fn f<'a>(x: Box<dyn Tr + 'a>) -> &u8 {}", "a"),
+        ("fn f<'a>(x: Vec<&'a u8>, n: usize) -> &u8 {}", "a"),
+    ] {
+        assert_eq!(
+            returned_references(source),
+            [format!("borrowed lifetime {name}")],
+            "{source}"
+        );
+    }
+}
+
+#[test]
+fn a_lone_reference_among_the_parameters_is_the_one_returned() {
+    for source in [
+        "fn f(x: &u8) -> &u8 {}",
+        "fn f(mut x: &u8) -> &u8 {}",
+        "fn f(x: &mut u8, n: usize) -> &u8 {}",
+        "fn f(x: Foo<'_>) -> &u8 {}",
+        "fn f(x: Vec<&u8>) -> &u8 {}",
+        "fn f(x: (&u8, u8)) -> &u8 {}",
+        "fn f(self, x: &u8) -> &u8 {}",
+        "fn f(self: Box<Self>, x: &u8) -> &u8 {}",
+        "fn f(x: &u8, g: fn(&u8) -> &u8) -> &u8 {}",
+        "fn f(x: &u8, g: impl Fn(&u8) -> &u8) -> &u8 {}",
+        "async fn f(x: &u8) -> &u8 {}",
+    ] {
+        assert_eq!(
+            returned_references(source),
+            ["borrowed (from x)"],
+            "{source}"
+        );
+    }
+}
+
+#[test]
+fn every_elided_reference_in_the_return_type_is_read() {
+    assert_eq!(
+        returned_references("fn f(x: &u8) -> (&u8, Option<&mut u8>) {}"),
+        ["borrowed (from x)", "borrowed (from x)"]
+    );
+    assert_eq!(
+        returned_references("fn f(x: &u8) -> impl Iterator<Item = &u8> {}"),
+        ["borrowed (from x)"]
+    );
+}
+
+#[test]
+fn nothing_is_added_where_syntax_cannot_say_or_the_lifetime_is_written() {
+    for (source, expected) in [
+        ("fn f() -> &u8 {}", vec!["borrowed"]),
+        ("fn f(n: usize) -> &u8 {}", vec!["borrowed"]),
+        ("fn f(x: Foo) -> &u8 {}", vec!["borrowed"]),
+        ("fn f(x: &u8, y: &u8) -> &u8 {}", vec!["borrowed"]),
+        ("fn f(x: &u8, y: &'a u8) -> &u8 {}", vec!["borrowed"]),
+        ("fn f(x: Foo<'a>, y: &u8) -> &u8 {}", vec!["borrowed"]),
+        ("fn f((a, b): (&u8, u8)) -> &u8 {}", vec!["borrowed"]),
+        ("fn f(_: &u8) -> &u8 {}", vec!["borrowed"]),
+        ("fn f(g: impl Fn(&u8) -> &u8) -> &u8 {}", vec!["borrowed"]),
+        ("fn f(x: &u8) -> &'a u8 {}", vec!["borrowed"]),
+        ("fn f(x: &u8) -> &'static u8 {}", vec!["borrowed"]),
+        ("fn f(self: Box<Self>) -> &u8 {}", vec!["borrowed"]),
+    ] {
+        assert_eq!(returned_references(source), expected, "{source}");
+    }
+}
+
+#[test]
+fn a_reference_in_its_own_scope_is_not_the_functions() {
+    assert_eq!(
+        returned_references("fn f(x: &u8) -> fn(&u8) -> &u8 {}"),
+        ["borrowed", "borrowed"]
+    );
+    assert_eq!(
+        returned_references("fn f(x: &u8) -> impl Fn(&u8) -> &u8 {}"),
+        ["borrowed", "borrowed"]
+    );
+    assert_eq!(
+        returned_references("fn f(x: &u8) -> Box<dyn Fn(&u8) -> &u8> {}"),
+        ["borrowed", "borrowed"]
+    );
+}
+
+#[test]
+fn only_a_functions_references_are_elided_ones() {
+    let elided = |source: &str| {
+        roles_in(source).into_iter().any(|(_, role)| {
+            matches!(
+                role,
+                Role::ElidedFromSelf | Role::ElidedFromParam | Role::ElidedNamed
+            )
+        })
+    };
+    assert!(elided("fn f(x: &u8) -> &u8 {}"));
+    assert!(!elided("fn f(x: &u8) { let y: &u8 = x; }"));
+    assert!(!elided("fn f() { let g = |x: &u8| -> &u8 { x }; }"));
+    assert!(!elided("struct S { x: &'static u8 }"));
+    assert!(!elided("type T = fn(&u8) -> &u8;"));
+    assert!(!elided("trait T { fn f(&self) -> u8; }"));
+}

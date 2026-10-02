@@ -550,3 +550,86 @@ fn help_describes_expand_all() {
     let help = stdout(&plene(&["--help"], ""));
     assert!(help.contains("--expand-all"), "{help}");
 }
+
+const ELIDED: &str = "fn f(x: &u8) -> &u8 {}\n";
+
+#[test]
+fn elided_lifetimes_start_off_and_are_expanded_on_request() {
+    let shown = |args: &[&str]| {
+        let mut all = vec!["--expanded"];
+        all.extend_from_slice(args);
+        all.push("-");
+        stdout(&plene(&all, ELIDED))
+    };
+    let plain = "function f(x: borrowed u8) returns borrowed u8 {}\n";
+    let elided = "function f(x: borrowed u8) returns borrowed (from x) u8 {}\n";
+    assert_eq!(shown(&[]), plain);
+    assert_eq!(shown(&["--expand", "elision"]), elided);
+    assert_eq!(shown(&["--expand-all"]), elided);
+    assert_eq!(
+        shown(&["--keep", "ends"]),
+        plain,
+        "keeping others does not turn it on"
+    );
+    assert_eq!(shown(&["--keep", "ends", "--expand", "elision"]), elided);
+    assert_eq!(
+        shown(&["--keep", "references", "--expand", "elision"]),
+        "function f(x: &u8) returns borrowed (from x) u8 {}\n",
+        "its own `&` still reads as the elided one while references are kept"
+    );
+}
+
+#[test]
+fn expand_takes_only_a_category_that_starts_off() {
+    let output = plene(&["--expand", "lifetimes", "-"], ELIDED);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(
+        stderr(&output).contains(
+            "`lifetimes` already expands by default; the categories that start off are: elision"
+        ),
+        "{}",
+        stderr(&output)
+    );
+    for args in [
+        &["--expand", "elision", "--expand-all", "-"][..],
+        &["--dump-glossary", "--expand", "elision"][..],
+    ] {
+        assert_eq!(plene(args, "").status.code(), Some(2), "{args:?}");
+    }
+}
+
+#[test]
+fn the_config_file_expands_what_starts_off() {
+    let output = with_config(
+        "config-expand",
+        "expand = [\"elision\"]\n",
+        &["--expanded", "-"],
+        ELIDED,
+    );
+    assert_eq!(
+        stdout(&output),
+        "function f(x: borrowed u8) returns borrowed (from x) u8 {}\n"
+    );
+    let warned = with_config(
+        "config-expand-warned",
+        "expand = [\"lifetimes\"]\n",
+        &["--expanded", "-"],
+        ELIDED,
+    );
+    assert!(
+        stderr(&warned).contains("config.toml: skipping `lifetimes` already expands by default"),
+        "{}",
+        stderr(&warned)
+    );
+    let replaced = with_config(
+        "config-expand-replaced",
+        "expand = [\"elision\"]\n",
+        &["--expanded", "--keep", "ends", "-"],
+        ELIDED,
+    );
+    assert_eq!(
+        stdout(&replaced),
+        "function f(x: borrowed u8) returns borrowed u8 {}\n",
+        "the command line replaces both lists"
+    );
+}

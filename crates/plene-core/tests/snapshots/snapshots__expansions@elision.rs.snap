@@ -1,0 +1,83 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/elision.rs
+---
+  1 | impl Reader {
+    | implement Reader {
+  2 |     fn first(&self) -> &str {
+    |     function first(borrowed self) returns borrowed (from self) str {
+  3 |         self.text
+  4 |     }
+  5 | 
+  6 |     fn pick(&mut self, y: &u8) -> &mut u8 {
+    |     function pick(borrowed mutable self, y: borrowed u8) returns borrowed (from self) mutable u8 {
+  7 |         &mut self.byte
+    |         borrow mutable self.byte
+  8 |     }
+  9 | 
+ 10 |     fn named<'a>(&'a self) -> &u8 {
+    |     function named<lifetime a>(borrowed lifetime a self) returns borrowed lifetime a u8 {
+ 11 |         &self.byte
+    |         borrow self.byte
+ 12 |     }
+ 13 | 
+ 14 |     fn typed(self: &Self) -> Option<&u8> {
+    |     function typed(self: borrowed Self) returns Option<borrowed (from self) u8> {
+ 15 |         None
+ 16 |     }
+ 17 | }
+ 18 | 
+ 19 | fn one(x: &u8) -> &u8 {
+    | function one(x: borrowed u8) returns borrowed (from x) u8 {
+ 20 |     x
+ 21 | }
+ 22 | 
+ 23 | fn nested(x: Vec<&u8>) -> Option<&u8> {
+    | function nested(x: Vec<borrowed u8>) returns Option<borrowed (from x) u8> {
+ 24 |     x.first()
+ 25 | }
+ 26 | 
+ 27 | fn through(x: Foo<'_>, n: usize) -> impl Iterator<Item = &u8> {
+    | function through(x: Foo<lifetime inferred>, n: usize) returns some Iterator<Item = borrowed (from x) u8> {
+ 28 |     x.items()
+ 29 | }
+ 30 | 
+ 31 | fn static_one(name: &'static str) -> &str {
+    | function static_one(name: borrowed lifetime static str) returns borrowed lifetime static str {
+ 32 |     name
+ 33 | }
+ 34 | 
+ 35 | fn pointer(x: &u8, f: fn(&u8) -> &u8) -> &u8 {
+    | function pointer(x: borrowed u8, f: function(borrowed u8) returns borrowed u8) returns borrowed (from x) u8 {
+ 36 |     f(x)
+ 37 | }
+ 38 | 
+ 39 | fn two(x: &u8, y: &u8) -> &u8 {
+    | function two(x: borrowed u8, y: borrowed u8) returns borrowed u8 {
+ 40 |     x
+ 41 | }
+ 42 | 
+ 43 | fn none() -> &'static u8 {
+    | function none() returns borrowed lifetime static u8 {
+ 44 |     &0
+    |     borrow 0
+ 45 | }
+ 46 | 
+ 47 | fn untouched(x: Foo) -> &u8 {
+    | function untouched(x: Foo) returns borrowed u8 {
+ 48 |     x.get()
+ 49 | }
+ 50 | 
+ 51 | fn destructured((a, b): (&u8, u8)) -> &u8 {
+    | function destructured((a, b): (borrowed u8, u8)) returns borrowed u8 {
+ 52 |     a
+ 53 | }
+ 54 | 
+ 55 | fn returns_pointer(x: &u8) -> fn(&u8) -> &u8 {
+    | function returns_pointer(x: borrowed u8) returns function(borrowed u8) returns borrowed u8 {
+ 56 |     helper
+ 57 | }
+ 58 | 
+ 59 | fn closure_bound(f: impl Fn(&u8) -> &u8) {}
+    | function closure_bound(f: some Fn(borrowed u8) returns borrowed u8) {}

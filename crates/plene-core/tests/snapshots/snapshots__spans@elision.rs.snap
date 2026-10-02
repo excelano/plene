@@ -1,0 +1,64 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_spans(&source)
+input_file: crates/plene-core/tests/fixtures/elision.rs
+---
+  1 | impl:Keyword/impl_block Reader:Type {:Punctuation
+  2 | fn:Keyword/keyword first:Function (:Punctuation &:Operator/self_param self:Keyword ):Punctuation ->:Operator/ret_type &:Operator/elided_from_self str:Type {:Punctuation
+  3 | self:Keyword .:Punctuation text:Identifier
+  4 | }:Punctuation
+  5 |
+  6 | fn:Keyword/keyword pick:Function (:Punctuation &:Operator/self_param mut:Keyword/keyword self:Keyword ,:Punctuation y:Identifier ::Punctuation &:Operator/ref_type u8:Type ):Punctuation ->:Operator/ret_type &:Operator/elided_from_self mut:Keyword/keyword u8:Type {:Punctuation
+  7 | &:Operator/ref_expr mut:Keyword/keyword self:Keyword .:Punctuation byte:Identifier
+  8 | }:Punctuation
+  9 |
+ 10 | fn:Keyword/keyword named:Function <:Punctuation 'a:Lifetime/lifetime >:Punctuation (:Punctuation &:Operator/self_param 'a:Lifetime/lifetime self:Keyword ):Punctuation ->:Operator/ret_type &:Operator/elided_named u8:Type {:Punctuation
+ 11 | &:Operator/ref_expr self:Keyword .:Punctuation byte:Identifier
+ 12 | }:Punctuation
+ 13 |
+ 14 | fn:Keyword/keyword typed:Function (:Punctuation self:Keyword ::Punctuation &:Operator/ref_type Self:Keyword ):Punctuation ->:Operator/ret_type Option:Type <:Punctuation &:Operator/elided_from_self u8:Type >:Punctuation {:Punctuation
+ 15 | None:Identifier
+ 16 | }:Punctuation
+ 17 | }:Punctuation
+ 18 |
+ 19 | fn:Keyword/keyword one:Function (:Punctuation x:Identifier ::Punctuation &:Operator/ref_type u8:Type ):Punctuation ->:Operator/ret_type &:Operator/elided_from_param u8:Type {:Punctuation
+ 20 | x:Identifier
+ 21 | }:Punctuation
+ 22 |
+ 23 | fn:Keyword/keyword nested:Function (:Punctuation x:Identifier ::Punctuation Vec:Type <:Punctuation &:Operator/ref_type u8:Type >:Punctuation ):Punctuation ->:Operator/ret_type Option:Type <:Punctuation &:Operator/elided_from_param u8:Type >:Punctuation {:Punctuation
+ 24 | x:Identifier .:Punctuation first:Function (:Punctuation ):Punctuation
+ 25 | }:Punctuation
+ 26 |
+ 27 | fn:Keyword/keyword through:Function (:Punctuation x:Identifier ::Punctuation Foo:Type <:Punctuation '_:Lifetime/lifetime_anonymous >:Punctuation ,:Punctuation n:Identifier ::Punctuation usize:Type ):Punctuation ->:Operator/ret_type impl:Keyword/impl_trait_type Iterator:Type <:Punctuation Item:Identifier =:Operator &:Operator/elided_from_param u8:Type >:Punctuation {:Punctuation
+ 28 | x:Identifier .:Punctuation items:Function (:Punctuation ):Punctuation
+ 29 | }:Punctuation
+ 30 |
+ 31 | fn:Keyword/keyword static_one:Function (:Punctuation name:Identifier ::Punctuation &:Operator/ref_type 'static:Lifetime/lifetime str:Type ):Punctuation ->:Operator/ret_type &:Operator/elided_named str:Type {:Punctuation
+ 32 | name:Identifier
+ 33 | }:Punctuation
+ 34 |
+ 35 | fn:Keyword/keyword pointer:Function (:Punctuation x:Identifier ::Punctuation &:Operator/ref_type u8:Type ,:Punctuation f:Identifier ::Punctuation fn:Keyword/keyword (:Punctuation &:Operator/ref_type u8:Type ):Punctuation ->:Operator/ret_type &:Operator/ref_type u8:Type ):Punctuation ->:Operator/ret_type &:Operator/elided_from_param u8:Type {:Punctuation
+ 36 | f:Function (:Punctuation x:Identifier ):Punctuation
+ 37 | }:Punctuation
+ 38 |
+ 39 | fn:Keyword/keyword two:Function (:Punctuation x:Identifier ::Punctuation &:Operator/ref_type u8:Type ,:Punctuation y:Identifier ::Punctuation &:Operator/ref_type u8:Type ):Punctuation ->:Operator/ret_type &:Operator/ref_type u8:Type {:Punctuation
+ 40 | x:Identifier
+ 41 | }:Punctuation
+ 42 |
+ 43 | fn:Keyword/keyword none:Function (:Punctuation ):Punctuation ->:Operator/ret_type &:Operator/ref_type 'static:Lifetime/lifetime u8:Type {:Punctuation
+ 44 | &:Operator/ref_expr 0:Number
+ 45 | }:Punctuation
+ 46 |
+ 47 | fn:Keyword/keyword untouched:Function (:Punctuation x:Identifier ::Punctuation Foo:Type ):Punctuation ->:Operator/ret_type &:Operator/ref_type u8:Type {:Punctuation
+ 48 | x:Identifier .:Punctuation get:Function (:Punctuation ):Punctuation
+ 49 | }:Punctuation
+ 50 |
+ 51 | fn:Keyword/keyword destructured:Function (:Punctuation (:Punctuation a:Identifier ,:Punctuation b:Identifier ):Punctuation ::Punctuation (:Punctuation &:Operator/ref_type u8:Type ,:Punctuation u8:Type ):Punctuation ):Punctuation ->:Operator/ret_type &:Operator/ref_type u8:Type {:Punctuation
+ 52 | a:Identifier
+ 53 | }:Punctuation
+ 54 |
+ 55 | fn:Keyword/keyword returns_pointer:Function (:Punctuation x:Identifier ::Punctuation &:Operator/ref_type u8:Type ):Punctuation ->:Operator/ret_type fn:Keyword/keyword (:Punctuation &:Operator/ref_type u8:Type ):Punctuation ->:Operator/ret_type &:Operator/ref_type u8:Type {:Punctuation
+ 56 | helper:Identifier
+ 57 | }:Punctuation
+ 58 |
+ 59 | fn:Keyword/keyword closure_bound:Function (:Punctuation f:Identifier ::Punctuation impl:Keyword/impl_trait_type Fn:Type (:Punctuation &:Operator/ref_type u8:Type ):Punctuation ->:Operator/ret_type &:Operator/ref_type u8:Type ):Punctuation {:Punctuation }:Punctuation

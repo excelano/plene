@@ -63,6 +63,7 @@ fn malformed_files_are_errors() {
 fn to_toml_writes_the_categories_in_their_usual_order_and_reads_back() {
     let config = Config {
         keep: vec![Category::Macros, Category::Keywords, Category::Lifetimes],
+        ..Config::default()
     };
     let text = config.to_toml();
     assert_eq!(text, "keep = [\"keywords\", \"lifetimes\", \"macros\"]\n");
@@ -80,6 +81,7 @@ fn save_makes_the_directory_and_load_reads_the_file_back() {
     let path = scratch("save").join("plene").join("config.toml");
     let config = Config {
         keep: vec![Category::Visibility],
+        ..Config::default()
     };
     config.save(&path).unwrap();
     assert_eq!(Config::load_from(&path).unwrap(), (config, Vec::new()));
@@ -94,11 +96,13 @@ fn save_replaces_what_was_there() {
     let path = scratch("replace").join("config.toml");
     Config {
         keep: vec![Category::Ends],
+        ..Config::default()
     }
     .save(&path)
     .unwrap();
     Config {
         keep: vec![Category::Flow],
+        ..Config::default()
     }
     .save(&path)
     .unwrap();
@@ -150,4 +154,65 @@ fn the_config_lives_beside_the_glossary() {
     let path = Config::path().unwrap();
     assert_eq!(path.file_name().unwrap(), "config.toml");
     assert_eq!(path.parent().unwrap().file_name().unwrap(), "plene");
+}
+
+#[test]
+fn expand_turns_on_a_category_that_starts_off() {
+    let (config, warnings) = parse("expand = [\"elision\"]\n");
+    assert_eq!(config.expand, [Category::Elision]);
+    assert!(config.keep.is_empty());
+    assert!(warnings.is_empty());
+    assert!(config.kept().is_empty(), "elision is no longer kept");
+    assert_eq!(Config::default().kept(), [Category::Elision]);
+}
+
+#[test]
+fn expand_skips_a_category_that_already_expands_and_one_that_is_unknown() {
+    let (config, warnings) =
+        parse("expand = [\"lifetimes\", \"nope\", \"elision\", \"elision\"]\n");
+    assert_eq!(config.expand, [Category::Elision]);
+    assert_eq!(warnings.len(), 2);
+    assert_eq!(
+        warnings[0],
+        "skipping `lifetimes` already expands by default; the categories that start off are: elision"
+    );
+    assert!(warnings[1].starts_with("skipping unknown category `nope`; one of: "));
+}
+
+#[test]
+fn keeping_other_categories_does_not_turn_elision_on() {
+    let (config, _) = parse("keep = [\"lifetimes\"]\n");
+    assert_eq!(config.kept(), [Category::Lifetimes, Category::Elision]);
+}
+
+#[test]
+fn expand_is_written_only_when_there_is_something_to_say_and_reads_back() {
+    let config = Config {
+        keep: vec![Category::Ends],
+        expand: vec![Category::Elision],
+    };
+    let text = config.to_toml();
+    assert_eq!(text, "keep = [\"ends\"]\nexpand = [\"elision\"]\n");
+    assert_eq!(parse(&text).0, config);
+    assert_eq!(Config::default().to_toml(), "keep = []\n");
+}
+
+#[test]
+fn a_set_of_kept_categories_is_made_into_the_config_that_gives_it_back() {
+    for kept in [
+        vec![],
+        vec![Category::Elision],
+        vec![Category::Lifetimes, Category::Elision],
+        vec![Category::Lifetimes, Category::Visibility],
+        Category::ALL.to_vec(),
+    ] {
+        let config = Config::from_kept(&kept);
+        assert!(config.keep.iter().all(|category| !category.opt_in()));
+        assert!(config.expand.iter().all(|category| category.opt_in()));
+        let mut sorted = kept.clone();
+        sorted.sort();
+        assert_eq!(config.kept(), sorted, "{kept:?}");
+    }
+    assert_eq!(Config::from_kept(&[]).expand, [Category::Elision]);
+    assert!(Config::from_kept(&[Category::Elision]).expand.is_empty());
 }

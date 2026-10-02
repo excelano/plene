@@ -100,6 +100,20 @@ Inside a `macro_rules!` definition the notation for what a variable matches and 
 
 `block`, `item`, `lifetime`, `literal`, `meta` and `path` are whole words and stay as written. A specifier is read only on the matcher's side of a rule, which inside a macro's token trees is the tree followed by `=` and `>`; on the other side `$x:expr` is a variable followed by two ordinary tokens. A repetition operator is read on both sides: it follows `$( ... )` directly or after one separator token, and a `*`, `+` or `?` that follows another operator is not one, so `(1 + 2) * 3` in a transcriber is arithmetic. The same notation in any other macro's arguments, or in an attribute, is left alone. So `$($k:expr => $v:expr),*` reads `$($k: expression => $v: expression), zero or more`, the colon gaining the space the word needs.
 
+### Elided lifetimes
+
+A function's return type may leave a reference's lifetime out, and the compiler takes it from the parameters. The `&` of such a reference reads as that source when syntax alone can say which it is, since this adds what the source leaves out. It stays off until asked for: see Categories.
+
+| Role | When | Expansion |
+|---|---|---|
+| `elided_from_self` | the function borrows `self`: `&self`, `&mut self`, `&'_ self` or `self: &Self` | `borrowed (from self) ` |
+| `elided_from_param` | no `&self`, and one lifetime among the parameters, left out of the parameter named `x` | `borrowed (from {name}) ` |
+| `elided_named` | the one lifetime that is written, on `self` or a parameter, as `'a` or `'static` | `borrowed lifetime {name}` |
+
+The `&` of an elided reference is the token that is expanded, and it keeps its ordinary reading, `ref_type`, as the role to fall back on: with the category off it reads `borrowed`, and with references kept too it stays `&`. The texts of the first two end in a space, since a closing parenthesis would otherwise run into the type after it.
+
+The positions that count in the parameters are each reference, and each lifetime written elsewhere as in `Foo<'a>`, `Foo<'_>` or `dyn Tr + 'a`. A function pointer, an `Fn(..)` bound and the return type of either have a scope of their own and are not counted or labelled. Where the parameters hold none, or several and the function does not borrow `self`, the code would not compile or syntax cannot see which, and the `&` keeps its ordinary reading; so does one whose parameter has no plain name, as in a tuple pattern. A written lifetime in the return type, as `&'a u8`, is not elided. Only `fn` items are read, so closures, function pointer types and trait methods without a signature to read from are left alone. Every elided reference in the return type is labelled, as in `(&u8, Option<&mut u8>)`.
+
 ### Closing braces
 
 The closing brace of an item's body is expanded to carry what it closes, once the block runs to 20 lines or more, since its opening is out of sight by then. The expansion replaces the one `}` token, and keeps it.
@@ -144,6 +158,9 @@ A reader who has grown used to some of the notation can leave it as written. The
 | Match arms, returns, closures and `?` | `flow` | `=>`, `->`, the closure pipes, `?` |
 | Labels on the closing braces of long items | `ends` | the closing-brace labels above |
 | `macro_rules!` fragments and repetitions | `macros` | the macro definition notation above |
+| Elided lifetimes in return types | `elision` | the `&` of an elided reference in a return type; starts off |
+
+A category that starts off adds what the source leaves out, so a reader asks for it: `Category::opt_in` says which, and only `elision` does. It is kept as written until it is expanded, and keeping other categories does not turn it on. `Category::kept(keep, expand)` gives what to leave as written from the two lists, and `Glossary::without` takes the result.
 
 Switching a category off removes its entries from the glossary that transcribes, with `Glossary::without`, so the tokens it covers come out as written and carry no role: no underline and no hover card. The glossary the hover cards read is unchanged. The invariants hold for any set of categories off, and with all of them off the transcription is the source.
 
@@ -153,9 +170,12 @@ Switching a category off removes its entries from the glossary that transcribes,
 
 ```toml
 keep = ["lifetimes", "visibility"]
+expand = ["elision"]
 ```
 
-Both programs read it. A missing file is silent, an unknown category is skipped with a warning, and a file that does not parse is an error that names it. On the command line `--keep` replaces the list for that run and `--expand-all` ignores it; neither reads the file, so a config that does not parse cannot stop an override. The window starts from the list and writes the Expand menu's choices back after each change, in the usual order of the categories, to a file beside the config that is then moved into place, so a failure cannot leave half a file. It does not save when the command line decided the run's settings, or when the file could not be read, since saving would replace what is there; and it says so when a save fails. The window is handed where to save rather than finding it, so no test touches a real config.
+`keep` names the categories that expand by default and are left as written; `expand` names the ones that start off and are expanded. An unknown category is skipped with a warning, and so is one in `expand` that already expands.
+
+Both programs read it. A missing file is silent, an unknown category is skipped with a warning, and a file that does not parse is an error that names it. On the command line `--keep` and `--expand` replace the lists for that run, a category of either alone leaving the other list empty, and `--expand-all` expands every category and ignores them; none of them reads the file, so a config that does not parse cannot stop an override. The window starts from the list and writes the Expand menu's choices back after each change, in the usual order of the categories, to a file beside the config that is then moved into place, so a failure cannot leave half a file. It does not save when the command line decided the run's settings, or when the file could not be read, since saving would replace what is there; and it says so when a save fails. The window is handed where to save rather than finding it, so no test touches a real config.
 
 ## Glossary file format
 
@@ -234,6 +254,8 @@ plene [OPTIONS] <FILE|->
   --changed-only     only lines that differ, numbered with their source lines
   --lines <START:END>  only these source lines, numbered; either end may be left out
   --keep <CATEGORY,...>  leave these categories as written, not expanded
+  --expand <CATEGORY,...>  expand the categories that start off
+  --expand-all       expand every category, those that start off included
   --color <auto|always|never>
   --theme <dark|light>              (default dark)
   --edition <2015|2018|2021|2024>   (default 2021)
@@ -242,7 +264,7 @@ plene [OPTIONS] <FILE|->
 ```
 
 - Interleaved output marks lines in a two-column gutter: blank for source lines, `» ` for expansion lines, so the two are distinguishable without color and indentation stays aligned. With color, expansion lines also sit on a subtle background band, padded with spaces to the widest expansion line so the bands form an even block. Padding uses spaces rather than an erase-to-end-of-line escape, which `less -R` would print literally. `--theme <dark|light>` (default dark) picks the band for the terminal's background.
-- `--keep` takes categories, comma-separated or repeated, and leaves them as written. An unknown name is an argument error that lists the known ones.
+- `--keep` takes categories, comma-separated or repeated, and leaves them as written. An unknown name is an argument error that lists the known ones. `--expand` takes the categories that start off, and a name that already expands is an argument error. Either replaces the config file's lists, and `--expand-all` conflicts with both.
 - The three layouts are exclusive; `--changed-only` and `--lines` filter any of them, and both number the rows they keep with their source lines. The whole file is parsed whatever the range, so a line's roles do not depend on it. A range's end is clamped to the file; a start past the last line is an error. Side by side, the left column is padded to the widest source line and never truncated, and changed lines carry the band on the right; `less -RS` scrolls a wide result. Blank lines print as empty lines in every layout, leaving no trailing spaces.
 - ANSI color via the highlight classes, from the terminal's 16-color palette so it follows the user's theme. Tokens with a glossary role are underlined on both lines, pairing each token with its expansion.
 - A closed reader (`plene file.rs | head`) ends output quietly. Errors print `plene: …` and exit 1; argument errors exit 2.
@@ -268,7 +290,7 @@ plene-gui [OPTIONS] [FILE]
 - Hovering a token with a glossary role, on either side, shows the token and its expansion, its role, the glossary `note`, and the reference page. Ctrl+click on the token opens that page in the browser: a hover card vanishes when the pointer leaves the token, so a link in it could not be clicked. egui merges neighbouring text of one format, so the token under the pointer is found from the spans' own lengths, not from the laid-out sections.
 - Ctrl+F opens a search bar under the toolbar; Escape closes it. The query is a substring, with ASCII letters matching in either case, searched in the text of each line as a pane shows it, so `borrowed mutable` finds what the source spells `&mut` and a match may run across tokens. The bar chooses the source, the transcription or both, and searches only the panes on screen; choosing the transcription shows its pane. Matches are highlighted in the panes, the current one more strongly. Enter and Shift+Enter, or the Next and Previous buttons, step through the matches in row order, source before transcription within a row, wrapping at the ends; a step selects the match's row and scrolls to it. Typing a query goes to the first match from the selected row, or from the first row in view. While the field has the keyboard, the arrow and page keys leave the rows alone.
 - A click on a name (an identifier, type, function, macro or lifetime) marks every token with the same text in both panes; a click on a bracket, one of `()[]{}`, marks it and the bracket it matches. Names are matched by their text alone, with no resolution of what they refer to, so a shadowed name marks its namesakes too, and a file-wide match is the point: it finds where a function or type is used. Brackets match by kind and nest; one nothing matches, as in a file that doesn't parse, marks nothing, and brackets inside strings and comments are not brackets. Keywords, operators and other punctuation mark nothing, since every `,` highlighted is noise. A click anywhere else clears the marks. The clicked token is remembered by its place in the source, so switching a category, which makes the transcription again, keeps the marks on the right text; opening a file clears them. A search match is shown over a mark where the two meet.
-- An Expand menu in the toolbar holds a checkbox for each category; unchecking one leaves what it covers as written. The transcription is made again, so the selection stays and the search runs over the new text. All are on at start, and the choice holds across the files opened.
+- An Expand menu in the toolbar holds a checkbox for each category; unchecking one leaves what it covers as written. The transcription is made again, so the selection stays and the search runs over the new text. All are on at start but the one that starts off, and the choice holds across the files opened.
 - Bodies fold. The row that holds an item's opening brace, which stays in view when the signature runs over several lines, shows a triangle in the gap before the source text, pointing down while open and right once folded; clicking it folds or unfolds the outermost body that opens there. Left folds the innermost open body around the selected row, its own line included, and Right unfolds a folded one that opens on it. A toolbar button folds every function body, which leaves the `impl`, trait and module around them open so that the file reads as its signatures, and another unfolds everything. A folded body hides the rows after its opening line through its closing brace, and its opening row ends in `… N lines` on both panes. Rows, scrolling, clicks and the arrow keys all work over the rows shown. A selection that is folded away moves to the row holding it, and a search match, or a step to one, unfolds what hides it. Folds hold across a category being switched, since that changes no line, and end with the file.
 - A toggle for changed-only lines.
 - Light and dark themes, with a switch; on Linux the system theme comes from the XDG portal, since winit reports none there.

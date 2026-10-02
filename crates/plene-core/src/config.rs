@@ -10,10 +10,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::category::Category;
 
-/// What the reader has chosen to keep: the categories left as written, not expanded.
+/// What the reader has chosen: the categories left as written, not expanded, and the
+/// ones that start off and are expanded.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Config {
     pub keep: Vec<Category>,
+    pub expand: Vec<Category>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -32,6 +34,8 @@ impl std::error::Error for ConfigError {}
 struct ConfigFile {
     #[serde(default)]
     keep: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    expand: Vec<String>,
 }
 
 impl Config {
@@ -62,12 +66,35 @@ impl Config {
         Ok((config, warnings))
     }
 
+    /// The categories to leave as written under this config.
+    pub fn kept(&self) -> Vec<Category> {
+        Category::kept(&self.keep, &self.expand)
+    }
+
+    /// The config that has `kept` left as written: the ones that expand by default in
+    /// `keep`, and the ones that start off, which are not kept, in `expand`.
+    pub fn from_kept(kept: &[Category]) -> Config {
+        let named = |starting_off: bool| -> Vec<Category> {
+            Category::ALL
+                .iter()
+                .copied()
+                .filter(|category| category.opt_in() == starting_off)
+                .filter(|category| kept.contains(category) != starting_off)
+                .collect()
+        };
+        Config {
+            keep: named(false),
+            expand: named(true),
+        }
+    }
+
     /// Parses a config file. A category that is not one is skipped with a warning, and
-    /// one named twice counts once.
+    /// one named twice counts once. `expand` takes only the categories that start off.
     pub fn parse(text: &str) -> Result<(Config, Vec<String>), ConfigError> {
         let file: ConfigFile =
             toml::from_str(text).map_err(|error| ConfigError(error.to_string()))?;
         let mut keep = Vec::new();
+        let mut expand = Vec::new();
         let mut warnings = Vec::new();
         for id in file.keep {
             match id.parse::<Category>() {
@@ -76,17 +103,30 @@ impl Config {
                 Err(unknown) => warnings.push(format!("skipping {unknown}")),
             }
         }
-        Ok((Config { keep }, warnings))
+        for id in file.expand {
+            match Category::from_opt_in_str(&id) {
+                Ok(category) if !expand.contains(&category) => expand.push(category),
+                Ok(_) => {}
+                Err(problem) => warnings.push(format!("skipping {problem}")),
+            }
+        }
+        Ok((Config { keep, expand }, warnings))
     }
 
     /// The config as a file `parse` reads back, with the categories in their usual order.
     pub fn to_toml(&self) -> String {
-        let keep = Category::ALL
-            .iter()
-            .filter(|category| self.keep.contains(category))
-            .map(|category| category.as_str().to_string())
-            .collect();
-        toml::to_string(&ConfigFile { keep }).expect("a config serializes")
+        let listed = |list: &[Category]| -> Vec<String> {
+            Category::ALL
+                .iter()
+                .filter(|category| list.contains(category))
+                .map(|category| category.as_str().to_string())
+                .collect()
+        };
+        let file = ConfigFile {
+            keep: listed(&self.keep),
+            expand: listed(&self.expand),
+        };
+        toml::to_string(&file).expect("a config serializes")
     }
 
     /// Writes the config to `path`, making its directory if need be. The file is written

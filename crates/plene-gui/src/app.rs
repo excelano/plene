@@ -38,9 +38,8 @@ const MIN_COLUMN_CHARS: f32 = 20.0;
 const SELECTION_ALPHA: f32 = 0.35;
 
 /// What the reader has set that lasts between runs, as the program found it.
-#[derive(Default)]
 pub struct Settings {
-    /// The categories left as written at start.
+    /// The categories left as written at start. By default those that start off.
     pub kept: Vec<Category>,
     /// Where changes to the Expand menu are saved. None keeps them to the session: the
     /// command line decided what is kept, or the config file could not be read, and
@@ -48,6 +47,16 @@ pub struct Settings {
     pub save_to: Option<PathBuf>,
     /// What went wrong reading them, shown for the whole session.
     pub problems: Vec<String>,
+}
+
+impl Default for Settings {
+    fn default() -> Settings {
+        Settings {
+            kept: Category::kept(&[], &[]),
+            save_to: None,
+            problems: Vec::new(),
+        }
+    }
 }
 
 pub struct App {
@@ -284,9 +293,7 @@ impl App {
 
     fn save_settings(&mut self) {
         if let Some(path) = &self.save_to {
-            let config = Config {
-                keep: self.kept.clone(),
-            };
+            let config = Config::from_kept(&self.kept);
             self.save_error = config
                 .save(path)
                 .err()

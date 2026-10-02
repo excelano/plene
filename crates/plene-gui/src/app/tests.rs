@@ -534,7 +534,10 @@ fn the_expand_menu_switches_a_category_off_and_on() {
     let mut harness = opened(LIFETIME, "expand.rs", WIDE);
     assert_eq!(rendered(&harness, "'a"), "lifetime a");
     toggle_expansion(&mut harness, "Lifetimes and labels");
-    assert_eq!(harness.state().kept, [Category::Lifetimes]);
+    assert_eq!(
+        harness.state().kept,
+        [Category::Elision, Category::Lifetimes]
+    );
     assert_eq!(rendered(&harness, "'a"), "'a");
     assert_eq!(
         rendered(&harness, "fn"),
@@ -543,7 +546,7 @@ fn the_expand_menu_switches_a_category_off_and_on() {
     );
     assert_eq!(rendered(&harness, "&"), "borrowed");
     toggle_expansion(&mut harness, "Lifetimes and labels");
-    assert!(harness.state().kept.is_empty());
+    assert_eq!(harness.state().kept, [Category::Elision]);
     assert_eq!(rendered(&harness, "'a"), "lifetime a");
 }
 
@@ -1055,7 +1058,10 @@ fn a_change_to_the_expand_menu_is_saved_where_the_settings_say() {
 fn nothing_is_saved_when_the_settings_name_no_file() {
     let mut harness = with_settings(Settings::default(), "settings_unsaved.rs");
     toggle_expansion(&mut harness, "Lifetimes and labels");
-    assert_eq!(harness.state().kept, [Category::Lifetimes]);
+    assert_eq!(
+        harness.state().kept,
+        [Category::Elision, Category::Lifetimes]
+    );
     assert!(
         harness
             .query_by_label_contains("settings not saved")
@@ -1099,4 +1105,72 @@ fn problems_reading_the_settings_are_shown_for_the_session() {
         "settings_problems.rs",
     );
     harness.get_by_label("warning: c.toml: skipping unknown category `x`");
+}
+
+const ELIDED: &str = "fn f(x: &u8) -> &u8 {}\n";
+
+/// What the last `&` of the first line reads as, which is the one in the return type.
+fn return_reference(harness: &Harness<'_, App>) -> String {
+    harness.state().document.as_ref().unwrap().lines[0]
+        .spans
+        .iter()
+        .rfind(|span| span.original == "&")
+        .unwrap()
+        .rendered
+        .clone()
+}
+
+#[test]
+fn elided_lifetimes_start_off_and_the_menu_turns_them_on_and_off() {
+    let mut harness = opened(ELIDED, "elided.rs", WIDE);
+    assert_eq!(return_reference(&harness), "borrowed");
+    assert_eq!(harness.state().kept, [Category::Elision]);
+    toggle_expansion(&mut harness, "Elided lifetimes in return types");
+    assert_eq!(return_reference(&harness), "borrowed (from x) ");
+    assert!(harness.state().kept.is_empty());
+    toggle_expansion(&mut harness, "Elided lifetimes in return types");
+    assert_eq!(return_reference(&harness), "borrowed");
+}
+
+#[test]
+fn turning_elision_on_is_saved_as_expand_and_off_again_as_nothing() {
+    let path = config_path("saves_expand");
+    let mut harness = with_settings(
+        Settings {
+            save_to: Some(path.clone()),
+            ..Settings::default()
+        },
+        "settings_expand.rs",
+    );
+    toggle_expansion(&mut harness, "Elided lifetimes in return types");
+    assert_eq!(
+        std::fs::read_to_string(&path).unwrap(),
+        "keep = []\nexpand = [\"elision\"]\n"
+    );
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    assert_eq!(
+        std::fs::read_to_string(&path).unwrap(),
+        "keep = [\"lifetimes\"]\nexpand = [\"elision\"]\n"
+    );
+    toggle_expansion(&mut harness, "Elided lifetimes in return types");
+    assert_eq!(
+        std::fs::read_to_string(&path).unwrap(),
+        "keep = [\"lifetimes\"]\n"
+    );
+}
+
+#[test]
+fn a_window_started_with_elision_expanded_shows_it_from_the_start() {
+    let mut app = App::new(
+        Edition::default(),
+        Ok((Glossary::default(), Vec::new())),
+        Settings {
+            kept: Vec::new(),
+            ..Settings::default()
+        },
+        Some(&temp_file("settings_elided.rs", ELIDED)),
+    );
+    app.picker = Box::new(refuse_dialog);
+    let harness = window(app, WIDE);
+    assert_eq!(return_reference(&harness), "borrowed (from x) ");
 }

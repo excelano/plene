@@ -484,3 +484,24 @@ role = "zero_or_one"
 text = "zero or one"
 note = "Ends a repetition: the group before it may appear once, or not at all."
 url = "https://doc.rust-lang.org/reference/macros-by-example.html#repetitions"
+
+[[expand]]
+token = "&"
+role = "elided_from_self"
+text = "borrowed (from self) "
+note = "A reference in the return type with no lifetime written, which takes the lifetime of the borrowed self."
+url = "https://doc.rust-lang.org/reference/lifetime-elision.html#lifetime-elision-in-functions"
+
+[[expand]]
+token = "&"
+role = "elided_from_param"
+text = "borrowed (from {name}) "
+note = "A reference in the return type with no lifetime written, which takes the lifetime of the one reference in the parameters, here the one in {name}."
+url = "https://doc.rust-lang.org/reference/lifetime-elision.html#lifetime-elision-in-functions"
+
+[[expand]]
+token = "&"
+role = "elided_named"
+text = "borrowed lifetime {name}"
+note = "A reference in the return type with no lifetime written, which takes the one lifetime the parameters name."
+url = "https://doc.rust-lang.org/reference/lifetime-elision.html#lifetime-elision-in-functions"

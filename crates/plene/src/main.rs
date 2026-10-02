@@ -37,11 +37,15 @@ struct Args {
     glossary: Option<PathBuf>,
     /// Leave these categories as written instead of expanding them, comma-separated:
     /// keywords, visibility, mutability, references, operators, ranges, patterns,
-    /// lifetimes, bounds, flow, ends, macros. Replaces the list in the config file.
+    /// lifetimes, bounds, flow, ends, macros. Replaces the config file's lists.
     #[arg(long, value_delimiter = ',', value_name = "CATEGORY")]
     keep: Vec<Category>,
-    /// Expand every category, ignoring the list in the config file.
-    #[arg(long, conflicts_with = "keep")]
+    /// Expand the categories that start off, comma-separated: elision. Replaces the
+    /// config file's lists, like --keep.
+    #[arg(long, value_delimiter = ',', value_name = "CATEGORY", value_parser = Category::from_opt_in_str)]
+    expand: Vec<Category>,
+    /// Expand every category, those that start off included, ignoring the config file.
+    #[arg(long, conflicts_with_all = ["keep", "expand"])]
     expand_all: bool,
     /// Show the source and its expansion in two columns.
     #[arg(long, conflicts_with = "expanded")]
@@ -60,7 +64,7 @@ struct Args {
     #[arg(
         long,
         conflicts_with_all = [
-            "file", "keep", "expand_all", "side_by_side", "expanded", "changed_only", "lines"
+            "file", "keep", "expand", "expand_all", "side_by_side", "expanded", "changed_only", "lines"
         ]
     )]
     dump_glossary: bool,
@@ -167,21 +171,21 @@ fn run(args: &Args) -> Result<(), String> {
     }
 }
 
-/// The categories to leave as written: those named on the command line, or none with
-/// `--expand-all`, and otherwise the config file's. The config is not read when the
+/// The categories to leave as written: those the command line decides, which is none
+/// with `--expand-all`, and otherwise the config file's. The config is not read when the
 /// command line decides, so a config that does not parse cannot stop an override.
 fn categories_kept(args: &Args) -> Result<Vec<Category>, String> {
     if args.expand_all {
         return Ok(Vec::new());
     }
-    if !args.keep.is_empty() {
-        return Ok(args.keep.clone());
+    if !args.keep.is_empty() || !args.expand.is_empty() {
+        return Ok(Category::kept(&args.keep, &args.expand));
     }
     let (config, warnings) = Config::load()?;
     for warning in warnings {
         eprintln!("plene: warning: {warning}");
     }
-    Ok(config.keep)
+    Ok(config.kept())
 }
 
 fn read_source(path: &Path) -> Result<String, String> {

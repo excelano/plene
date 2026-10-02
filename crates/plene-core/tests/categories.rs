@@ -57,7 +57,7 @@ fn ids_round_trip_and_an_unknown_one_lists_the_known() {
     let unknown: UnknownCategory = "nope".parse::<Category>().unwrap_err();
     let message = unknown.to_string();
     assert!(message.starts_with("unknown category `nope`; one of: keywords, visibility, "));
-    assert!(message.ends_with(", flow, ends, macros"));
+    assert!(message.ends_with(", flow, ends, macros, elision"));
 }
 
 #[test]
@@ -105,7 +105,11 @@ fn a_switched_off_category_is_left_as_written_and_nothing_else_changes() {
                 let in_category = a
                     .role
                     .is_some_and(|role| Category::of(&a.original, role) == *category);
-                if in_category {
+                if in_category && *category == Category::Elision {
+                    // What it adds to is left: an ordinary reference.
+                    assert_eq!(b.role, Some(Role::RefType), "{category} in {name}");
+                    assert_eq!(b.rendered, "borrowed", "{category} in {name}");
+                } else if in_category {
                     assert_eq!(b.rendered, b.original, "{category} in {name}");
                     assert_eq!(b.role, None, "{category} in {name}");
                 } else {
@@ -151,4 +155,86 @@ fn with_every_category_off_the_transcription_is_the_source() {
             }
         }
     }
+}
+
+#[test]
+fn only_elision_starts_off() {
+    let starting_off: Vec<Category> = Category::ALL
+        .iter()
+        .copied()
+        .filter(|category| category.opt_in())
+        .collect();
+    assert_eq!(starting_off, [Category::Elision]);
+}
+
+#[test]
+fn kept_is_what_is_named_plus_what_starts_off_unless_expanded() {
+    assert_eq!(Category::kept(&[], &[]), [Category::Elision]);
+    assert_eq!(
+        Category::kept(&[Category::Lifetimes, Category::Ends], &[]),
+        [Category::Lifetimes, Category::Ends, Category::Elision],
+        "keeping others does not turn elision on"
+    );
+    assert!(Category::kept(&[], &[Category::Elision]).is_empty());
+    assert_eq!(
+        Category::kept(&[Category::Ends], &[Category::Elision]),
+        [Category::Ends]
+    );
+    assert_eq!(
+        Category::kept(&[Category::Elision], &[]),
+        [Category::Elision],
+        "naming it in keep changes nothing"
+    );
+    assert_eq!(
+        Category::kept(&[], &[Category::Lifetimes]),
+        [Category::Elision],
+        "expand only turns on what starts off"
+    );
+}
+
+#[test]
+fn only_a_category_that_starts_off_can_be_expanded() {
+    assert_eq!(Category::from_opt_in_str("elision"), Ok(Category::Elision));
+    let already = Category::from_opt_in_str("lifetimes").unwrap_err();
+    assert_eq!(
+        already,
+        "`lifetimes` already expands by default; the categories that start off are: elision"
+    );
+    let unknown = Category::from_opt_in_str("nope").unwrap_err();
+    assert!(
+        unknown.starts_with("unknown category `nope`; one of: "),
+        "{unknown}"
+    );
+}
+
+#[test]
+fn elided_lifetimes_read_as_an_ordinary_reference_when_elision_is_not_expanded() {
+    let source = "fn f(&self) -> &u8 {}\n";
+    let reading = |glossary: &Glossary| -> Vec<(Option<Role>, String)> {
+        let lines = transcribe(source, Edition::default(), glossary);
+        let spans = &lines[0].spans;
+        let arrow = spans.iter().position(|span| span.original == "->").unwrap();
+        spans[arrow..]
+            .iter()
+            .filter(|span| span.original == "&")
+            .map(|span| (span.role, span.rendered.clone()))
+            .collect()
+    };
+    let full = Glossary::default();
+    assert_eq!(
+        reading(&full),
+        [(
+            Some(Role::ElidedFromSelf),
+            "borrowed (from self) ".to_string()
+        )]
+    );
+    assert_eq!(
+        reading(&full.without(&[Category::Elision])),
+        [(Some(Role::RefType), "borrowed".to_string())]
+    );
+    assert_eq!(
+        reading(&full.without(&[Category::Elision, Category::References])),
+        [(None, "&".to_string())],
+        "with the ordinary reading off too, there is nothing left to say"
+    );
 }

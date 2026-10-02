@@ -82,11 +82,21 @@ pub fn transcribe(source: &str, edition: Edition, glossary: &Glossary) -> Vec<Li
     for (token, mut offset) in walk::tokens(&parse.syntax_node(), edition) {
         let class = highlight::classify(&token, edition);
         let classified = role::classify(&token);
-        let role = classified.as_ref().map(|classified| classified.role);
+        let mut role = classified.as_ref().map(|classified| classified.role);
         let name = classified
             .as_ref()
             .and_then(|classified| classified.name.as_deref());
-        let expansion = role.and_then(|role| glossary.expand(token.text(), role, name));
+        let mut expansion = role.and_then(|role| glossary.expand(token.text(), role, name));
+        // A role that adds to another reads as that one when the glossary has no entry
+        // for it, as when its category is switched off.
+        if expansion.is_none()
+            && let Some(fallback) = classified
+                .as_ref()
+                .and_then(|classified| classified.fallback)
+        {
+            role = Some(fallback);
+            expansion = glossary.expand(token.text(), fallback, None);
+        }
         // A token the glossary has no entry for has no role to show.
         let role = role.filter(|_| expansion.is_some());
         for piece in token.text().split_inclusive('\n') {
