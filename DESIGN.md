@@ -147,6 +147,16 @@ A reader who has grown used to some of the notation can leave it as written. The
 
 Switching a category off removes its entries from the glossary that transcribes, with `Glossary::without`, so the tokens it covers come out as written and carry no role: no underline and no hover card. The glossary the hover cards read is unchanged. The invariants hold for any set of categories off, and with all of them off the transcription is the source.
 
+## Settings file
+
+`config.toml` sits beside `glossary.toml` in the config directory, found by the same rule, and holds what the reader keeps between runs: the categories to leave as written, by the ids in the table above.
+
+```toml
+keep = ["lifetimes", "visibility"]
+```
+
+Both programs read it. A missing file is silent, an unknown category is skipped with a warning, and a file that does not parse is an error that names it. On the command line `--keep` replaces the list for that run and `--expand-all` ignores it; neither reads the file, so a config that does not parse cannot stop an override. The window starts from the list and writes the Expand menu's choices back after each change, in the usual order of the categories, to a file beside the config that is then moved into place, so a failure cannot leave half a file. It does not save when the command line decided the run's settings, or when the file could not be read, since saving would replace what is there; and it says so when a save fails. The window is handed where to save rather than finding it, so no test touches a real config.
+
 ## Glossary file format
 
 The default glossary lives at `crates/plene-core/glossary.toml` and is embedded via `include_str!`. It sits inside the crate so `cargo publish` packages it. Two files may override it, merging by `(token, role)`: the config directory's `plene/glossary.toml`, then the file named with `--glossary`, so the named file wins. The config directory is `$XDG_CONFIG_HOME`, or `~/.config` when that is unset or not an absolute path, on every platform. A missing config file is silent; one that exists and fails to parse is an error, as a bad `--glossary` file is.

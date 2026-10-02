@@ -30,6 +30,7 @@ fn app_with(file: Option<&Path>) -> App {
     let mut app = App::new(
         Edition::default(),
         Ok((Glossary::default(), Vec::new())),
+        Settings::default(),
         file,
     );
     app.picker = Box::new(refuse_dialog);
@@ -149,6 +150,7 @@ fn glossary_problems_are_shown_and_the_built_in_glossary_used() {
     let mut failed = App::new(
         Edition::default(),
         Err("g.toml: bad".to_string()),
+        Settings::default(),
         Some(&file),
     );
     failed.picker = Box::new(refuse_dialog);
@@ -163,6 +165,7 @@ fn glossary_problems_are_shown_and_the_built_in_glossary_used() {
             Glossary::default(),
             vec!["g.toml: unknown role".to_string()],
         )),
+        Settings::default(),
         None,
     );
     warned.picker = Box::new(refuse_dialog);
@@ -986,4 +989,114 @@ fn a_file_without_bodies_has_nothing_to_fold() {
     fold_functions(&mut harness);
     assert_eq!(shown(&harness), [0, 1]);
     assert!(harness.state().view.folding.is_empty());
+}
+
+/// A window opened on `LIFETIME` with `settings`, whose file dialog refuses.
+fn with_settings(settings: Settings, name: &str) -> Harness<'static, App> {
+    let mut app = App::new(
+        Edition::default(),
+        Ok((Glossary::default(), Vec::new())),
+        settings,
+        Some(&temp_file(name, LIFETIME)),
+    );
+    app.picker = Box::new(refuse_dialog);
+    window(app, WIDE)
+}
+
+/// A path for a config file of its own that does not exist yet.
+fn config_path(name: &str) -> PathBuf {
+    let dir = std::env::temp_dir().join("plene-gui-tests").join(name);
+    let _ = std::fs::remove_dir_all(&dir);
+    dir.join("plene").join("config.toml")
+}
+
+#[test]
+fn the_settings_say_what_is_left_as_written_from_the_start() {
+    let harness = with_settings(
+        Settings {
+            kept: vec![Category::Lifetimes],
+            ..Settings::default()
+        },
+        "settings_start.rs",
+    );
+    assert_eq!(rendered(&harness, "'a"), "'a");
+    assert_eq!(rendered(&harness, "fn"), "function");
+    assert_eq!(harness.state().kept, [Category::Lifetimes]);
+}
+
+#[test]
+fn a_change_to_the_expand_menu_is_saved_where_the_settings_say() {
+    let path = config_path("saves");
+    let mut harness = with_settings(
+        Settings {
+            save_to: Some(path.clone()),
+            ..Settings::default()
+        },
+        "settings_save.rs",
+    );
+    assert!(!path.exists(), "nothing is written until something changes");
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    toggle_expansion(&mut harness, "Visibility");
+    assert_eq!(
+        std::fs::read_to_string(&path).unwrap(),
+        "keep = [\"visibility\", \"lifetimes\"]\n"
+    );
+    toggle_expansion(&mut harness, "Visibility");
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    assert_eq!(std::fs::read_to_string(&path).unwrap(), "keep = []\n");
+    assert!(
+        harness
+            .query_by_label_contains("settings not saved")
+            .is_none()
+    );
+}
+
+#[test]
+fn nothing_is_saved_when_the_settings_name_no_file() {
+    let mut harness = with_settings(Settings::default(), "settings_unsaved.rs");
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    assert_eq!(harness.state().kept, [Category::Lifetimes]);
+    assert!(
+        harness
+            .query_by_label_contains("settings not saved")
+            .is_none()
+    );
+}
+
+#[test]
+fn a_save_that_fails_is_shown_until_one_works() {
+    let dir = std::env::temp_dir().join("plene-gui-tests").join("blocked");
+    std::fs::create_dir_all(&dir).unwrap();
+    let blocker = dir.join("blocker");
+    std::fs::write(&blocker, "").unwrap();
+    let mut harness = with_settings(
+        Settings {
+            save_to: Some(blocker.join("config.toml")),
+            ..Settings::default()
+        },
+        "settings_blocked.rs",
+    );
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    harness.get_by_label_contains("settings not saved: ");
+    assert_eq!(rendered(&harness, "'a"), "'a", "the change still applies");
+
+    harness.state_mut().save_to = Some(config_path("unblocked"));
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    assert!(
+        harness
+            .query_by_label_contains("settings not saved")
+            .is_none()
+    );
+}
+
+#[test]
+fn problems_reading_the_settings_are_shown_for_the_session() {
+    let harness = with_settings(
+        Settings {
+            problems: vec!["warning: c.toml: skipping unknown category `x`".to_string()],
+            ..Settings::default()
+        },
+        "settings_problems.rs",
+    );
+    harness.get_by_label("warning: c.toml: skipping unknown category `x`");
 }

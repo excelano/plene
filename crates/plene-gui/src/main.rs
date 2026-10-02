@@ -17,9 +17,9 @@ use std::path::PathBuf;
 
 use clap::{Parser, ValueEnum};
 use eframe::egui::ViewportBuilder;
-use plene_core::{Edition, Glossary};
+use plene_core::{Category, Config, Edition, Glossary};
 
-use app::App;
+use app::{App, Settings};
 
 /// Shows Rust source beside an expanded transcription: the same code with
 /// abbreviations and symbols written out in words.
@@ -35,6 +35,15 @@ struct Args {
     /// the config directory.
     #[arg(long, value_name = "PATH")]
     glossary: Option<PathBuf>,
+    /// Leave these categories as written instead of expanding them, comma-separated:
+    /// keywords, visibility, mutability, references, operators, ranges, patterns,
+    /// lifetimes, bounds, flow, ends, macros. Replaces the list in the config file for
+    /// this run, and the Expand menu's changes are not saved.
+    #[arg(long, value_delimiter = ',', value_name = "CATEGORY")]
+    keep: Vec<Category>,
+    /// Expand every category, ignoring the list in the config file, for this run.
+    #[arg(long, conflicts_with = "keep")]
+    expand_all: bool,
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -60,12 +69,46 @@ impl From<EditionArg> for Edition {
     }
 }
 
+/// The settings to start with: what the command line names, or else the config file's,
+/// which the window then saves its changes to. A config that could not be read is
+/// reported and not saved over.
+fn settings(
+    args: &Args,
+    config: impl FnOnce() -> Result<(Config, Vec<String>), String>,
+    config_path: Option<PathBuf>,
+) -> Settings {
+    if args.expand_all {
+        return Settings::default();
+    }
+    if !args.keep.is_empty() {
+        return Settings {
+            kept: args.keep.clone(),
+            ..Settings::default()
+        };
+    }
+    match config() {
+        Ok((config, warnings)) => Settings {
+            kept: config.keep,
+            save_to: config_path,
+            problems: warnings
+                .into_iter()
+                .map(|warning| format!("warning: {warning}"))
+                .collect(),
+        },
+        Err(error) => Settings {
+            problems: vec![format!("{error}; this session's settings are not saved")],
+            ..Settings::default()
+        },
+    }
+}
+
 // Opening the window needs a display, so these lines run by hand, never in a test.
 fn main() -> eframe::Result {
     let args = Args::parse();
     let app = App::new(
         args.edition.into(),
         Glossary::load(args.glossary.as_deref()),
+        settings(&args, Config::load, Config::path()),
         args.file.as_deref(),
     );
     let options = eframe::NativeOptions {
@@ -92,5 +135,68 @@ mod tests {
             let args = Args::try_parse_from(["plene-gui", "--edition", year]).unwrap();
             assert_eq!(Edition::from(args.edition), edition);
         }
+    }
+
+    fn parsed(args: &[&str]) -> Args {
+        Args::try_parse_from(std::iter::once("plene-gui").chain(args.iter().copied())).unwrap()
+    }
+
+    fn saved_config() -> Result<(Config, Vec<String>), String> {
+        Ok((
+            Config {
+                keep: vec![Category::Lifetimes],
+            },
+            vec!["c.toml: skipping unknown category `x`".to_string()],
+        ))
+    }
+
+    fn path() -> Option<PathBuf> {
+        Some(PathBuf::from("/config/plene/config.toml"))
+    }
+
+    #[test]
+    fn the_config_files_settings_are_the_start_and_where_changes_are_saved() {
+        let settings = settings(&parsed(&[]), saved_config, path());
+        assert_eq!(settings.kept, [Category::Lifetimes]);
+        assert_eq!(settings.save_to, path());
+        assert_eq!(
+            settings.problems,
+            ["warning: c.toml: skipping unknown category `x`"]
+        );
+    }
+
+    #[test]
+    fn the_command_line_decides_for_the_run_and_nothing_is_saved() {
+        let unread = || -> Result<(Config, Vec<String>), String> { panic!("the config was read") };
+        let kept = settings(&parsed(&["--keep", "visibility,ends"]), unread, path());
+        assert_eq!(kept.kept, [Category::Visibility, Category::Ends]);
+        assert_eq!(kept.save_to, None);
+        assert!(kept.problems.is_empty());
+
+        let all = settings(&parsed(&["--expand-all"]), unread, path());
+        assert!(all.kept.is_empty());
+        assert_eq!(all.save_to, None);
+    }
+
+    #[test]
+    fn a_config_that_cannot_be_read_is_reported_and_not_saved_over() {
+        let failed = || Err("c.toml: invalid config: bad".to_string());
+        let settings = settings(&parsed(&[]), failed, path());
+        assert!(settings.kept.is_empty());
+        assert_eq!(settings.save_to, None);
+        assert_eq!(
+            settings.problems,
+            ["c.toml: invalid config: bad; this session's settings are not saved"]
+        );
+    }
+
+    #[test]
+    fn keep_and_expand_all_exclude_each_other_and_keep_rejects_an_unknown_category() {
+        assert!(Args::try_parse_from(["plene-gui", "--keep", "ends", "--expand-all"]).is_err());
+        let error = Args::try_parse_from(["plene-gui", "--keep", "nope"])
+            .err()
+            .unwrap()
+            .to_string();
+        assert!(error.contains("unknown category `nope`"), "{error}");
     }
 }

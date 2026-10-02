@@ -14,7 +14,7 @@ use eframe::egui::{
     Panel, Pos2, Rect, RichText, ScrollArea, Sense, Shape, Stroke, TextEdit, Ui, Vec2,
     ViewportCommand,
 };
-use plene_core::{Category, Edition, Glossary, Role, Span};
+use plene_core::{Category, Config, Edition, Glossary, Role, Span};
 
 use crate::document::Document;
 use crate::folding::{Folding, folds_opening_at};
@@ -37,6 +37,19 @@ const MIN_COLUMN_CHARS: f32 = 20.0;
 /// the text on it stays readable.
 const SELECTION_ALPHA: f32 = 0.35;
 
+/// What the reader has set that lasts between runs, as the program found it.
+#[derive(Default)]
+pub struct Settings {
+    /// The categories left as written at start.
+    pub kept: Vec<Category>,
+    /// Where changes to the Expand menu are saved. None keeps them to the session: the
+    /// command line decided what is kept, or the config file could not be read, and
+    /// saving over it would lose what is there.
+    pub save_to: Option<PathBuf>,
+    /// What went wrong reading them, shown for the whole session.
+    pub problems: Vec<String>,
+}
+
 pub struct App {
     edition: Edition,
     glossary: Glossary,
@@ -52,6 +65,9 @@ pub struct App {
     /// The categories the reader has switched off: left as written in the
     /// transcription. All are on at start, and the choice holds across the files opened.
     kept: Vec<Category>,
+    save_to: Option<PathBuf>,
+    /// Why the Expand menu's choices could not be saved, until they can.
+    save_error: Option<String>,
     search: Search,
     /// The tokens related to the one last clicked.
     related: Related,
@@ -112,6 +128,7 @@ impl App {
     pub fn new(
         edition: Edition,
         glossary: Result<(Glossary, Vec<String>), String>,
+        settings: Settings,
         file: Option<&Path>,
     ) -> App {
         let (glossary, glossary_problems) = match glossary {
@@ -127,6 +144,8 @@ impl App {
                 vec![format!("{error}; using the built-in glossary")],
             ),
         };
+        let mut glossary_problems = glossary_problems;
+        glossary_problems.extend(settings.problems);
         let mut app = App {
             edition,
             glossary,
@@ -135,7 +154,9 @@ impl App {
             document: None,
             view: View::default(),
             show_transcription: true,
-            kept: Vec::new(),
+            kept: settings.kept,
+            save_to: settings.save_to,
+            save_error: None,
             search: Search::default(),
             related: Related::default(),
             picker: Box::new(native_picker),
@@ -251,8 +272,25 @@ impl App {
             self.search_bar(ui);
         }
         let error_color = ui.visuals().error_fg_color;
-        for problem in self.glossary_problems.iter().chain(&self.open_error) {
+        for problem in self
+            .glossary_problems
+            .iter()
+            .chain(&self.open_error)
+            .chain(&self.save_error)
+        {
             ui.label(RichText::new(problem).color(error_color));
+        }
+    }
+
+    fn save_settings(&mut self) {
+        if let Some(path) = &self.save_to {
+            let config = Config {
+                keep: self.kept.clone(),
+            };
+            self.save_error = config
+                .save(path)
+                .err()
+                .map(|error| format!("settings not saved: {error}"));
         }
     }
 
@@ -297,6 +335,7 @@ impl App {
                         document.transcribe(self.edition, &glossary);
                     }
                     self.rows_changed();
+                    self.save_settings();
                 }
             }
         });

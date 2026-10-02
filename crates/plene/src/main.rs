@@ -11,7 +11,7 @@ use std::process::ExitCode;
 
 use anstream::{AutoStream, ColorChoice};
 use clap::{Parser, ValueEnum};
-use plene_core::{Category, Edition, Glossary, transcribe};
+use plene_core::{Category, Config, Edition, Glossary, transcribe};
 use render::{Layout, LineRange, Styling, Theme, View};
 
 /// Shows Rust source alongside an expanded transcription: the same code with
@@ -37,9 +37,12 @@ struct Args {
     glossary: Option<PathBuf>,
     /// Leave these categories as written instead of expanding them, comma-separated:
     /// keywords, visibility, mutability, references, operators, ranges, patterns,
-    /// lifetimes, bounds, flow, ends, macros.
+    /// lifetimes, bounds, flow, ends, macros. Replaces the list in the config file.
     #[arg(long, value_delimiter = ',', value_name = "CATEGORY")]
     keep: Vec<Category>,
+    /// Expand every category, ignoring the list in the config file.
+    #[arg(long, conflicts_with = "keep")]
+    expand_all: bool,
     /// Show the source and its expansion in two columns.
     #[arg(long, conflicts_with = "expanded")]
     side_by_side: bool,
@@ -56,7 +59,9 @@ struct Args {
     /// Print the glossary in effect, as a glossary file, and exit.
     #[arg(
         long,
-        conflicts_with_all = ["file", "keep", "side_by_side", "expanded", "changed_only", "lines"]
+        conflicts_with_all = [
+            "file", "keep", "expand_all", "side_by_side", "expanded", "changed_only", "lines"
+        ]
     )]
     dump_glossary: bool,
 }
@@ -120,7 +125,8 @@ fn run(args: &Args) -> Result<(), String> {
     let output = match &args.file {
         Some(file) => {
             let source = read_source(file)?;
-            let lines = transcribe(&source, args.edition.into(), &glossary.without(&args.keep));
+            let keep = categories_kept(args)?;
+            let lines = transcribe(&source, args.edition.into(), &glossary.without(&keep));
             if let Some(range) = args.lines.filter(|range| range.start > lines.len()) {
                 return Err(format!(
                     "--lines starts at {} but the source has {} lines",
@@ -159,6 +165,23 @@ fn run(args: &Args) -> Result<(), String> {
         Err(error) if error.kind() == io::ErrorKind::BrokenPipe => Ok(()),
         result => result.map_err(|error| format!("writing output: {error}")),
     }
+}
+
+/// The categories to leave as written: those named on the command line, or none with
+/// `--expand-all`, and otherwise the config file's. The config is not read when the
+/// command line decides, so a config that does not parse cannot stop an override.
+fn categories_kept(args: &Args) -> Result<Vec<Category>, String> {
+    if args.expand_all {
+        return Ok(Vec::new());
+    }
+    if !args.keep.is_empty() {
+        return Ok(args.keep.clone());
+    }
+    let (config, warnings) = Config::load()?;
+    for warning in warnings {
+        eprintln!("plene: warning: {warning}");
+    }
+    Ok(config.keep)
 }
 
 fn read_source(path: &Path) -> Result<String, String> {

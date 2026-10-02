@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::category::Category;
+use crate::config::config_dir;
 use crate::role::Role;
 
 const BUILTIN: &str = include_str!("../glossary.toml");
@@ -72,8 +73,7 @@ impl Default for Glossary {
 impl Glossary {
     /// The glossary in effect: the built-in one, overridden by the config directory's
     /// `plene/glossary.toml` when it exists, and then by the file at `named`. Each
-    /// warning and error names the file it came from. This is the only part of
-    /// plene-core that reads files.
+    /// warning and error names the file it came from.
     pub fn load(named: Option<&Path>) -> Result<(Glossary, Vec<String>), String> {
         let mut glossary = Glossary::default();
         let mut warnings = Vec::new();
@@ -194,14 +194,9 @@ impl Glossary {
     }
 }
 
-/// `$XDG_CONFIG_HOME/plene/glossary.toml`, or `~/.config/plene/glossary.toml` when
-/// `XDG_CONFIG_HOME` is unset or not absolute, which the XDG spec says to ignore.
+/// `glossary.toml` in plene's directory under the config directory.
 fn config_path() -> Option<PathBuf> {
-    let config_home = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .filter(|path| path.is_absolute())
-        .or_else(|| std::env::home_dir().map(|home| home.join(".config")))?;
-    Some(config_home.join("plene").join("glossary.toml"))
+    config_dir().map(|dir| dir.join("glossary.toml"))
 }
 
 /// Entries for roles that take a name are keyed by role alone.

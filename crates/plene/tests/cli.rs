@@ -430,3 +430,123 @@ fn a_long_functions_closing_brace_is_labelled_unless_ends_are_kept() {
     assert_eq!(last(&[]), "} end function long");
     assert_eq!(last(&["--keep", "ends"]), "}");
 }
+
+/// A config directory holding `config` as plene's config file, and the output of plene
+/// run on `source` with `args` and that directory in effect.
+fn with_config(name: &str, config: &str, args: &[&str], source: &str) -> Output {
+    let home = temp_dir(name);
+    temp_file(&format!("{name}/plene/config.toml"), config);
+    plene_in(args, source, &[("XDG_CONFIG_HOME", home.to_str().unwrap())])
+}
+
+const LIFETIMES: &str = "pub fn f<'a>(x: &'a u8) {}\n";
+
+#[test]
+fn the_config_files_keep_list_applies() {
+    let output = with_config(
+        "config-keep",
+        "keep = [\"lifetimes\", \"visibility\"]\n",
+        &["--expanded", "-"],
+        LIFETIMES,
+    );
+    assert_eq!(
+        stdout(&output),
+        "pub function f<'a>(x: borrowed 'a u8) {}\n"
+    );
+    assert_eq!(stderr(&output), "");
+}
+
+#[test]
+fn keep_on_the_command_line_replaces_the_config_files_list() {
+    let output = with_config(
+        "config-replaced",
+        "keep = [\"lifetimes\"]\n",
+        &["--expanded", "--keep", "visibility", "-"],
+        LIFETIMES,
+    );
+    assert_eq!(
+        stdout(&output),
+        "pub function f<lifetime a>(x: borrowed lifetime a u8) {}\n"
+    );
+}
+
+#[test]
+fn expand_all_ignores_the_config_file() {
+    let output = with_config(
+        "config-expand-all",
+        "keep = [\"lifetimes\", \"visibility\"]\n",
+        &["--expanded", "--expand-all", "-"],
+        LIFETIMES,
+    );
+    assert_eq!(
+        stdout(&output),
+        "public function f<lifetime a>(x: borrowed lifetime a u8) {}\n"
+    );
+}
+
+#[test]
+fn a_config_that_does_not_parse_is_an_error_naming_it_unless_the_command_line_decides() {
+    let bad = "keep = 3\n";
+    let output = with_config("config-bad", bad, &["--expanded", "-"], LIFETIMES);
+    assert_eq!(output.status.code(), Some(1));
+    assert_eq!(stdout(&output), "");
+    let message = stderr(&output);
+    assert!(message.starts_with("plene: "), "{message}");
+    assert!(
+        message.contains("config.toml: invalid config: "),
+        "{message}"
+    );
+
+    for flag in [&["--keep", "visibility"][..], &["--expand-all"][..]] {
+        let mut args = vec!["--expanded"];
+        args.extend_from_slice(flag);
+        args.push("-");
+        let output = with_config("config-bad-overridden", bad, &args, LIFETIMES);
+        assert_eq!(
+            output.status.code(),
+            Some(0),
+            "{flag:?}: {}",
+            stderr(&output)
+        );
+        assert_eq!(stderr(&output), "");
+    }
+
+    let dumped = with_config("config-bad-dump", bad, &["--dump-glossary"], "");
+    assert_eq!(dumped.status.code(), Some(0), "the config is not read");
+}
+
+#[test]
+fn an_unknown_category_in_the_config_is_a_warning() {
+    let output = with_config(
+        "config-unknown",
+        "keep = [\"nope\", \"lifetimes\"]\n",
+        &["--expanded", "-"],
+        LIFETIMES,
+    );
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        stdout(&output),
+        "public function f<'a>(x: borrowed 'a u8) {}\n"
+    );
+    assert!(
+        stderr(&output).contains("config.toml: skipping unknown category `nope`; one of: "),
+        "{}",
+        stderr(&output)
+    );
+}
+
+#[test]
+fn expand_all_conflicts_with_keep_and_with_dumping_the_glossary() {
+    for args in [
+        &["--expand-all", "--keep", "lifetimes", "-"][..],
+        &["--expand-all", "--dump-glossary"][..],
+    ] {
+        assert_eq!(plene(args, "").status.code(), Some(2), "{args:?}");
+    }
+}
+
+#[test]
+fn help_describes_expand_all() {
+    let help = stdout(&plene(&["--help"], ""));
+    assert!(help.contains("--expand-all"), "{help}");
+}
