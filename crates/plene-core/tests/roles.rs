@@ -427,3 +427,113 @@ fn nested_items_each_take_their_own_label() {
         .collect();
     assert_eq!(labelled, ["} end function f", "} end module outer"]);
 }
+
+/// The roles of the tokens of `source` that carry one, as `(text, role)`.
+fn macro_roles(source: &str) -> Vec<(String, Role)> {
+    roles_in(source)
+}
+
+#[test]
+fn a_matcher_expands_its_fragment_specifiers() {
+    for (spec, expected) in [
+        ("expr", true),
+        ("ty", true),
+        ("ident", true),
+        ("tt", true),
+        ("stmt", true),
+        ("pat", true),
+        ("pat_param", true),
+        ("vis", true),
+        ("block", false),
+        ("item", false),
+        ("path", false),
+        ("lifetime", false),
+        ("literal", false),
+        ("meta", false),
+    ] {
+        let roles = macro_roles(&format!("macro_rules! m {{ ($x:{spec}) => {{}}; }}"));
+        let found = roles
+            .iter()
+            .any(|(text, role)| text == spec && *role == Role::FragmentSpecifier);
+        assert_eq!(found, expected, "{spec}");
+    }
+}
+
+#[test]
+fn a_specifier_is_read_where_it_is_one() {
+    let specifier = |source: &str| {
+        macro_roles(source)
+            .iter()
+            .any(|(_, role)| *role == Role::FragmentSpecifier)
+    };
+    assert!(specifier("macro_rules! m { ($x : expr) => {}; }"));
+    assert!(specifier("macro_rules! m { ($($x:expr),*) => {}; }"));
+    assert!(specifier("macro_rules! m { (a) => {}; ($x:expr) => {}; }"));
+    assert!(!specifier("macro_rules! m { (a) => { $x:expr }; }"));
+    assert!(!specifier("macro_rules! m { $x:expr }"), "outside any rule");
+    assert!(!specifier("macro_rules! m { (expr) => {}; }"));
+    assert!(!specifier("macro_rules! m { (x:expr) => {}; }"));
+    assert!(!specifier("macro_rules! m { ($x::expr) => {}; }"));
+    assert!(!specifier("fn f() { other!($x:expr); }"));
+    assert!(!specifier("#[attr($x:expr)] fn f() {}"));
+}
+
+#[test]
+fn a_repetition_operator_ends_a_repetition() {
+    for (source, operators) in [
+        ("$($x:expr),*", vec![("*", Role::ZeroOrMore)]),
+        ("$($x:expr)+", vec![("+", Role::OneOrMore)]),
+        ("$($x:expr)?", vec![("?", Role::ZeroOrOne)]),
+        ("$($x:expr);+", vec![("+", Role::OneOrMore)]),
+        (
+            "$($x:expr)+ $(,)?",
+            vec![("+", Role::OneOrMore), ("?", Role::ZeroOrOne)],
+        ),
+        (
+            "$($($x:tt)*),+",
+            vec![("*", Role::ZeroOrMore), ("+", Role::OneOrMore)],
+        ),
+        ("$( $x:expr ) , *", vec![("*", Role::ZeroOrMore)]),
+        ("$($x:expr)* + a", vec![("*", Role::ZeroOrMore)]),
+        ("$($x:expr)?*", vec![("?", Role::ZeroOrOne)]),
+    ] {
+        let found: Vec<(String, Role)> =
+            macro_roles(&format!("macro_rules! m {{ ({source}) => {{}}; }}"))
+                .into_iter()
+                .filter(|(text, _)| matches!(text.as_str(), "*" | "+" | "?"))
+                .collect();
+        let expected: Vec<(String, Role)> = operators
+            .into_iter()
+            .map(|(text, role)| (text.to_string(), role))
+            .collect();
+        assert_eq!(found, expected, "in {source:?}");
+    }
+}
+
+#[test]
+fn arithmetic_and_other_macros_keep_their_operators() {
+    let operators = |source: &str| {
+        macro_roles(source)
+            .into_iter()
+            .filter(|(text, _)| matches!(text.as_str(), "*" | "+" | "?"))
+            .count()
+    };
+    assert_eq!(operators("macro_rules! m { () => { (1 + 2) * 3 }; }"), 0);
+    assert_eq!(operators("macro_rules! m { ($a:expr) => { $a * 2 }; }"), 0);
+    assert_eq!(operators("macro_rules! m { ($a:expr) => { ($a)* 2 }; }"), 0);
+    assert_eq!(operators("macro_rules! m { () => { $x? }; }"), 0);
+    assert_eq!(operators("fn f() { other!($($x),*); }"), 0);
+    assert_eq!(operators("fn f() { quote!($(a)+); }"), 0);
+}
+
+#[test]
+fn a_repetition_operator_reads_on_either_side_of_the_arrow() {
+    let roles = macro_roles("macro_rules! m { ($($x:expr),*) => { $(f($x);)* }; }");
+    let stars: Vec<_> = roles.iter().filter(|(text, _)| text == "*").collect();
+    assert_eq!(stars.len(), 2);
+    let fragments = roles
+        .iter()
+        .filter(|(_, role)| *role == Role::FragmentSpecifier)
+        .count();
+    assert_eq!(fragments, 1, "only the matcher has a specifier");
+}

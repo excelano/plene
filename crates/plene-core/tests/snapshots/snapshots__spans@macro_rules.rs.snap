@@ -1,0 +1,17 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_spans(&source)
+input_file: crates/plene-core/tests/fixtures/macro_rules.rs
+---
+  1 | macro_rules:Keyword !:Macro map:Macro {:Punctuation
+  2 | (:Punctuation $:Punctuation (:Punctuation $:Punctuation k:Identifier ::Punctuation expr:Identifier/fragment_specifier =:Operator >:Punctuation $:Punctuation v:Identifier ::Punctuation expr:Identifier/fragment_specifier ):Punctuation ,:Punctuation *:Operator/zero_or_more $:Punctuation (:Punctuation ,:Punctuation ):Punctuation ?:Operator/zero_or_one ):Punctuation =:Operator >:Punctuation {:Punctuation {:Punctuation
+  3 | let:Keyword mut:Keyword m:Identifier =:Operator HashMap:Identifier ::Punctuation ::Punctuation new:Identifier (:Punctuation ):Punctuation ;:Punctuation
+  4 | $:Punctuation (:Punctuation m:Identifier .:Punctuation insert:Identifier (:Punctuation $:Punctuation k:Identifier ,:Punctuation $:Punctuation v:Identifier ):Punctuation ;:Punctuation ):Punctuation *:Operator/zero_or_more
+  5 | m:Identifier
+  6 | }:Punctuation }:Punctuation ;:Punctuation
+  7 | (:Punctuation $:Punctuation x:Identifier ::Punctuation ident:Identifier/fragment_specifier ::Punctuation $:Punctuation t:Identifier ::Punctuation ty:Identifier/fragment_specifier ,:Punctuation $:Punctuation (:Punctuation $:Punctuation rest:Identifier ::Punctuation tt:Identifier/fragment_specifier ):Punctuation +:Operator/one_or_more ):Punctuation =:Operator >:Punctuation {:Punctuation let:Keyword $:Punctuation x:Identifier ::Punctuation $:Punctuation t:Identifier ;:Punctuation }:Punctuation ;:Punctuation
+  8 | (:Punctuation $:Punctuation v:Identifier ::Punctuation vis:Identifier/fragment_specifier struct:Keyword $:Punctuation n:Identifier ::Punctuation ident:Identifier/fragment_specifier ;:Punctuation ):Punctuation =:Operator >:Punctuation {:Punctuation $:Punctuation v:Identifier struct:Keyword $:Punctuation n:Identifier ;:Punctuation }:Punctuation ;:Punctuation
+  9 | (:Punctuation $:Punctuation b:Identifier ::Punctuation block:Identifier $:Punctuation i:Identifier ::Punctuation item:Identifier $:Punctuation p:Identifier ::Punctuation path:Identifier $:Punctuation l:Identifier ::Punctuation lifetime:Identifier $:Punctuation m:Identifier ::Punctuation meta:Identifier $:Punctuation lit:Identifier ::Punctuation literal:Identifier ):Punctuation =:Operator >:Punctuation {:Punctuation }:Punctuation ;:Punctuation
+ 10 | (:Punctuation $:Punctuation a:Identifier ::Punctuation pat_param:Identifier/fragment_specifier |:Operator $:Punctuation s:Identifier ::Punctuation stmt:Identifier/fragment_specifier ):Punctuation =:Operator >:Punctuation {:Punctuation (:Punctuation 1:Number +:Operator 2:Number ):Punctuation *:Operator 3:Number +:Operator $:Punctuation a:Identifier }:Punctuation ;:Punctuation
+ 11 | }:Punctuation
+ 12 | fn:Keyword/keyword f:Function (:Punctuation ):Punctuation {:Punctuation let:Keyword x:Identifier =:Operator 2:Number *:Operator 3:Number ;:Punctuation assert:Macro !:Macro (:Punctuation a:Identifier ?:Operator/try_chained .:Punctuation b:Identifier +:Operator c:Identifier *:Operator d:Identifier ):Punctuation ;:Punctuation }:Punctuation

@@ -58,6 +58,7 @@ categories! {
     Bounds => ("bounds", "Trait bounds"),
     Flow => ("flow", "Match arms, returns, closures and ?"),
     Ends => ("ends", "Labels on the closing braces of long items"),
+    Macros => ("macros", "macro_rules! fragments and repetitions"),
 }
 
 impl Category {
@@ -108,6 +109,9 @@ impl Category {
             | Role::TraitEnd
             | Role::StructEnd
             | Role::EnumEnd => Category::Ends,
+            Role::FragmentSpecifier | Role::ZeroOrMore | Role::OneOrMore | Role::ZeroOrOne => {
+                Category::Macros
+            }
         }
     }
 }

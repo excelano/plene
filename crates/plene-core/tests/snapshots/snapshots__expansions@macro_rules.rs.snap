@@ -1,0 +1,23 @@
+---
+source: crates/plene-core/tests/snapshots.rs
+expression: render_expansion(&source)
+input_file: crates/plene-core/tests/fixtures/macro_rules.rs
+---
+  1 | macro_rules! map {
+  2 |     ($($k:expr => $v:expr),* $(,)?) => {{
+    |     ($($k: expression => $v: expression), zero or more $(,) zero or one) => {{
+  3 |         let mut m = HashMap::new();
+  4 |         $(m.insert($k, $v);)*
+    |         $(m.insert($k, $v);) zero or more
+  5 |         m
+  6 |     }};
+  7 |     ($x:ident : $t:ty, $($rest:tt)+) => { let $x: $t; };
+    |     ($x: identifier : $t: type, $($rest: token tree) one or more) => { let $x: $t; };
+  8 |     ($v:vis struct $n:ident;) => { $v struct $n; };
+    |     ($v: visibility struct $n: identifier;) => { $v struct $n; };
+  9 |     ($b:block $i:item $p:path $l:lifetime $m:meta $lit:literal) => {};
+ 10 |     ($a:pat_param | $s:stmt) => { (1 + 2) * 3 + $a };
+    |     ($a: pattern without or | $s: statement) => { (1 + 2) * 3 + $a };
+ 11 | }
+ 12 | fn f() { let x = 2 * 3; assert!(a?.b + c * d); }
+    | function f() { let x = 2 * 3; assert!(a?.b + c * d); }

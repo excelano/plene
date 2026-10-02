@@ -87,6 +87,19 @@ Identifiers; std types (`Vec`, `Box`, `str`, `i32`…); keywords not listed belo
 | `:` | `lifetime_bound` | `'a: 'b`, `T: 'a`, when the first bound is a lifetime | `outliving` |
 | `+` | `bound_separator` | between bounds | `and` |
 
+### Macro definitions
+
+Inside a `macro_rules!` definition the notation for what a variable matches and how a group repeats is fixed, so it is read from the token tree without parsing it as Rust. Nothing else in the body is expanded, since the rest is the macro's own syntax or the code it produces.
+
+| Token | Role | Context | Expansion |
+|---|---|---|---|
+| `expr` `ty` `ident` `tt` `stmt` `pat` `pat_param` `vis` | `fragment_specifier` | the specifier in a matcher's `$name:spec` | `expression` `type` `identifier` `token tree` `statement` `pattern` `pattern without or` `visibility` |
+| `*` | `zero_or_more` | ends a repetition `$( ... )` | `zero or more` |
+| `+` | `one_or_more` | ends a repetition | `one or more` |
+| `?` | `zero_or_one` | ends a repetition | `zero or one` |
+
+`block`, `item`, `lifetime`, `literal`, `meta` and `path` are whole words and stay as written. A specifier is read only on the matcher's side of a rule, which inside a macro's token trees is the tree followed by `=` and `>`; on the other side `$x:expr` is a variable followed by two ordinary tokens. A repetition operator is read on both sides: it follows `$( ... )` directly or after one separator token, and a `*`, `+` or `?` that follows another operator is not one, so `(1 + 2) * 3` in a transcriber is arithmetic. The same notation in any other macro's arguments, or in an attribute, is left alone. So `$($k:expr => $v:expr),*` reads `$($k: expression => $v: expression), zero or more`, the colon gaining the space the word needs.
+
 ### Closing braces
 
 The closing brace of an item's body is expanded to carry what it closes, once the block runs to 20 lines or more, since its opening is out of sight by then. The expansion replaces the one `}` token, and keeps it.
@@ -130,6 +143,7 @@ A reader who has grown used to some of the notation can leave it as written. The
 | Trait bounds | `bounds` | `:` and `+` in bounds, `?Sized`, `impl !Trait` |
 | Match arms, returns, closures and `?` | `flow` | `=>`, `->`, the closure pipes, `?` |
 | Labels on the closing braces of long items | `ends` | the closing-brace labels above |
+| `macro_rules!` fragments and repetitions | `macros` | the macro definition notation above |
 
 Switching a category off removes its entries from the glossary that transcribes, with `Glossary::without`, so the tokens it covers come out as written and carry no role: no underline and no hover card. The glossary the hover cards read is unchanged. The invariants hold for any set of categories off, and with all of them off the transcription is the source.
 
@@ -192,7 +206,7 @@ pub struct Span {
 - **Highlighting is driven by the same token kinds that drive expansion.** Do not use a separate highlighter such as syntect. An expanded token keeps its original token's highlight class, so `&mut` and `borrow mutable` share a color by construction.
 - **Whitespace:** never alter source whitespace or indentation. Where an expansion's word edge touches a character that is not whitespace, insert a space, unless that character is punctuation that hugs the word from its side: `( [ { <` before it, or `) ] } > , ; : .` after it. After an expanded keyword, `(` and `<` also attach, as they do in the source. So `foo()?;` → `foo() or return early;`, `&mut` → `borrow mutable`, `&[u8]` → `borrowed [u8]`, `()->u8` → `() returns u8` and `!(a > b)` → `not (a > b)`, but `(&x)` → `(borrow x)`, `<'a>` → `<lifetime a>`, `pub(crate)` → `public(crate)` and `impl<T>` → `implement<T>`. An inserted space is its own span with an empty `original`, so each expansion's `rendered` is exactly its glossary text.
 - **Line correspondence is 1:1.** Every source line produces exactly one rendered line. Tokens that span lines (block comments, multi-line and raw strings) are split into one span per line. Line endings (LF or CRLF) are preserved.
-- **Macros:** the arguments of standard macros that take expressions are parsed as Rust and expanded like any other code: `assert`, `assert_eq`, `assert_ne`, `debug_assert`, `debug_assert_eq`, `debug_assert_ne`, `format`, `format_args`, `print`, `println`, `eprint`, `eprintln`, `write`, `writeln`, `panic`, `todo`, `unimplemented`, `unreachable`, `vec`, `dbg`, `addr_of` and `addr_of_mut`, matched by the last segment of the path, so `std::format!` counts. The arguments are parsed as the elements of an array, which also covers `vec![x; n]`, and an invocation expands only when they parse without error; otherwise it stays untouched. So `assert_eq!(&a, &b)` reads `assert_eq!(borrow a, borrow b)`, while `format!("{}", type = &a)` stays as written. The parsed arguments are the source's own bytes split into tokens again, so the invariants hold as they do elsewhere. Every other macro's token tree is left untouched, since syntax alone can't tell whether its arguments are Rust: `stringify!(&a)`, `quote!` bodies, and patterns in `matches!` would all read wrongly. Format strings are strings and stay unchanged. Attributes are untouched too. `macro_rules!` bodies are never expanded.
+- **Macros:** the arguments of standard macros that take expressions are parsed as Rust and expanded like any other code: `assert`, `assert_eq`, `assert_ne`, `debug_assert`, `debug_assert_eq`, `debug_assert_ne`, `format`, `format_args`, `print`, `println`, `eprint`, `eprintln`, `write`, `writeln`, `panic`, `todo`, `unimplemented`, `unreachable`, `vec`, `dbg`, `addr_of` and `addr_of_mut`, matched by the last segment of the path, so `std::format!` counts. The arguments are parsed as the elements of an array, which also covers `vec![x; n]`, and an invocation expands only when they parse without error; otherwise it stays untouched. So `assert_eq!(&a, &b)` reads `assert_eq!(borrow a, borrow b)`, while `format!("{}", type = &a)` stays as written. The parsed arguments are the source's own bytes split into tokens again, so the invariants hold as they do elsewhere. Every other macro's token tree is left untouched, since syntax alone can't tell whether its arguments are Rust: `stringify!(&a)`, `quote!` bodies, and patterns in `matches!` would all read wrongly. Format strings are strings and stay unchanged. Attributes are untouched too. A `macro_rules!` definition is the exception to leaving token trees alone, since its notation is fixed: see Macro definitions.
 - **Parse errors:** render everything; tokens inside error nodes are not expanded.
 - No CLI/GUI dependencies, and no I/O except `Glossary::load`, which reads the glossary files so that the CLI and the GUI find them by the same rules.
 

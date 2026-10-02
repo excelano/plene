@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use ra_ap_syntax::SyntaxKind::*;
 use ra_ap_syntax::ast;
-use ra_ap_syntax::{AstNode, Direction, SyntaxNode, SyntaxToken};
+use ra_ap_syntax::{AstNode, Direction, NodeOrToken, SyntaxElement, SyntaxNode, SyntaxToken};
 
 /// Declares `Role` with each variant's stable string identifier, used in glossary files.
 macro_rules! roles {
@@ -87,6 +87,10 @@ roles! {
     TraitEnd => "trait_end",
     StructEnd => "struct_end",
     EnumEnd => "enum_end",
+    FragmentSpecifier => "fragment_specifier",
+    ZeroOrMore => "zero_or_more",
+    OneOrMore => "one_or_more",
+    ZeroOrOne => "zero_or_one",
 }
 
 impl Role {
@@ -136,12 +140,14 @@ pub(crate) struct Classified {
 
 pub(crate) fn classify(token: &SyntaxToken) -> Option<Classified> {
     let parent = token.parent()?;
-    // Attribute arguments sit in token trees too, like macro arguments.
-    if parent
-        .ancestors()
-        .any(|node| matches!(node.kind(), ERROR | TOKEN_TREE))
-    {
+    if parent.ancestors().any(|node| node.kind() == ERROR) {
         return None;
+    }
+    // Macro arguments and attribute arguments sit in token trees, which syntax alone
+    // can't read as Rust. A `macro_rules!` definition is the one place their
+    // notation is fixed.
+    if parent.ancestors().any(|node| node.kind() == TOKEN_TREE) {
+        return macro_rules_role(token, &parent).map(|role| Classified { role, name: None });
     }
     if token.kind() == R_CURLY {
         return closing_brace(&parent);
@@ -203,6 +209,90 @@ fn role(token: &SyntaxToken, parent: &SyntaxNode) -> Option<Role> {
         (LIFETIME_IDENT, _) => Some(classify_lifetime(token, parent)),
         _ => None,
     }
+}
+
+/// The role of a token in a `macro_rules!` definition: the fragment specifier in a
+/// matcher's `$name:spec`, and the `*`, `+` or `?` that ends a repetition `$(...)`.
+fn macro_rules_role(token: &SyntaxToken, tree: &SyntaxNode) -> Option<Role> {
+    let trees: Vec<SyntaxNode> = tree
+        .ancestors()
+        .take_while(|node| node.kind() == TOKEN_TREE)
+        .collect();
+    if trees.last()?.parent()?.kind() != MACRO_RULES {
+        return None;
+    }
+    match token.kind() {
+        IDENT if is_fragment_specifier(token) && in_matcher(&trees) => {
+            Some(Role::FragmentSpecifier)
+        }
+        STAR | PLUS | QUESTION if is_repetition_operator(token) => Some(match token.kind() {
+            STAR => Role::ZeroOrMore,
+            PLUS => Role::OneOrMore,
+            _ => Role::ZeroOrOne,
+        }),
+        _ => None,
+    }
+}
+
+/// The elements on one side of `element`, nearest first, without whitespace and comments.
+fn neighbours(
+    element: impl Into<SyntaxElement>,
+    direction: Direction,
+) -> impl Iterator<Item = SyntaxElement> {
+    let step = move |element: &SyntaxElement| match direction {
+        Direction::Prev => element.prev_sibling_or_token(),
+        Direction::Next => element.next_sibling_or_token(),
+    };
+    let first = step(&element.into());
+    std::iter::successors(first, move |element| step(element))
+        .filter(|neighbour| !matches!(neighbour.kind(), WHITESPACE | COMMENT))
+}
+
+/// Whether `ident` is the `spec` of a `$name:spec`.
+fn is_fragment_specifier(ident: &SyntaxToken) -> bool {
+    let kinds: Vec<_> = neighbours(ident.clone(), Direction::Prev)
+        .take(3)
+        .map(|neighbour| neighbour.kind())
+        .collect();
+    kinds == [COLON, IDENT, DOLLAR]
+}
+
+/// Whether the innermost of `trees` lies in a rule's matcher, the side before its `=>`.
+/// `trees` runs from the innermost token tree out to the definition's body, and a rule
+/// is the tree directly inside the body. Inside a macro's token trees `=>` is `=`
+/// then `>`.
+fn in_matcher(trees: &[SyntaxNode]) -> bool {
+    let Some(rule) = trees.len().checked_sub(2).map(|rule| &trees[rule]) else {
+        return false;
+    };
+    let after: Vec<_> = neighbours(rule.clone(), Direction::Next)
+        .take(2)
+        .map(|neighbour| neighbour.kind())
+        .collect();
+    after == [EQ, R_ANGLE]
+}
+
+/// Whether `operator` ends a repetition: it follows `$( ... )`, directly or after one
+/// separator token. A separator is never `*`, `+` or `?`, so an operator that follows
+/// another is not one.
+fn is_repetition_operator(operator: &SyntaxToken) -> bool {
+    let mut before = neighbours(operator.clone(), Direction::Prev);
+    let group = match before.next() {
+        Some(NodeOrToken::Node(group)) => group,
+        Some(NodeOrToken::Token(separator))
+            if !matches!(separator.kind(), STAR | PLUS | QUESTION) =>
+        {
+            match before.next() {
+                Some(NodeOrToken::Node(group)) => group,
+                _ => return false,
+            }
+        }
+        _ => return false,
+    };
+    let opens_with_paren = group
+        .first_token()
+        .is_some_and(|first| first.kind() == L_PAREN);
+    opens_with_paren && before.next().is_some_and(|dollar| dollar.kind() == DOLLAR)
 }
 
 /// The role and name of the closing brace of `block`, when `block` is the body of an

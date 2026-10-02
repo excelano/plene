@@ -16,6 +16,7 @@ input_file: crates/plene-core/tests/fixtures/highlight.rs
  10 | 
  11 | macro_rules! square {
  12 |     ($x:expr) => {
+    |     ($x: expression) => {
  13 |         $x * $x
  14 |     };
  15 | }

@@ -14,7 +14,7 @@ input_file: crates/plene-core/tests/fixtures/highlight.rs
   9 | }:Punctuation
  10 |
  11 | macro_rules:Keyword !:Macro square:Macro {:Punctuation
- 12 | (:Punctuation $:Punctuation x:Identifier ::Punctuation expr:Identifier ):Punctuation =:Operator >:Punctuation {:Punctuation
+ 12 | (:Punctuation $:Punctuation x:Identifier ::Punctuation expr:Identifier/fragment_specifier ):Punctuation =:Operator >:Punctuation {:Punctuation
  13 | $:Punctuation x:Identifier *:Operator $:Punctuation x:Identifier
  14 | }:Punctuation ;:Punctuation
  15 | }:Punctuation

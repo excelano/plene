@@ -57,7 +57,7 @@ fn ids_round_trip_and_an_unknown_one_lists_the_known() {
     let unknown: UnknownCategory = "nope".parse::<Category>().unwrap_err();
     let message = unknown.to_string();
     assert!(message.starts_with("unknown category `nope`; one of: keywords, visibility, "));
-    assert!(message.ends_with(", flow, ends"));
+    assert!(message.ends_with(", flow, ends, macros"));
 }
 
 #[test]

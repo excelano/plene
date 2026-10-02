@@ -349,3 +349,69 @@ token = "}"
 role = "enum_end"
 text = "} end enum {name}"
 note = "Closes a long enum, labelled with what it closes, since its opening is out of sight. Shorter ones are left alone."
+
+[[expand]]
+token = "expr"
+role = "fragment_specifier"
+text = "expression"
+note = "Matches any expression. The kind of source a macro_rules! variable stands for."
+
+[[expand]]
+token = "ty"
+role = "fragment_specifier"
+text = "type"
+note = "Matches a type. The kind of source a macro_rules! variable stands for."
+
+[[expand]]
+token = "ident"
+role = "fragment_specifier"
+text = "identifier"
+note = "Matches a single identifier or keyword. The kind of source a macro_rules! variable stands for."
+
+[[expand]]
+token = "tt"
+role = "fragment_specifier"
+text = "token tree"
+note = "Matches one token, or a group of tokens inside matching brackets. The kind of source a macro_rules! variable stands for."
+
+[[expand]]
+token = "stmt"
+role = "fragment_specifier"
+text = "statement"
+note = "Matches a statement without its trailing semicolon. The kind of source a macro_rules! variable stands for."
+
+[[expand]]
+token = "pat"
+role = "fragment_specifier"
+text = "pattern"
+note = "Matches a pattern. The kind of source a macro_rules! variable stands for."
+
+[[expand]]
+token = "pat_param"
+role = "fragment_specifier"
+text = "pattern without or"
+note = "Matches a pattern that is not a top-level choice with |. The kind of source a macro_rules! variable stands for."
+
+[[expand]]
+token = "vis"
+role = "fragment_specifier"
+text = "visibility"
+note = "Matches a visibility, which may be empty: pub, pub(crate) or nothing. The kind of source a macro_rules! variable stands for."
+
+[[expand]]
+token = "*"
+role = "zero_or_more"
+text = "zero or more"
+note = "Ends a repetition: the group before it may repeat any number of times, or not appear."
+
+[[expand]]
+token = "+"
+role = "one_or_more"
+text = "one or more"
+note = "Ends a repetition: the group before it must appear, and may repeat."
+
+[[expand]]
+token = "?"
+role = "zero_or_one"
+text = "zero or one"
+note = "Ends a repetition: the group before it may appear once, or not at all."
