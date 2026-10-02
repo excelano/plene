@@ -842,3 +842,148 @@ fn a_plain_click_and_a_token_without_a_role_open_nothing() {
         .expect("a click lands on the name f");
     assert!(click_and_collect_urls(&mut harness, on_name, true).is_empty());
 }
+
+/// An `impl` with two functions, and a short function after it.
+const FOLDABLE: &str =
+    "impl S {\n    fn a() {\n        x;\n    }\n    fn b() {\n        y;\n    }\n}\nfn c() {}\n";
+
+fn shown(harness: &Harness<'_, App>) -> Vec<usize> {
+    harness.state().view.shown.as_ref().unwrap().to_vec()
+}
+
+fn fold_functions(harness: &mut Harness<'_, App>) {
+    harness.get_by_label("Fold functions").click();
+    harness.run();
+}
+
+#[test]
+fn folding_functions_hides_their_bodies_and_unfolding_shows_them_again() {
+    let mut harness = opened(FOLDABLE, "fold_buttons.rs", WIDE);
+    assert_eq!(shown(&harness), (0..9).collect::<Vec<_>>());
+    let full = harness.state().view.rows.total();
+    fold_functions(&mut harness);
+    assert_eq!(shown(&harness), [0, 1, 4, 7, 8]);
+    assert!(harness.state().view.rows.total() < full);
+    harness.get_by_label("Unfold all").click();
+    harness.run();
+    assert_eq!(shown(&harness), (0..9).collect::<Vec<_>>());
+    assert_eq!(harness.state().view.rows.total(), full);
+}
+
+#[test]
+fn the_arrows_move_over_the_rows_that_are_shown() {
+    let mut harness = opened(FOLDABLE, "fold_arrows.rs", WIDE);
+    fold_functions(&mut harness);
+    press(&mut harness, Key::ArrowDown, 1);
+    assert_eq!(selected(&harness), Some(0));
+    for expected in [1, 4, 7, 8, 8] {
+        press(&mut harness, Key::ArrowDown, 1);
+        assert_eq!(selected(&harness), Some(expected));
+    }
+    for expected in [7, 4, 1, 0, 0] {
+        press(&mut harness, Key::ArrowUp, 1);
+        assert_eq!(selected(&harness), Some(expected));
+    }
+}
+
+#[test]
+fn left_folds_the_body_around_the_selected_row_and_right_unfolds_it() {
+    let mut harness = opened(FOLDABLE, "fold_keys.rs", WIDE);
+    press(&mut harness, Key::ArrowDown, 3);
+    assert_eq!(selected(&harness), Some(2), "inside the first function");
+    press(&mut harness, Key::ArrowLeft, 1);
+    assert_eq!(shown(&harness), [0, 1, 4, 5, 6, 7, 8]);
+    assert_eq!(selected(&harness), Some(1), "the row that holds it now");
+    press(&mut harness, Key::ArrowLeft, 1);
+    assert_eq!(shown(&harness), [0, 8], "then the impl around it");
+    assert_eq!(selected(&harness), Some(0));
+    press(&mut harness, Key::ArrowRight, 1);
+    assert_eq!(
+        shown(&harness),
+        [0, 1, 4, 5, 6, 7, 8],
+        "the impl opens again"
+    );
+    press(&mut harness, Key::ArrowDown, 1);
+    press(&mut harness, Key::ArrowRight, 1);
+    assert_eq!(shown(&harness), (0..9).collect::<Vec<_>>());
+    press(&mut harness, Key::ArrowRight, 1);
+    assert_eq!(shown(&harness).len(), 9, "nothing folded at this row");
+}
+
+#[test]
+fn the_arrows_leave_a_row_outside_every_body_alone() {
+    let mut harness = opened(FOLDABLE, "fold_outside.rs", WIDE);
+    press(&mut harness, Key::ArrowDown, 9);
+    assert_eq!(selected(&harness), Some(8));
+    press(&mut harness, Key::ArrowLeft, 1);
+    assert_eq!(
+        shown(&harness).len(),
+        9,
+        "`fn c() {{}}` has nothing to hide"
+    );
+}
+
+#[test]
+fn clicking_the_marker_beside_an_opening_line_folds_and_unfolds() {
+    let mut harness = opened(FOLDABLE, "fold_marker.rs", WIDE);
+    let y = top_of_row(&mut harness, 1);
+    let marker = (14..40).step_by(2).find(|x| {
+        click(&mut harness, Pos2::new(*x as f32, y));
+        shown(&harness).len() < 9
+    });
+    let x = marker.expect("a click in the marker folds the body") as f32;
+    assert_eq!(shown(&harness), [0, 1, 4, 5, 6, 7, 8]);
+    click(&mut harness, Pos2::new(x, y));
+    assert_eq!(shown(&harness).len(), 9, "and a second click opens it");
+}
+
+#[test]
+fn the_marker_of_a_row_with_no_body_does_nothing() {
+    let mut harness = opened(FOLDABLE, "fold_no_marker.rs", WIDE);
+    let y = top_of_row(&mut harness, 2);
+    for x in (14..40).step_by(2) {
+        click(&mut harness, Pos2::new(x as f32, y));
+    }
+    assert_eq!(shown(&harness).len(), 9);
+}
+
+#[test]
+fn folding_away_the_selected_row_selects_the_row_that_holds_it() {
+    let mut harness = opened(FOLDABLE, "fold_selection.rs", WIDE);
+    press(&mut harness, Key::ArrowDown, 6);
+    assert_eq!(selected(&harness), Some(5));
+    fold_functions(&mut harness);
+    assert_eq!(selected(&harness), Some(4));
+}
+
+#[test]
+fn a_search_match_inside_a_fold_unfolds_it() {
+    let mut harness = opened(FOLDABLE, "fold_search.rs", WIDE);
+    fold_functions(&mut harness);
+    harness.key_press_modifiers(Modifiers::COMMAND, Key::F);
+    harness.run();
+    harness.get_by_role(NodeRole::TextInput).type_text("y;");
+    harness.run();
+    assert_eq!(selected(&harness), Some(5));
+    assert_eq!(shown(&harness), [0, 1, 4, 5, 6, 7, 8], "only b was opened");
+}
+
+#[test]
+fn folds_survive_a_category_being_switched_and_end_with_the_file() {
+    let mut harness = opened(FOLDABLE, "fold_survives.rs", WIDE);
+    fold_functions(&mut harness);
+    toggle_expansion(&mut harness, "Keywords");
+    assert_eq!(shown(&harness), [0, 1, 4, 7, 8]);
+    let dropped = temp_file("fold_next.rs", FOLDABLE);
+    harness.input_mut().dropped_files = vec![Arc::new(Dropped(dropped))];
+    harness.run();
+    assert_eq!(shown(&harness).len(), 9);
+}
+
+#[test]
+fn a_file_without_bodies_has_nothing_to_fold() {
+    let mut harness = opened("use a;\nfn f() {}\n", "fold_none.rs", WIDE);
+    fold_functions(&mut harness);
+    assert_eq!(shown(&harness), [0, 1]);
+    assert!(harness.state().view.folding.is_empty());
+}

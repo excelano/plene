@@ -7,14 +7,17 @@
 use std::mem;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 use eframe::egui::{
-    Align2, CentralPanel, FontId, Key, KeyboardShortcut, Modifiers, OpenUrl, Panel, Rect, RichText,
-    ScrollArea, Sense, TextEdit, Ui, Vec2, ViewportCommand,
+    Align2, Button, CentralPanel, Color32, FontId, Key, KeyboardShortcut, Modifiers, OpenUrl,
+    Panel, Pos2, Rect, RichText, ScrollArea, Sense, Shape, Stroke, TextEdit, Ui, Vec2,
+    ViewportCommand,
 };
 use plene_core::{Category, Edition, Glossary, Role, Span};
 
 use crate::document::Document;
+use crate::folding::{Folding, folds_opening_at};
 use crate::related::Related;
 use crate::rows::Rows;
 use crate::search::{Scope, Search};
@@ -58,8 +61,9 @@ pub struct App {
     title: String,
 }
 
-/// Where the reader is in the open document: the rows' geometry, the selected row, and
-/// the rows last in view.
+/// Where the reader is in the open document: the rows' geometry, the selected row, the
+/// rows last in view, and what is folded away. The geometry and the rows in view count
+/// the rows shown, which skip the ones a fold hides; the selection is a document row.
 #[derive(Default)]
 struct View {
     rows: Rows,
@@ -67,6 +71,39 @@ struct View {
     in_view: Range<usize>,
     /// The selected row is to be scrolled into view on the next frame.
     reveal: bool,
+    folding: Folding,
+    /// The document rows shown, made again when a fold changes.
+    shown: Option<Rc<Vec<usize>>>,
+}
+
+impl View {
+    fn shown(&mut self, document: &Document) -> Rc<Vec<usize>> {
+        let folding = &self.folding;
+        Rc::clone(self.shown.get_or_insert_with(|| {
+            Rc::new(folding.shown_rows(&document.folds, document.lines.len()))
+        }))
+    }
+
+    /// A fold changed: the rows shown are found again and measured again, and a
+    /// selection that was folded away moves to the row that is left holding it.
+    fn folds_changed(&mut self, document: &Document) {
+        self.shown = None;
+        self.rows = Rows::default();
+        let shown = self.shown(document);
+        if let Some(selected) = self.selected {
+            let at = shown.partition_point(|row| *row <= selected);
+            self.selected = at.checked_sub(1).map(|at| shown[at]);
+        }
+    }
+
+    /// The first document row in view.
+    fn top_row(&self) -> usize {
+        self.shown
+            .as_ref()
+            .and_then(|shown| shown.get(self.in_view.start))
+            .copied()
+            .unwrap_or(0)
+    }
 }
 
 impl App {
@@ -205,6 +242,7 @@ impl App {
                 self.rows_changed();
             }
             self.expand_menu(ui);
+            self.fold_buttons(ui);
             if let Some(document) = &self.document {
                 ui.label(RichText::new(&document.name).strong());
             }
@@ -215,6 +253,22 @@ impl App {
         let error_color = ui.visuals().error_fg_color;
         for problem in self.glossary_problems.iter().chain(&self.open_error) {
             ui.label(RichText::new(problem).color(error_color));
+        }
+    }
+
+    /// Fold every function body to its signature, or unfold everything.
+    fn fold_buttons(&mut self, ui: &mut Ui) {
+        let Some(document) = &self.document else {
+            return;
+        };
+        let folded = !self.view.folding.is_empty();
+        if ui.button("Fold functions").clicked() {
+            self.view.folding.fold_functions(&document.folds);
+            self.view.folds_changed(document);
+        }
+        if ui.add_enabled(folded, Button::new("Unfold all")).clicked() {
+            self.view.folding.unfold_all();
+            self.view.folds_changed(document);
         }
     }
 
@@ -310,7 +364,7 @@ impl App {
         if !self.search.open {
             return;
         }
-        let from = self.view.selected.unwrap_or(self.view.in_view.start);
+        let from = self.view.selected.unwrap_or(self.view.top_row());
         self.search
             .refresh(&document.lines, self.show_transcription, from);
         if jump {
@@ -323,8 +377,14 @@ impl App {
         self.go_to(row);
     }
 
+    /// Selects `row` and scrolls to it, unfolding what hides it.
     fn go_to(&mut self, row: Option<usize>) {
         if let Some(row) = row {
+            if self.view.folding.reveal(row)
+                && let Some(document) = &self.document
+            {
+                self.view.folds_changed(document);
+            }
             self.view.selected = Some(row);
             self.view.reveal = true;
         }
@@ -350,21 +410,43 @@ impl App {
         let column = columns.text_width;
         let visuals = ui.visuals().clone();
         let typing = ui.ctx().egui_wants_keyboard_input();
-        let [up, down, page_up, page_down] =
-            [Key::ArrowUp, Key::ArrowDown, Key::PageUp, Key::PageDown].map(|key| {
-                !typing && ui.input_mut(|input| input.consume_key(Modifiers::NONE, key))
-            });
-        let moved = (up || down) && !lines.is_empty();
+        let [up, down, page_up, page_down, left, right] = [
+            Key::ArrowUp,
+            Key::ArrowDown,
+            Key::PageUp,
+            Key::PageDown,
+            Key::ArrowLeft,
+            Key::ArrowRight,
+        ]
+        .map(|key| !typing && ui.input_mut(|input| input.consume_key(Modifiers::NONE, key)));
+        if let Some(row) = view.selected {
+            let fold = if left {
+                view.folding.to_fold(&document.folds, row)
+            } else if right {
+                view.folding.to_unfold(&document.folds, row)
+            } else {
+                None
+            };
+            if let Some(fold) = fold {
+                view.folding.toggle(fold);
+                view.folds_changed(document);
+            }
+        }
+        let shown = view.shown(document);
+        let moved = (up || down) && !shown.is_empty();
         let reveal = mem::take(&mut view.reveal) || moved;
         if moved {
-            let last = lines.len() - 1;
-            view.selected = Some(match view.selected {
+            let last = shown.len() - 1;
+            let at = view.selected.and_then(|row| shown.binary_search(&row).ok());
+            let next = match at {
                 None => view.in_view.start.min(last),
-                Some(row) if down => (row + 1).min(last),
-                Some(row) => row.saturating_sub(1),
-            });
+                Some(at) if down => (at + 1).min(last),
+                Some(at) => at.saturating_sub(1),
+            };
+            view.selected = Some(shown[next]);
         }
-        view.rows.measure(column, lines.len(), |row| {
+        view.rows.measure(column, shown.len(), |at| {
+            let row = shown[at];
             sides
                 .iter()
                 .map(|&side| {
@@ -374,6 +456,7 @@ impl App {
                 .fold(row_height, f32::max)
                 + ROW_SPACING
         });
+        let mut fold_toggled = false;
         ScrollArea::vertical()
             .auto_shrink(false)
             .show_viewport(ui, |ui, viewport| {
@@ -384,18 +467,26 @@ impl App {
                     .clicked()
                     .then(|| response.interact_pointer_pos())
                     .flatten();
+                let mut marker_clicked = None;
                 if let Some(pointer) = click {
-                    view.selected = rows.row_at(pointer.y - area.min.y);
+                    view.selected = rows.row_at(pointer.y - area.min.y).map(|at| shown[at]);
+                    let marker = columns.number_end(Side::Source)..columns.text_start(Side::Source);
+                    marker_clicked = view
+                        .selected
+                        .filter(|_| marker.contains(&(pointer.x - area.min.x)));
                 }
                 let mut clicked_span = None;
-                let row_rect = |row: usize| {
+                let row_rect = |at: usize| {
                     Rect::from_min_max(
-                        area.min + Vec2::new(0.0, rows.top(row)),
-                        area.min + Vec2::new(columns.width(), rows.bottom(row)),
+                        area.min + Vec2::new(0.0, rows.top(at)),
+                        area.min + Vec2::new(columns.width(), rows.bottom(at)),
                     )
                 };
-                if reveal && let Some(row) = view.selected {
-                    ui.scroll_to_rect(row_rect(row), None);
+                if reveal
+                    && let Some(row) = view.selected
+                    && let Ok(at) = shown.binary_search(&row)
+                {
+                    ui.scroll_to_rect(row_rect(at), None);
                 }
                 for (pressed, direction) in [(page_up, 1.0), (page_down, -1.0)] {
                     if pressed {
@@ -403,11 +494,22 @@ impl App {
                     }
                 }
                 view.in_view = rows.visible(viewport.min.y, viewport.max.y);
-                for row in view.in_view.clone() {
-                    let top = area.min + Vec2::new(0.0, rows.top(row));
+                for at in view.in_view.clone() {
+                    let row = shown[at];
+                    let top = area.min + Vec2::new(0.0, rows.top(at));
                     if view.selected == Some(row) {
                         let band = visuals.selection.bg_fill.gamma_multiply(SELECTION_ALPHA);
-                        ui.painter().rect_filled(row_rect(row), 0.0, band);
+                        ui.painter().rect_filled(row_rect(at), 0.0, band);
+                    }
+                    let opening = folds_opening_at(&document.folds, row);
+                    let folded = opening.iter().find(|fold| view.folding.is_folded(fold));
+                    if !opening.is_empty() {
+                        let centre = top
+                            + Vec2::new(
+                                columns.number_end(Side::Source) + GAP / 2.0,
+                                row_height / 2.0,
+                            );
+                        fold_marker(ui, centre, folded.is_some(), visuals.weak_text_color());
                     }
                     for &side in sides {
                         ui.painter().text(
@@ -441,8 +543,27 @@ impl App {
                             ui.interact(rect, ui.id().with((row, side)), Sense::hover())
                                 .on_hover_ui_at_pointer(|ui| hover(ui, span, role, glossary));
                         }
+                        if let Some(fold) = folded
+                            && let Some(last) = galley.rows.last()
+                        {
+                            let hidden = fold.last - fold.first;
+                            let end = rect.min + Vec2::new(last.rect().max.x, last.rect().min.y);
+                            ui.painter().text(
+                                end + Vec2::new(char_width, 0.0),
+                                Align2::LEFT_TOP,
+                                format!(
+                                    "… {hidden} {}",
+                                    if hidden == 1 { "line" } else { "lines" }
+                                ),
+                                font.clone(),
+                                visuals.weak_text_color(),
+                            );
+                        }
                         ui.painter().galley(rect.min, galley, visuals.text_color());
                     }
+                }
+                if let Some(row) = marker_clicked {
+                    fold_toggled = view.folding.toggle_at(&document.folds, row);
                 }
                 if click.is_some() {
                     match clicked_span {
@@ -457,7 +578,31 @@ impl App {
                     }
                 }
             });
+        if fold_toggled {
+            view.folds_changed(document);
+        }
     }
+}
+
+/// The marker that says a body can be folded: a triangle pointing down while it is
+/// open and right once it is folded.
+fn fold_marker(ui: &Ui, centre: Pos2, folded: bool, color: Color32) {
+    let half = 3.5;
+    let points = if folded {
+        vec![
+            centre + Vec2::new(-half * 0.6, -half),
+            centre + Vec2::new(half * 0.9, 0.0),
+            centre + Vec2::new(-half * 0.6, half),
+        ]
+    } else {
+        vec![
+            centre + Vec2::new(-half, -half * 0.6),
+            centre + Vec2::new(half, -half * 0.6),
+            centre + Vec2::new(0.0, half * 0.9),
+        ]
+    };
+    ui.painter()
+        .add(Shape::convex_polygon(points, color, Stroke::NONE));
 }
 
 /// The native file dialog. It needs a display, so this runs by hand, never in a test.

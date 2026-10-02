@@ -7,6 +7,7 @@
 
 mod app;
 mod document;
+mod folding;
 mod related;
 mod rows;
 mod search;

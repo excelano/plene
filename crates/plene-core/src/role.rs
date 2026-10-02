@@ -295,10 +295,11 @@ fn is_repetition_operator(operator: &SyntaxToken) -> bool {
     opens_with_paren && before.next().is_some_and(|dollar| dollar.kind() == DOLLAR)
 }
 
-/// The role and name of the closing brace of `block`, when `block` is the body of an
-/// item long enough that its opening is out of sight: the item's name, or for an `impl`
-/// the type it is for, with its trait.
-fn closing_brace(block: &SyntaxNode) -> Option<Classified> {
+/// The item whose body `block` is, and the role its closing brace takes: a function's
+/// body, an `impl` or trait's items, a module's, a struct's fields or an enum's
+/// variants. The braces of an `if`, a loop, a closure or an enum variant are not an
+/// item's body.
+pub(crate) fn item_body(block: &SyntaxNode) -> Option<(Role, SyntaxNode)> {
     let item = if block.kind() == STMT_LIST {
         block
             .parent()
@@ -316,6 +317,14 @@ fn closing_brace(block: &SyntaxNode) -> Option<Classified> {
         (ENUM, VARIANT_LIST) => Role::EnumEnd,
         _ => return None,
     };
+    Some((role, item))
+}
+
+/// The role and name of the closing brace of `block`, when `block` is the body of an
+/// item long enough that its opening is out of sight: the item's name, or for an `impl`
+/// the type it is for, with its trait.
+fn closing_brace(block: &SyntaxNode) -> Option<Classified> {
+    let (role, item) = item_body(block)?;
     if block.text().to_string().lines().count() <= SHORT_BLOCK_LINES {
         return None;
     }

@@ -5,13 +5,15 @@
 
 use std::path::Path;
 
-use plene_core::{Edition, Glossary, Line, transcribe};
+use plene_core::{Edition, Fold, Glossary, Line, folds, transcribe};
 
 pub struct Document {
     /// The file's name, for the window title and the toolbar.
     pub name: String,
     source: String,
     pub lines: Vec<Line>,
+    /// The bodies that can be folded away, which do not depend on the glossary.
+    pub folds: Vec<Fold>,
 }
 
 impl Document {
@@ -24,10 +26,12 @@ impl Document {
             .to_string_lossy()
             .into_owned();
         let lines = transcribe(&source, edition, glossary);
+        let folds = folds(&source, edition);
         Ok(Document {
             name,
             source,
             lines,
+            folds,
         })
     }
 

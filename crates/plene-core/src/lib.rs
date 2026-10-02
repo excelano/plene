@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 mod category;
+mod fold;
 mod glossary;
 mod highlight;
 mod role;
@@ -17,6 +18,7 @@ use std::ops::Range;
 use ra_ap_syntax::SourceFile;
 
 pub use category::{Category, UnknownCategory};
+pub use fold::{Fold, folds};
 pub use glossary::{Glossary, GlossaryEntry, GlossaryError};
 pub use highlight::HighlightClass;
 pub use role::{Role, UnknownRole};
