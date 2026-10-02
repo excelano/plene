@@ -64,5 +64,6 @@ at run time, so the plene-gui package names them in `Depends` by hand; a change 
 eframe or its features is followed by `check-libraries.sh` on both display backends.
 
 Coverage has one exception: code that needs a display. The native file dialog
-(`App::pick_file` and the two lines that call it), `eframe::App::ui` and `main` run by
-hand, never in a test, and are the only uncovered lines `plene-gui` is allowed.
+(`native_picker`), `eframe::App::ui` and `main` run by hand, never in a test, and are
+the only uncovered lines `plene-gui` is allowed. Tests put a stand-in in the window in
+place of the dialog, one that panics if asked, since a real dialog waits on a person.

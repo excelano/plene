@@ -6,7 +6,7 @@
 
 use std::mem;
 use std::ops::Range;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use eframe::egui::{
     Align2, CentralPanel, FontId, Key, KeyboardShortcut, Modifiers, Panel, Rect, RichText,
@@ -15,9 +15,10 @@ use eframe::egui::{
 use plene_core::{Category, Edition, Glossary, Role, Span};
 
 use crate::document::Document;
+use crate::related::Related;
 use crate::rows::Rows;
 use crate::search::{Scope, Search};
-use crate::text::{FONT_SIZE, Side, layout_job, span_at};
+use crate::text::{FONT_SIZE, Side, combine, layout_job, span_at, span_index_at};
 
 const OPEN: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::O);
 const FIND: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::F);
@@ -47,6 +48,11 @@ pub struct App {
     /// transcription. All are on at start, and the choice holds across the files opened.
     kept: Vec<Category>,
     search: Search,
+    /// The tokens related to the one last clicked.
+    related: Related,
+    /// Asks the reader for a file. The native dialog in the window; tests put in a
+    /// stand-in, since a dialog needs a display and waits for a person.
+    picker: Box<dyn Fn() -> Option<PathBuf>>,
     title: String,
 }
 
@@ -92,6 +98,8 @@ impl App {
             show_transcription: true,
             kept: Vec::new(),
             search: Search::default(),
+            related: Related::default(),
+            picker: Box::new(native_picker),
             title: String::new(),
         };
         if let Some(file) = file {
@@ -106,18 +114,15 @@ impl App {
                 self.document = Some(document);
                 self.view = View::default();
                 self.search.mark_stale();
+                self.related.clear();
                 self.open_error = None;
             }
             Err(error) => self.open_error = Some(error),
         }
     }
 
-    /// The native file dialog needs a display, so this runs by hand, never in a test.
     fn pick_file(&mut self) {
-        if let Some(path) = rfd::FileDialog::new()
-            .add_filter("Rust", &["rs"])
-            .pick_file()
-        {
+        if let Some(path) = (self.picker)() {
             self.open(&path);
         }
     }
@@ -147,6 +152,9 @@ impl App {
         self.set_title(ui);
         Panel::top("toolbar").show(ui, |ui| self.toolbar(ui));
         self.find_matches(false);
+        if let Some(document) = &self.document {
+            self.related.refresh(&document.lines);
+        }
         CentralPanel::default().show(ui, |ui| {
             if let Some(document) = &self.document {
                 let sides: &[Side] = if self.show_transcription {
@@ -160,6 +168,7 @@ impl App {
                     &mut self.view,
                     &self.glossary,
                     &self.search,
+                    &mut self.related,
                     sides,
                 );
             } else {
@@ -212,6 +221,7 @@ impl App {
     fn rows_changed(&mut self) {
         self.view.rows = Rows::default();
         self.search.mark_stale();
+        self.related.mark_stale();
     }
 
     /// A checkbox for each category of expansion. The transcription is made again
@@ -327,6 +337,7 @@ impl App {
         view: &mut View,
         glossary: &Glossary,
         search: &Search,
+        related: &mut Related,
         sides: &[Side],
     ) {
         let lines = &document.lines;
@@ -367,11 +378,14 @@ impl App {
                 let rows = &view.rows;
                 let (area, response) = ui
                     .allocate_exact_size(Vec2::new(columns.width(), rows.total()), Sense::click());
-                if response.clicked()
-                    && let Some(pointer) = response.interact_pointer_pos()
-                {
+                let click = response
+                    .clicked()
+                    .then(|| response.interact_pointer_pos())
+                    .flatten();
+                if let Some(pointer) = click {
                     view.selected = rows.row_at(pointer.y - area.min.y);
                 }
+                let mut clicked_span = None;
                 let row_rect = |row: usize| {
                     Rect::from_min_max(
                         area.min + Vec2::new(0.0, rows.top(row)),
@@ -401,13 +415,21 @@ impl App {
                             font.clone(),
                             visuals.weak_text_color(),
                         );
-                        let marks = search.marks(row, side);
+                        let marks =
+                            combine(search.marks(row, side), related.marks(lines, row, side));
                         let job = layout_job(&lines[row], side, column, &visuals, &marks);
                         let galley = ui.fonts_mut(|fonts| fonts.layout_job(job));
                         let rect = Rect::from_min_size(
                             top + Vec2::new(columns.text_start(side), 0.0),
                             galley.size(),
                         );
+                        if let Some(pointer) = click
+                            && rect.contains(pointer)
+                        {
+                            clicked_span =
+                                span_index_at(&galley, &lines[row], side, pointer - rect.min)
+                                    .map(|span| (row, span));
+                        }
                         if let Some(pointer) = ui.ctx().pointer_hover_pos()
                             && rect.contains(pointer)
                             && let Some(span) =
@@ -420,8 +442,21 @@ impl App {
                         ui.painter().galley(rect.min, galley, visuals.text_color());
                     }
                 }
+                if click.is_some() {
+                    match clicked_span {
+                        Some((row, span)) => related.select(lines, row, span),
+                        None => related.clear(),
+                    }
+                }
             });
     }
+}
+
+/// The native file dialog. It needs a display, so this runs by hand, never in a test.
+fn native_picker() -> Option<PathBuf> {
+    rfd::FileDialog::new()
+        .add_filter("Rust", &["rs"])
+        .pick_file()
 }
 
 /// Where each pane sits across a row. A pane is its line numbers, a gap and its text;

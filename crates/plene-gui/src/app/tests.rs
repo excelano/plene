@@ -20,12 +20,20 @@ fn temp_file(name: &str, contents: &str) -> PathBuf {
     path
 }
 
+/// Stands where the native file dialog would, which a test must never raise: it needs a
+/// display and waits for a person to close it.
+fn refuse_dialog() -> Option<PathBuf> {
+    panic!("a test raised the native file dialog");
+}
+
 fn app_with(file: Option<&Path>) -> App {
-    App::new(
+    let mut app = App::new(
         Edition::default(),
         Ok((Glossary::default(), Vec::new())),
         file,
-    )
+    );
+    app.picker = Box::new(refuse_dialog);
+    app
 }
 
 fn window(app: App, size: Vec2) -> Harness<'static, App> {
@@ -138,17 +146,18 @@ fn unreadable_file_is_reported_until_one_opens() {
 #[test]
 fn glossary_problems_are_shown_and_the_built_in_glossary_used() {
     let file = temp_file("glossary.rs", "fn f() {}\n");
-    let failed = App::new(
+    let mut failed = App::new(
         Edition::default(),
         Err("g.toml: bad".to_string()),
         Some(&file),
     );
+    failed.picker = Box::new(refuse_dialog);
     let harness = window(failed, WIDE);
     harness.get_by_label("g.toml: bad; using the built-in glossary");
     let document = harness.state().document.as_ref().unwrap();
     assert_eq!(document.lines[0].spans[0].rendered, "function");
 
-    let warned = App::new(
+    let mut warned = App::new(
         Edition::default(),
         Ok((
             Glossary::default(),
@@ -156,6 +165,7 @@ fn glossary_problems_are_shown_and_the_built_in_glossary_used() {
         )),
         None,
     );
+    warned.picker = Box::new(refuse_dialog);
     window(warned, WIDE).get_by_label("warning: g.toml: unknown role");
 }
 
@@ -578,4 +588,168 @@ fn every_category_has_a_checkbox() {
     for category in Category::ALL {
         harness.get_by_label(category.label());
     }
+}
+
+/// Where, just inside the top of `row`, a click falls: found by clicking down the
+/// line numbers until that row is selected. The search starts well clear of the
+/// toolbar, whose Open button would raise the native file dialog.
+fn top_of_row(harness: &mut Harness<'_, App>, row: usize) -> f32 {
+    let clear_of_toolbar = harness.get_by_label("Open…").rect().max.y.ceil() as usize + 16;
+    for y in (clear_of_toolbar..300).step_by(3) {
+        click(harness, Pos2::new(14.0, y as f32));
+        if selected(harness) == Some(row) {
+            return y as f32 + 1.0;
+        }
+    }
+    panic!("row {row} is not in view");
+}
+
+/// Clicks along `row` over `xs`, a character cell wide at a time or so, until `count`
+/// tokens are related to the one clicked. A click is the pointer's press and release
+/// in one frame, which keeps the search quick.
+fn click_until_related(
+    harness: &mut Harness<'_, App>,
+    row: usize,
+    xs: std::ops::Range<usize>,
+    count: usize,
+) -> bool {
+    let y = top_of_row(harness, row);
+    xs.step_by(4).any(|x| {
+        let pos = Pos2::new(x as f32, y);
+        harness.hover_at(pos);
+        harness.drag_at(pos);
+        harness.drop_at(pos);
+        harness.run();
+        harness.state().related.count() == count
+    })
+}
+
+const NAMES: &str = "fn f(alpha: u8) -> u8 {\n    alpha + alpha\n}\n";
+
+#[test]
+fn clicking_a_name_marks_its_namesakes_on_either_pane() {
+    for xs in [24..200, 450..700] {
+        let mut harness = opened(NAMES, "namesakes.rs", WIDE);
+        assert!(
+            click_until_related(&mut harness, 0, xs.clone(), 3),
+            "{xs:?}"
+        );
+        assert!(selected(&harness).is_some(), "the row is selected too");
+    }
+}
+
+#[test]
+fn clicking_a_bracket_marks_its_partner() {
+    let mut harness = opened("fn f() {\n    g(1);\n}\n", "bracket.rs", WIDE);
+    assert!(click_until_related(&mut harness, 1, 24..200, 2));
+}
+
+#[test]
+fn clicking_away_clears_what_was_marked() {
+    let mut harness = opened(NAMES, "away.rs", WIDE);
+    assert!(click_until_related(&mut harness, 0, 24..200, 3));
+    let y = top_of_row(&mut harness, 0);
+    click(&mut harness, Pos2::new(380.0, y));
+    assert_eq!(harness.state().related.count(), 0);
+}
+
+/// The text of row 0 on `side` that is marked as related to the token clicked.
+fn marked_text(harness: &Harness<'_, App>, side: Side) -> Vec<String> {
+    let app = harness.state();
+    let lines = &app.document.as_ref().unwrap().lines;
+    let text: String = lines[0].spans.iter().map(|span| side.text(span)).collect();
+    app.related
+        .marks(lines, 0, side)
+        .into_iter()
+        .map(|mark| text[mark.range].to_string())
+        .collect()
+}
+
+#[test]
+fn what_was_marked_survives_a_category_being_switched() {
+    let mut harness = opened(LIFETIME, "survives.rs", WIDE);
+    assert!(click_until_related(&mut harness, 0, 24..200, 2));
+    assert_eq!(marked_text(&harness, Side::Source), ["'a", "'a"]);
+    assert_eq!(
+        marked_text(&harness, Side::Transcription),
+        ["lifetime a", "lifetime a"]
+    );
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    assert_eq!(rendered(&harness, "'a"), "'a");
+    assert_eq!(marked_text(&harness, Side::Source), ["'a", "'a"]);
+    assert_eq!(marked_text(&harness, Side::Transcription), ["'a", "'a"]);
+    toggle_expansion(&mut harness, "Lifetimes and labels");
+    assert_eq!(
+        marked_text(&harness, Side::Transcription),
+        ["lifetime a", "lifetime a"]
+    );
+}
+
+#[test]
+fn opening_a_file_clears_what_was_marked() {
+    let mut harness = opened(NAMES, "before_related.rs", WIDE);
+    assert!(click_until_related(&mut harness, 0, 24..200, 3));
+    let dropped = temp_file("after_related.rs", NAMES);
+    harness.input_mut().dropped_files = vec![Arc::new(Dropped(dropped))];
+    harness.run();
+    assert_eq!(harness.state().related.count(), 0);
+}
+
+/// A window whose file dialog answers with `answer`, and a count of how often it was asked.
+fn picking(
+    answer: Option<PathBuf>,
+) -> (Harness<'static, App>, Arc<std::sync::atomic::AtomicUsize>) {
+    let asked = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let mut app = app_with(None);
+    let counter = Arc::clone(&asked);
+    app.picker = Box::new(move || {
+        counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        answer.clone()
+    });
+    (window(app, WIDE), asked)
+}
+
+fn times_asked(asked: &Arc<std::sync::atomic::AtomicUsize>) -> usize {
+    asked.load(std::sync::atomic::Ordering::SeqCst)
+}
+
+#[test]
+fn the_open_button_asks_for_a_file_and_opens_the_answer() {
+    let (mut harness, asked) = picking(Some(temp_file("picked.rs", "fn f() {}\n")));
+    harness.get_by_label("Open…").click();
+    harness.run();
+    assert_eq!(times_asked(&asked), 1);
+    harness.get_by_label("picked.rs");
+    assert!(harness.state().document.is_some());
+}
+
+#[test]
+fn ctrl_o_asks_for_a_file_too() {
+    let (mut harness, asked) = picking(Some(temp_file("picked_keys.rs", "fn f() {}\n")));
+    harness.key_press_modifiers(Modifiers::COMMAND, Key::O);
+    harness.run();
+    assert_eq!(times_asked(&asked), 1);
+    assert_eq!(harness.state().title, "picked_keys.rs - plene");
+}
+
+#[test]
+fn a_cancelled_dialog_changes_nothing() {
+    let (mut harness, asked) = picking(None);
+    harness.get_by_label("Open…").click();
+    harness.run();
+    assert_eq!(times_asked(&asked), 1);
+    assert!(harness.state().document.is_none());
+    harness.get_by_label_contains("Open a Rust file");
+}
+
+#[test]
+fn marks_stay_on_their_tokens_when_a_switch_removes_a_space_before_them() {
+    // `&x` is `borrow x` with a space inserted between; with references left as written
+    // there is no space, so the marked `x`s sit one span earlier.
+    let mut harness = opened("fn f() { g(&x, x, x); }\n", "spaces.rs", WIDE);
+    assert!(click_until_related(&mut harness, 0, 24..260, 3));
+    assert_eq!(marked_text(&harness, Side::Transcription), ["x", "x", "x"]);
+    toggle_expansion(&mut harness, "References and pointers");
+    assert_eq!(marked_text(&harness, Side::Source), ["x", "x", "x"]);
+    assert_eq!(marked_text(&harness, Side::Transcription), ["x", "x", "x"]);
 }

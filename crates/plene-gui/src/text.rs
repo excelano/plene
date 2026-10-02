@@ -12,18 +12,59 @@ use plene_core::{HighlightClass, Line, Span};
 
 pub const FONT_SIZE: f32 = 14.0;
 
-/// Backgrounds for the text a search matched, translucent so the text stays readable
-/// on a dark or a light theme, and stronger for the match the reader is on.
+/// Backgrounds for marked text, translucent so the text stays readable on a dark or a
+/// light theme.
 const MATCH_BACKGROUND: Color32 = Color32::from_rgba_premultiplied(70, 55, 0, 70);
 const CURRENT_MATCH_BACKGROUND: Color32 = Color32::from_rgba_premultiplied(160, 120, 0, 160);
+const OCCURRENCE_BACKGROUND: Color32 = Color32::from_rgba_premultiplied(0, 40, 70, 70);
+const BRACKET_BACKGROUND: Color32 = Color32::from_rgba_premultiplied(0, 90, 40, 110);
 
-/// A stretch of one side's text for a line that a search matched.
+/// Why a stretch of text is marked.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MarkKind {
+    /// A search match.
+    Match,
+    /// The search match the reader is on.
+    CurrentMatch,
+    /// Another token with the name of the one clicked.
+    Occurrence,
+    /// A bracket and its partner.
+    Bracket,
+}
+
+impl MarkKind {
+    fn background(self) -> Color32 {
+        match self {
+            MarkKind::Match => MATCH_BACKGROUND,
+            MarkKind::CurrentMatch => CURRENT_MATCH_BACKGROUND,
+            MarkKind::Occurrence => OCCURRENCE_BACKGROUND,
+            MarkKind::Bracket => BRACKET_BACKGROUND,
+        }
+    }
+}
+
+/// A stretch of one side's text for a line that is marked.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mark {
     /// Byte range in the text of the whole line on that side; the marks of a line do
     /// not overlap and are in order.
     pub range: Range<usize>,
-    pub current: bool,
+    pub kind: MarkKind,
+}
+
+/// `first` and `second` as one set of marks in order. Where a mark of `second` overlaps
+/// one of `first`, the one in `first` stays and the other is dropped.
+pub fn combine(mut first: Vec<Mark>, second: Vec<Mark>) -> Vec<Mark> {
+    for mark in second {
+        let overlaps = first
+            .iter()
+            .any(|kept| kept.range.start < mark.range.end && mark.range.start < kept.range.end);
+        if !overlaps {
+            first.push(mark);
+        }
+    }
+    first.sort_by_key(|mark| mark.range.start);
+    first
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -83,11 +124,7 @@ pub fn layout_job(
         for (piece, mark) in pieces(text, start, marks) {
             let mut piece_format = format.clone();
             if let Some(mark) = mark {
-                piece_format.background = if mark.current {
-                    CURRENT_MATCH_BACKGROUND
-                } else {
-                    MATCH_BACKGROUND
-                };
+                piece_format.background = mark.kind.background();
             }
             job.append(piece, 0.0, piece_format);
         }
@@ -125,10 +162,15 @@ fn pieces<'a>(text: &'a str, start: usize, marks: &'a [Mark]) -> Vec<(&'a str, O
 /// `side`. egui merges neighbouring sections that share a format, so sections do not
 /// line up with spans; the span is found from the spans' own lengths.
 pub fn span_at<'a>(galley: &Galley, line: &'a Line, side: Side, pos: Vec2) -> Option<&'a Span> {
+    span_index_at(galley, line, side, pos).map(|index| &line.spans[index])
+}
+
+/// Where in `line`'s spans the span under `pos` is, found as `span_at` finds it.
+pub fn span_index_at(galley: &Galley, line: &Line, side: Side, pos: Vec2) -> Option<usize> {
     let cursor = galley.cursor_from_pos(pos);
     let (byte, _) = galley.job.text.char_indices().nth(cursor.index.0)?;
     let mut end = 0;
-    line.spans.iter().find(|span| {
+    line.spans.iter().position(|span| {
         end += side.text(span).len();
         byte < end
     })
@@ -274,10 +316,16 @@ mod tests {
         let text: String = line.spans.iter().map(|span| &*span.rendered).collect();
         let start = text.find("rowed mu").unwrap();
         let range = start..start + "rowed mu".len();
-        for (current, expected) in [(false, MATCH_BACKGROUND), (true, CURRENT_MATCH_BACKGROUND)] {
+        for kind in [
+            MarkKind::Match,
+            MarkKind::CurrentMatch,
+            MarkKind::Occurrence,
+            MarkKind::Bracket,
+        ] {
+            let expected = kind.background();
             let marks = [Mark {
                 range: range.clone(),
-                current,
+                kind,
             }];
             let job = layout_job(&line, Side::Transcription, 1000.0, &Visuals::dark(), &marks);
             assert_eq!(job.text, text, "marking changes no text");
@@ -297,7 +345,7 @@ mod tests {
     fn pieces_cover_the_text_once_with_or_without_marks() {
         let mark = |range: Range<usize>| Mark {
             range,
-            current: false,
+            kind: MarkKind::Match,
         };
         let marks = [mark(1..3), mark(7..9)];
         // A span at bytes 2..8 of its line: the first mark covers its start, the
@@ -320,5 +368,52 @@ mod tests {
             ["xyz"],
             "a mark that ends before the text leaves it whole"
         );
+    }
+
+    #[test]
+    fn every_kind_has_its_own_background() {
+        let kinds = [
+            MarkKind::Match,
+            MarkKind::CurrentMatch,
+            MarkKind::Occurrence,
+            MarkKind::Bracket,
+        ];
+        for (index, kind) in kinds.iter().enumerate() {
+            assert_ne!(kind.background(), Color32::TRANSPARENT);
+            for other in &kinds[index + 1..] {
+                assert_ne!(kind.background(), other.background(), "{kind:?} {other:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn combining_marks_keeps_the_first_where_they_overlap() {
+        let mark = |range: Range<usize>, kind| Mark { range, kind };
+        let first = vec![
+            mark(4..8, MarkKind::Match),
+            mark(20..22, MarkKind::CurrentMatch),
+        ];
+        let second = vec![
+            mark(0..2, MarkKind::Occurrence),
+            mark(7..9, MarkKind::Occurrence),
+            mark(8..10, MarkKind::Occurrence),
+            mark(21..23, MarkKind::Bracket),
+            mark(30..31, MarkKind::Bracket),
+        ];
+        let combined: Vec<(Range<usize>, MarkKind)> = combine(first, second)
+            .into_iter()
+            .map(|mark| (mark.range, mark.kind))
+            .collect();
+        assert_eq!(
+            combined,
+            [
+                (0..2, MarkKind::Occurrence),
+                (4..8, MarkKind::Match),
+                (8..10, MarkKind::Occurrence),
+                (20..22, MarkKind::CurrentMatch),
+                (30..31, MarkKind::Bracket),
+            ]
+        );
+        assert!(combine(Vec::new(), Vec::new()).is_empty());
     }
 }

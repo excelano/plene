@@ -8,7 +8,7 @@ use std::ops::Range;
 
 use plene_core::Line;
 
-use crate::text::{Mark, Side};
+use crate::text::{Mark, MarkKind, Side};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Scope {
@@ -125,7 +125,11 @@ impl Search {
             .filter(|(_, found)| found.side == side)
             .map(|(offset, found)| Mark {
                 range: found.range.clone(),
-                current: self.current == Some(first + offset),
+                kind: if self.current == Some(first + offset) {
+                    MarkKind::CurrentMatch
+                } else {
+                    MarkKind::Match
+                },
             })
             .collect()
     }
@@ -311,12 +315,12 @@ mod tests {
         search.refresh(&lines(), true, 0);
         let marks = search.marks(0, Side::Source);
         assert_eq!(marks.len(), 2);
-        assert!(marks[0].current && !marks[1].current);
+        assert!(marks[0].kind == MarkKind::CurrentMatch && marks[1].kind == MarkKind::Match);
         assert!(search.marks(0, Side::Transcription).is_empty());
         assert!(search.marks(1, Side::Source).is_empty());
         search.step(true);
         let marks = search.marks(0, Side::Source);
-        assert!(!marks[0].current && marks[1].current);
+        assert!(marks[0].kind == MarkKind::Match && marks[1].kind == MarkKind::CurrentMatch);
         search.open = false;
         assert!(search.marks(0, Side::Source).is_empty());
     }

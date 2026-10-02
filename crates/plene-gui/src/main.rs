@@ -7,6 +7,7 @@
 
 mod app;
 mod document;
+mod related;
 mod rows;
 mod search;
 mod text;
