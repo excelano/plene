@@ -58,8 +58,7 @@ a non-whitespace token classed `Plain` is a token kind the highlighter misses.
 Releases: the apps in excelano/shipping, run from this directory; `ship-crates`
 publishes the crates in dependency order. There is no release document.
 
-Every crate is `forbid(unsafe_code)`, and nothing in the dependency tree compiles C
-(`~/notes/pure_rust_preference.md`). The window's display libraries are opened by name
+Every crate is `forbid(unsafe_code)`, and nothing in the dependency tree compiles C. The window's display libraries are opened by name
 at run time, so the plene-gui package names them in `Depends` by hand; a change to
 eframe or its features is followed by `check-libraries.sh` on both display backends.
 
