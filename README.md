@@ -24,19 +24,13 @@ curl -fsSL https://excelano.com/apt/setup.sh | sudo sh
 sudo apt install plene
 ```
 
-With Homebrew:
-
-```sh
-brew install excelano/tap/plene
-```
-
 From crates.io, with a Rust toolchain at least as new as the one `Cargo.toml` names:
 
 ```sh
 cargo install plene
 ```
 
-The window is a separate package, `plene-gui`, from the same apt repository (`sudo apt install plene-gui`). Homebrew carries the command-line tool only.
+The window is a separate package, `plene-gui`, from the same apt repository (`sudo apt install plene-gui`).
 
 ## Run
 
