@@ -205,7 +205,7 @@ note = "A named lifetime: how long a reference is valid."
 
 ## Architecture
 
-Cargo workspace, three crates:
+A Cargo workspace:
 
 ```
 plene/
@@ -241,7 +241,7 @@ pub struct Span {
 - **Line correspondence is 1:1.** Every source line produces exactly one rendered line. Tokens that span lines (block comments, multi-line and raw strings) are split into one span per line. Line endings (LF or CRLF) are preserved.
 - **Macros:** the arguments of standard macros that take expressions are parsed as Rust and expanded like any other code: `assert`, `assert_eq`, `assert_ne`, `debug_assert`, `debug_assert_eq`, `debug_assert_ne`, `format`, `format_args`, `print`, `println`, `eprint`, `eprintln`, `write`, `writeln`, `panic`, `todo`, `unimplemented`, `unreachable`, `vec`, `dbg`, `addr_of` and `addr_of_mut`, matched by the last segment of the path, so `std::format!` counts. The arguments are parsed as the elements of an array, which also covers `vec![x; n]`, and an invocation expands only when they parse without error; otherwise it stays untouched. So `assert_eq!(&a, &b)` reads `assert_eq!(borrow a, borrow b)`, while `format!("{}", type = &a)` stays as written. The parsed arguments are the source's own bytes split into tokens again, so the invariants hold as they do elsewhere. Every other macro's token tree is left untouched, since syntax alone can't tell whether its arguments are Rust: `stringify!(&a)`, `quote!` bodies, and patterns in `matches!` would all read wrongly. Format strings are strings and stay unchanged. Attributes are untouched too. A `macro_rules!` definition is the exception to leaving token trees alone, since its notation is fixed: see Macro definitions.
 - **Parse errors:** render everything; tokens inside error nodes are not expanded.
-- No CLI/GUI dependencies, and no I/O except `Glossary::load`, which reads the glossary files so that the CLI and the GUI find them by the same rules.
+- No CLI/GUI dependencies, and no I/O except `Glossary::load`, which reads the glossary files, and `Config`'s load and save, which read and write the settings file, so that the CLI and the GUI find both by the same rules.
 
 ### plene (CLI)
 
@@ -279,21 +279,24 @@ plene-gui [OPTIONS] [FILE]
 
   --edition <2015|2018|2021|2024>   (default 2021)
   --glossary <PATH>
+  --keep <CATEGORY,...>
+  --expand <CATEGORY,...>
+  --expand-all
 ```
 
+- `--keep`, `--expand` and `--expand-all` work as in the CLI and decide the run's categories; the Expand menu's changes are then not saved.
 - Opens a `.rs` file named on the command line, dropped on the window, or chosen with the Open button or Ctrl+O. The file dialog is the XDG portal on Linux, so nothing links GTK.
 - The glossary is found by the CLI's rules, through `Glossary::load`. A glossary that fails to load, or a file that can't be opened, is reported in the window rather than ending it; a bad glossary falls back to the built-in one.
 - Two panes, original on the left and expansion on the right, each with its own line numbers. A toggle in the toolbar hides the transcription's pane and gives the source the whole width; it shows at start, and the choice holds across the files opened.
 - A click selects a row, marked by a band across both panes. The Up and Down arrows move the selection, starting from the first row in view, and scroll to keep it there. Page Up and Page Down scroll by the height of the view and leave the selection where it is. Opening a file clears the selection.
 - One scroll area holding one row per source line, each row with two cells. Rows stay aligned and scroll together by construction: long lines wrap, and each row's height is the taller of its two cells. Row heights are measured once per column width and kept with each row's top, so only the rows in view are laid out and painted; a change of width measures them again.
 - Syntax highlighting on both sides uses matching colors, from a dark and a light palette in the CLI's color families. Tokens with a glossary role are underlined on both sides, as in the CLI.
-- Hovering a token with a glossary role, on either side, shows the token and its expansion, its role, the glossary `note`, and the reference page. Ctrl+click on the token opens that page in the browser: a hover card vanishes when the pointer leaves the token, so a link in it could not be clicked. egui merges neighbouring text of one format, so the token under the pointer is found from the spans' own lengths, not from the laid-out sections.
+- Hovering a token with a glossary role, on either side, shows the token and its expansion, its role, the glossary `note`, and the reference page. Ctrl+click on the token opens that page in the browser: a hover card vanishes when the pointer leaves the token, so a link in it could not be clicked. egui merges neighboring text of one format, so the token under the pointer is found from the spans' own lengths, not from the laid-out sections.
 - Ctrl+F opens a search bar under the toolbar; Escape closes it. The query is a substring, with ASCII letters matching in either case, searched in the text of each line as a pane shows it, so `borrowed mutable` finds what the source spells `&mut` and a match may run across tokens. The bar chooses the source, the transcription or both, and searches only the panes on screen; choosing the transcription shows its pane. Matches are highlighted in the panes, the current one more strongly. Enter and Shift+Enter, or the Next and Previous buttons, step through the matches in row order, source before transcription within a row, wrapping at the ends; a step selects the match's row and scrolls to it. Typing a query goes to the first match from the selected row, or from the first row in view. While the field has the keyboard, the arrow and page keys leave the rows alone.
 - A click on a name (an identifier, type, function, macro or lifetime) marks every token with the same text in both panes; a click on a bracket, one of `()[]{}`, marks it and the bracket it matches. Names are matched by their text alone, with no resolution of what they refer to, so a shadowed name marks its namesakes too, and a file-wide match is the point: it finds where a function or type is used. Brackets match by kind and nest; one nothing matches, as in a file that doesn't parse, marks nothing, and brackets inside strings and comments are not brackets. Keywords, operators and other punctuation mark nothing, since every `,` highlighted is noise. A click anywhere else clears the marks. The clicked token is remembered by its place in the source, so switching a category, which makes the transcription again, keeps the marks on the right text; opening a file clears them. A search match is shown over a mark where the two meet.
 - An Expand menu in the toolbar holds a checkbox for each category; unchecking one leaves what it covers as written. The transcription is made again, so the selection stays and the search runs over the new text. All are on at start but the one that starts off, and the choice holds across the files opened.
 - Bodies fold. The row that holds an item's opening brace, which stays in view when the signature runs over several lines, shows a triangle in the gap before the source text, pointing down while open and right once folded; clicking it folds or unfolds the outermost body that opens there. Left folds the innermost open body around the selected row, its own line included, and Right unfolds a folded one that opens on it. A toolbar button folds every function body, which leaves the `impl`, trait and module around them open so that the file reads as its signatures, and another unfolds everything. A folded body hides the rows after its opening line through its closing brace, and its opening row ends in `… N lines` on both panes. Rows, scrolling, clicks and the arrow keys all work over the rows shown. A selection that is folded away moves to the row holding it, and a search match, or a step to one, unfolds what hides it. Folds hold across a category being switched, since that changes no line, and end with the file.
-- A toggle for changed-only lines.
-- Light and dark themes, with a switch; on Linux the system theme comes from the XDG portal, since winit reports none there.
+- Light and dark palettes for the highlighting; the window takes egui's theme, which follows the system on Windows and macOS.
 
 ## Testing
 
