@@ -26,10 +26,6 @@ rfd = "0.17"
 [dev-dependencies]
 egui_kittest = "0.36"
 
-# dist ships the CLI only; the window installs through cargo or apt.
-[package.metadata.dist]
-dist = false
-
 # The executable links libc and libgcc alone. The display stack, the graphics
 # driver loader and the keyboard map libraries are opened by name at run time,
 # so dpkg-shlibdeps finds none of them and they are named here; the list is

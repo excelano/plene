@@ -15,7 +15,3 @@ keywords = ["rust", "readability", "syntax", "transcription", "learning"]
 [workspace.dependencies]
 plene-core = { path = "crates/plene-core", version = "0.3.0" }
 ra_ap_syntax = "=0.0.352"
-
-[profile.dist]
-inherits = "release"
-lto = "thin"
