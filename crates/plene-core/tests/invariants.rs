@@ -102,7 +102,7 @@ fn crlf_ending_moves_out_of_line_comment() {
 }
 
 /// Runs over every `.rs` file under the directories in `PLENE_SMOKE_DIRS`
-/// (colon-separated), defaulting to `~/plene-corpus` and the `rust-src` standard
+/// (colon-separated), defaulting to `~/clones/plene-corpus` and the `rust-src` standard
 /// library. `cargo test --release -- --ignored` to run.
 #[test]
 #[ignore]
@@ -122,7 +122,7 @@ fn smoke_corpus() {
 
 fn default_smoke_dirs() -> Vec<PathBuf> {
     let home = PathBuf::from(std::env::var("HOME").expect("HOME is set"));
-    let mut dirs = vec![home.join("plene-corpus")];
+    let mut dirs = vec![home.join("clones/plene-corpus")];
     let sysroot = Command::new("rustc").args(["--print", "sysroot"]).output();
     if let Ok(output) = sysroot {
         let library = PathBuf::from(String::from_utf8_lossy(&output.stdout).trim())

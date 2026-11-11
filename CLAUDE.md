@@ -17,7 +17,7 @@ what is expanded, how, and why the glossary reads as it does.
     cargo run -p plene -- path/to/file.rs                     # --color always | less -R
     cargo run -p plene-gui -- path/to/file.rs
     cargo deb -p plene-gui && packaging/linux/check-libraries.sh   # needs a display
-    packaging/screenshots/render.sh ~/excelano.com/plene/img       # the site's window shots
+    packaging/screenshots/render.sh ~/repos/web/excelano.com/plene/img   # the site's window shots
     cargo test --release -p plene-core -- --ignored           # smoke test over the corpus
     cargo llvm-cov --workspace --summary-only                 # then read the uncovered lines:
     cargo llvm-cov report --workspace --text | grep -E '^\s+[0-9]+\|\s+0\|'
@@ -25,10 +25,10 @@ what is expanded, how, and why the glossary reads as it does.
     cargo run -p plene-core --example dump_tree -- file.rs    # the syntax tree, for role work
 
 The smoke test reads every `.rs` file under the colon-separated directories in
-`PLENE_SMOKE_DIRS`, defaulting to `~/plene-corpus` and the standard library source. To
+`PLENE_SMOKE_DIRS`, defaulting to `~/clones/plene-corpus` and the standard library source. To
 set up the default corpus:
 
-    mkdir -p ~/plene-corpus && cd ~/plene-corpus
+    mkdir -p ~/clones/plene-corpus && cd ~/clones/plene-corpus
     git clone --depth 1 https://github.com/BurntSushi/ripgrep
     git clone --depth 1 https://github.com/serde-rs/serde
     git clone --depth 1 https://github.com/rust-lang/rust-analyzer

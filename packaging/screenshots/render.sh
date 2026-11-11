@@ -1,8 +1,11 @@
 #!/bin/sh
+# Author: David M. Anderson
+# Built with AI assistance (Claude, Anthropic)
+#
 # Renders the window's screenshots for excelano.com/plene/, light and dark, and
 # writes them to OUT-DIR at the page's size: 2000 pixels wide, quantized.
 #
-#     packaging/screenshots/render.sh ~/excelano.com/plene/img
+#     packaging/screenshots/render.sh ~/repos/web/excelano.com/plene/img
 #
 # Needs a GPU adapter wgpu can open (a software one does), ImageMagick and
 # pngquant.
