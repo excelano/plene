@@ -6,10 +6,9 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
-keywords.workspace = true
 readme = "../../README.md"
 description = "A window showing Rust source beside its expanded transcription: the same code with abbreviations and symbols written out in words"
-categories = ["development-tools", "gui"]
+publish = false
 
 [dependencies]
 clap = { version = "4.6", features = ["derive"] }

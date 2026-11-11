@@ -36,7 +36,7 @@ From crates.io, with a Rust toolchain at least as new as the one `Cargo.toml` na
 cargo install plene
 ```
 
-The window is a separate package, `plene-gui`, from the same apt repository (`sudo apt install plene-gui`) or from crates.io (`cargo install plene-gui`). Homebrew carries the command-line tool only.
+The window is a separate package, `plene-gui`, from the same apt repository (`sudo apt install plene-gui`). Homebrew carries the command-line tool only.
 
 ## Run
 
